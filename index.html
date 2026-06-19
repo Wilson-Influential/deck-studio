@@ -95,6 +95,7 @@
   <h1>Deck Studio</h1>
   <span class="tag">On-brand slide decks, built in minutes</span>
   <span class="spacer"></span>
+  <button class="btn" id="btnLink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.1 0l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1"/><path d="M14 11a5 5 0 0 0-7.1 0l-2 2a5 5 0 0 0 7.1 7.1l1.1-1.1"/></svg>Copy link</button>
   <button class="btn" id="btnPNG"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 11l5 5 5-5M5 21h14"/></svg>This slide</button>
   <button class="btn primary" id="btnPDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 18H4v-6h16v6h-2M8 22h8v-6H8z"/></svg>Export deck (PDF)</button>
 </div>
@@ -338,6 +339,50 @@ let cur = 0;
 let sectorId = 'insights';
 const S = ()=>SECTORS.find(x=>x.id===sectorId);
 
+/* ===== share links ===== */
+function currentPayload(){
+  return { v:2, tool:'deck-studio', sector:sectorId, active:cur, slides:deck };
+}
+function loadState(payload){
+  if(!payload || payload.tool!=='deck-studio' || !Array.isArray(payload.slides)) return false;
+  const slides = payload.slides
+    .filter(sl => sl && LAYOUT_BY[sl.layout])
+    .map(sl => ({ ...sl, logo:['main','ring','off'].includes(sl.logo) ? sl.logo : (sl.logo || 'main') }));
+  if(!slides.length) return false;
+  deck = slides;
+  if(SECTORS.some(sec => sec.id === payload.sector)) sectorId = payload.sector;
+  cur = Math.max(0, Math.min(Number(payload.active || 0), deck.length - 1));
+  return true;
+}
+function b64urlEncode(obj){ return btoa(unescape(encodeURIComponent(JSON.stringify(obj)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+function b64urlDecode(s){ s=s.replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4) s+='='; return JSON.parse(decodeURIComponent(escape(atob(s)))); }
+function bytesToB64url(bytes){ let bin=''; for(const b of bytes) bin+=String.fromCharCode(b); return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+function b64urlToBytes(s){ s=s.replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4) s+='='; const bin=atob(s), out=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i); return out; }
+async function encodeShareFragment(obj){
+  const json=JSON.stringify(obj);
+  if(typeof CompressionStream==='function'){
+    try{
+      const cs=new CompressionStream('deflate');
+      const w=cs.writable.getWriter();
+      w.write(new TextEncoder().encode(json)); w.close();
+      const buf=await new Response(cs.readable).arrayBuffer();
+      return 'z='+bytesToB64url(new Uint8Array(buf));
+    }catch(e){}
+  }
+  return 'd='+b64urlEncode(obj);
+}
+async function decodeShareFragment(frag){
+  if(frag.startsWith('z=')){
+    const ds=new DecompressionStream('deflate');
+    const w=ds.writable.getWriter();
+    w.write(b64urlToBytes(frag.slice(2))); w.close();
+    const buf=await new Response(ds.readable).arrayBuffer();
+    return JSON.parse(new TextDecoder().decode(buf));
+  }
+  if(frag.startsWith('d=')) return b64urlDecode(frag.slice(2));
+  throw new Error('unrecognised link');
+}
+
 function buildSVG(slide){
   const L=LAYOUT_BY[slide.layout]; const uid=++UID;
   const idx=deck.indexOf(slide), pageOk = slide.layout!=='cover';
@@ -428,11 +473,24 @@ function printPDF(){
 }
 document.getElementById('btnPNG').onclick=()=>exportSlidePNG(cur);
 document.getElementById('btnPDF').onclick=printPDF;
+document.getElementById('btnLink').onclick=async function(){
+  const url=location.origin+location.pathname+'#'+await encodeShareFragment(currentPayload());
+  try{ await navigator.clipboard.writeText(url); }
+  catch(e){ const t=document.createElement('textarea'); t.value=url; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); }
+  const old=this.textContent; this.textContent='Link copied'; setTimeout(()=>this.textContent=old,1400);
+};
 document.addEventListener('keydown',e=>{ if(e.target.matches('input,textarea'))return;
   if(e.key==='ArrowDown'||e.key==='ArrowRight'){ cur=Math.min(deck.length-1,cur+1); renderAll(); }
   if(e.key==='ArrowUp'||e.key==='ArrowLeft'){ cur=Math.max(0,cur-1); renderAll(); } });
 
-renderAll();
+(async function init(){
+  const hash=location.hash || '';
+  if(hash.startsWith('#z=') || hash.startsWith('#d=')){
+    try{ loadState(await decodeShareFragment(hash.slice(1))); }
+    catch(e){ console.warn('Deck Studio link could not be read:', e.message); }
+  }
+  renderAll();
+})();
 </script>
 </body>
 </html>
