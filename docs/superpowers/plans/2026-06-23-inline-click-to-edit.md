@@ -185,17 +185,21 @@ Reload `http://localhost:4190` and run:
 (()=>{ const s={layout:'stat',body:'82%, old label\n3x, faster'};
   applyEdit(s,'body#0#value','90%'); applyEdit(s,'body#0#label','growth');
   const a = s.body==='90%, growth\n3x, faster';
-  const b = currentFieldValue(s,'body#1').value==='3x';                      // line, value-part default
+  const b = currentFieldValue(s,'body#1#value').value==='3x' && currentFieldValue(s,'body#1#label').value==='faster'; // stats use 3-part
   const s2={layout:'bullets',title:'T',body:'one\ntwo\nthree'};
   applyEdit(s2,'body#1','TWO'); const c = s2.body==='one\nTWO\nthree';
   const s3={layout:'cover',title:'Old'}; applyEdit(s3,'title','New'); const d = s3.title==='New';
   const e = currentFieldValue(s3,'title').multiline===false && currentFieldValue({layout:'columns',colA:'x'},'colA').multiline===true;
   const f = fieldLabel({layout:'stat'},'body#0#value')==='Stats: "Value, Label" per line value';
-  return [a,b,c,d,e,f].every(Boolean);
+  const s4={layout:'bullets',body:'reach, trust and results\ntwo'}; // 2-part bullet line keeps its comma (whole line, no truncation)
+  const g = currentFieldValue(s4,'body#0').value==='reach, trust and results';
+  return [a,b,c,d,e,f,g].every(Boolean);
 })()
 ```
 
 Expected: `true`
+
+> Note (2026-06-23): the 2-part key branch (`body#i`, used by **bullets** and **closing contact lines**) must return the **whole line** via `line.trim()`, never the pre-comma slice — bullets routinely contain commas and would otherwise be truncated on edit. Comma splitting belongs only to the 3-part (`#value`/`#label`) stats path. The `g` assertion above guards this.
 
 - [ ] **Step 3: Commit**
 
