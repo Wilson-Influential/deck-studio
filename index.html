@@ -19,7 +19,11 @@
   .topbar{display:flex;align-items:center;gap:16px;padding:14px 22px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
   .topbar .logo{height:30px;width:auto;display:block}
   .topbar h1{font-size:21px;font-weight:900;letter-spacing:-.6px;margin:0}
-  .topbar .tag{font-size:12.5px;color:var(--charcoal);font-weight:700;border-left:1px solid var(--line);padding-left:16px}
+  .topbar .sep{width:1px;height:22px;background:var(--line)}
+  .topbar .deckName{font-size:14.5px;color:#201747;font-weight:800;letter-spacing:-.2px;border:0;background:transparent;padding:5px 10px;border-radius:7px;min-width:150px;max-width:340px;outline:none;transition:background .12s}
+  .topbar .deckName::placeholder{color:var(--charcoal);font-weight:700;opacity:.55}
+  .topbar .deckName:hover{background:#f3f2f7}
+  .topbar .deckName:focus{background:#eceaf4}
   .topbar .spacer{flex:1}
   .btn{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line);background:#fff;color:var(--navy);
     border-radius:999px;padding:9px 15px;font:inherit;font-size:13px;font-weight:900;cursor:pointer;transition:.14s;white-space:nowrap}
@@ -115,7 +119,8 @@
 
 <div class="topbar">
   <h1>Deck Studio</h1>
-  <span class="tag">On-brand slide decks, built in minutes</span>
+  <span class="sep"></span>
+  <input id="deckName" class="deckName" type="text" placeholder="Untitled deck" maxlength="80" spellcheck="false" aria-label="Deck name" title="Name this deck — used in downloads and share links">
   <span class="spacer"></span>
   <div class="exportWrap" id="exportWrap">
     <button class="btn primary" id="btnExport" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 11l5 5 5-5M5 21h14"/></svg>Export</button>
@@ -359,6 +364,7 @@ const LAYOUT_BY = Object.fromEntries(LAYOUTS.map(l=>[l.id,l]));
 
 /* ===== state: a starter deck ===== */
 let UID=0;
+let deckName='';
 let deck = [
   {layout:'cover', kicker:'STRATEGY PROPOSAL · 2026', title:'A sharper story for the year ahead', subtitle:'How we grow reach, trust and results across every channel.'},
   {layout:'section', kicker:'01', title:'Where we are today', subtitle:'The honest starting point.'},
@@ -373,10 +379,16 @@ const S = ()=>SECTORS.find(x=>x.id===sectorId);
 
 /* ===== share links ===== */
 function currentPayload(){
-  return { v:2, tool:'deck-studio', sector:sectorId, active:cur, slides:deck };
+  return { v:2, tool:'deck-studio', name:deckName, sector:sectorId, active:cur, slides:deck };
 }
+// deck name -> filename-safe slug; readable title; browser tab + share-link helpers
+function deckSlug(){ return (deckName.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,60))||'influential-deck'; }
+function deckTitleText(){ return deckName.trim()||'Untitled deck'; }
+function updateDocTitle(){ document.title=(deckName.trim()?deckName.trim()+' · ':'')+'Deck Studio · Influential'; }
+function syncDeckName(){ const el=document.getElementById('deckName'); if(el) el.value=deckName; updateDocTitle(); }
 function loadState(payload){
   if(!payload || payload.tool!=='deck-studio' || !Array.isArray(payload.slides)) return false;
+  if(typeof payload.name==='string') deckName=payload.name.slice(0,80);
   const slides = payload.slides
     .filter(sl => sl && LAYOUT_BY[sl.layout])
     .map(sl => ({ ...sl, logo:['main','ring','off'].includes(sl.logo) ? sl.logo : (sl.logo || 'main') }));
@@ -545,7 +557,7 @@ async function svgToPNG(svgString,filename,cb){
     setTimeout(()=>{URL.revokeObjectURL(a.href); cb&&cb();},400);
   }catch(e){ alert('Export hit a snag, try again.'); cb&&cb(); }
 }
-function exportSlidePNG(i){ svgToPNG(buildSVG(deck[i]), `influential-deck-slide-${String(i+1).padStart(2,'0')}.png`); }
+function exportSlidePNG(i){ svgToPNG(buildSVG(deck[i]), `${deckSlug()}-slide-${String(i+1).padStart(2,'0')}.png`); }
 async function exportPPTX(){
   const btn=document.getElementById('btnExport');
   const PptxCtor=window.PptxGenJS || window.pptxgen;
@@ -561,7 +573,7 @@ async function exportPPTX(){
     pptx.layout='LAYOUT_WIDE';
     pptx.author='Influential';
     pptx.subject='Deck Studio export';
-    pptx.title=(deck[0]&&deck[0].title)||'Influential deck';
+    pptx.title=deckName.trim()||(deck[0]&&deck[0].title)||'Influential deck';
     pptx.company='Influential';
     for(const sl of deck){
       const slide=pptx.addSlide();
@@ -569,7 +581,7 @@ async function exportPPTX(){
       const data=await svgToPngDataUri(buildSVG(sl));
       slide.addImage({data,x:0,y:0,w:13.333,h:7.5});
     }
-    await pptx.writeFile({ fileName:'influential-deck.pptx' });
+    await pptx.writeFile({ fileName:`${deckSlug()}.pptx` });
   }catch(e){
     console.error(e);
     alert('PowerPoint export hit a snag. PDF export still works.');
@@ -581,6 +593,10 @@ async function exportPPTX(){
 function printPDF(){
   const root=document.getElementById('printRoot');
   root.innerHTML=deck.map(sl=>`<div class="pslide">${buildSVG(sl)}</div>`).join('');
+  // browsers use document.title as the print-to-PDF default filename
+  const prev=document.title; document.title=deckSlug();
+  const restore=()=>{ document.title=prev; window.removeEventListener('afterprint',restore); };
+  window.addEventListener('afterprint',restore);
   setTimeout(()=>window.print(), 60);
 }
 function setExportMenu(open){
@@ -588,7 +604,7 @@ function setExportMenu(open){
   document.getElementById('btnExport').setAttribute('aria-expanded', open ? 'true' : 'false');
 }
 async function copyShareLink(){
-  const url=location.origin+location.pathname+'#'+await encodeShareFragment(currentPayload());
+  const url=location.origin+location.pathname+'?d='+deckSlug()+'#'+await encodeShareFragment(currentPayload());
   try{ await navigator.clipboard.writeText(url); }
   catch(e){ const t=document.createElement('textarea'); t.value=url; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); }
   const btn=document.getElementById('btnExport'), old=btn.innerHTML;
@@ -780,12 +796,16 @@ previewEl.addEventListener('mouseleave',()=>{ hideHL(); hideLogoTip(); });
 window.addEventListener('scroll',e=>{ if(e.target===editBox) return; closeEditor(true); },true);
 window.addEventListener('resize',()=>closeEditor(true));
 
+const deckNameEl=document.getElementById('deckName');
+deckNameEl.addEventListener('input',()=>{ deckName=deckNameEl.value; updateDocTitle(); });
+
 (async function init(){
   const hash=location.hash || '';
   if(hash.startsWith('#z=') || hash.startsWith('#d=')){
     try{ loadState(await decodeShareFragment(hash.slice(1))); }
     catch(e){ console.warn('Deck Studio link could not be read:', e.message); }
   }
+  syncDeckName();
   renderAll();
 })();
 </script>
