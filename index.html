@@ -660,6 +660,13 @@ previewEl.addEventListener('click',e=>{
   const t=e.target.closest('[data-edit]');
   if(t){ hideHL(); openEditor(t); }
 });
+// While an editor is open, clicking another editable target must not let the
+// textarea blur first (blur->closeEditor->renderPreview detaches the target
+// before the click lands). preventDefault on mousedown keeps focus on the
+// current editor, so the click lands live and openEditor/cycleLogo self-commit.
+previewEl.addEventListener('mousedown', e=>{
+  if(editBox && e.target.closest('[data-edit],[data-edit-logo]')) e.preventDefault();
+});
 previewEl.addEventListener('mousemove',e=>{
   if(editBox) return;
   const t=e.target.closest('[data-edit],[data-edit-logo]');
