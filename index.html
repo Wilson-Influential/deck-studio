@@ -419,8 +419,8 @@ function currentFieldValue(slide,key){
   const p=key.split('#');
   if(p.length===1) return {value:slide[p[0]]||'', multiline:MULTILINE_FIELDS.includes(p[0])};
   const lines=(slide[p[0]]||'').split('\n'); const line=lines[+p[1]]||'';
+  if(p.length===2) return {value:line.trim(), multiline:false};
   const ci=line.indexOf(','); const val=ci<0?line.trim():line.slice(0,ci).trim(); const lab=ci<0?'':line.slice(ci+1).trim();
-  if(p.length===2) return {value:val, multiline:false};
   return {value: p[2]==='label'?lab:val, multiline:false};
 }
 function applyEdit(slide,key,text){
