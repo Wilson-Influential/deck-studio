@@ -70,6 +70,14 @@
   .stage .cap b{color:var(--navy)}
   .stage .cap .dlSlide{cursor:pointer;color:var(--navy);text-decoration:underline;text-underline-offset:3px}
 
+  #preview [data-edit]{cursor:text}
+  .editHL{position:fixed;pointer-events:none;border-radius:6px;background:rgba(183,227,11,.18);box-shadow:inset 0 0 0 1.5px rgba(183,227,11,.7);opacity:0;transition:opacity .12s;z-index:60}
+  .editHL.on{opacity:1}
+  .editBox{position:fixed;z-index:70;margin:0;border:0;padding:6px 9px;border-radius:9px;background:#fff;box-shadow:0 14px 36px -10px rgba(32,23,71,.5),0 0 0 2px #b7e30b;resize:none;overflow:hidden;line-height:1.12;font-family:'Effra Trial','Effra',system-ui,'Segoe UI',sans-serif;outline:none}
+  .editLabel{position:fixed;z-index:71;transform:translateY(-100%) translateY(-6px);background:#201747;color:#fff;font:700 10.5px/1 system-ui,sans-serif;letter-spacing:.05em;text-transform:uppercase;padding:4px 7px;border-radius:5px;white-space:nowrap;pointer-events:none}
+  .editToast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#201747;color:#fff;font:700 12px/1 system-ui,sans-serif;padding:9px 14px;border-radius:8px;z-index:80;opacity:0;transition:opacity .2s;pointer-events:none}
+  .editToast.on{opacity:1}
+
   /* editor */
   .editor{border-left:1px solid var(--line);background:#fff;overflow-y:auto;padding:20px}
   .editor h2{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--charcoal);margin:0 0 12px;font-weight:900}
@@ -588,6 +596,65 @@ document.addEventListener('keydown',e=>{ if(e.target.matches('input,textarea'))r
   if(e.key==='Escape') setExportMenu(false);
   if(e.key==='ArrowDown'||e.key==='ArrowRight'){ cur=Math.min(deck.length-1,cur+1); renderAll(); }
   if(e.key==='ArrowUp'||e.key==='ArrowLeft'){ cur=Math.max(0,cur-1); renderAll(); } });
+
+/* ===== inline editor overlay ===== */
+let hlEl=null, editBox=null, editLabel=null, editKeyCur=null;
+function ensureHL(){ if(!hlEl){ hlEl=document.createElement('div'); hlEl.className='editHL'; document.body.appendChild(hlEl);} return hlEl; }
+function positionHL(el){ const h=ensureHL(); const b=el.getBoundingClientRect(); Object.assign(h.style,{left:b.left+'px',top:b.top+'px',width:b.width+'px',height:b.height+'px'}); h.classList.add('on'); }
+function hideHL(){ if(hlEl) hlEl.classList.remove('on'); }
+function autoGrow(t){ t.style.height='auto'; t.style.height=Math.min(t.scrollHeight, window.innerHeight*0.5)+'px'; }
+function previewScale(){ const r=document.getElementById('preview').getBoundingClientRect(); return r.width/W; }
+
+function openEditor(el){
+  closeEditor(true);
+  hideHL();
+  const slide=deck[cur]; editKeyCur=el.getAttribute('data-edit');
+  const {value, multiline}=currentFieldValue(slide, editKeyCur);
+  const b=el.getBoundingClientRect();
+  const fs=parseFloat(el.getAttribute('font-size')||'16')*previewScale();
+  const anchor=el.getAttribute('text-anchor')||'start';
+  editBox=document.createElement('textarea');
+  editBox.className='editBox'; editBox.value=value; editBox.rows=multiline?3:1;
+  Object.assign(editBox.style,{
+    left:b.left+'px', top:b.top+'px',
+    width:Math.max(70,b.width+16)+'px',
+    fontSize:fs.toFixed(1)+'px',
+    fontWeight:el.getAttribute('font-weight')||'600',
+    color:el.getAttribute('fill')||'#201747',
+    textAlign: anchor==='middle'?'center':anchor==='end'?'right':'left'
+  });
+  editLabel=document.createElement('div'); editLabel.className='editLabel';
+  editLabel.textContent='Editing: '+fieldLabel(slide, editKeyCur);
+  Object.assign(editLabel.style,{left:b.left+'px', top:b.top+'px'});
+  document.body.append(editLabel, editBox);
+  editBox.focus(); editBox.select(); autoGrow(editBox);
+  editBox.addEventListener('input',()=>autoGrow(editBox));
+  editBox.addEventListener('keydown',ev=>{
+    if(ev.key==='Escape'){ ev.preventDefault(); closeEditor(false); }
+    else if(ev.key==='Enter' && !multiline){ ev.preventDefault(); closeEditor(true); }
+  });
+  editBox.addEventListener('blur',()=>closeEditor(true));
+}
+function closeEditor(commit){
+  if(!editBox) return;
+  const box=editBox, key=editKeyCur; editBox=null; editKeyCur=null;
+  if(commit){ applyEdit(deck[cur], key, box.value); renderPreview(); renderRailThumb(cur); renderEditor(); }
+  box.remove(); if(editLabel){ editLabel.remove(); editLabel=null; }
+}
+
+const previewEl=document.getElementById('preview');
+previewEl.addEventListener('click',e=>{
+  const t=e.target.closest('[data-edit]');
+  if(t && !e.target.closest('[data-edit-logo]')){ hideHL(); openEditor(t); }
+});
+previewEl.addEventListener('mousemove',e=>{
+  if(editBox) return;
+  const t=e.target.closest('[data-edit],[data-edit-logo]');
+  if(t) positionHL(t); else hideHL();
+});
+previewEl.addEventListener('mouseleave',hideHL);
+window.addEventListener('scroll',e=>{ if(e.target===editBox) return; closeEditor(true); },true);
+window.addEventListener('resize',()=>closeEditor(true));
 
 (async function init(){
   const hash=location.hash || '';
