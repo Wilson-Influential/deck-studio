@@ -77,7 +77,7 @@
   .editBox{position:fixed;box-sizing:border-box;z-index:70;margin:0;border:0;padding:0;background:transparent;resize:none;overflow:hidden;line-height:1.15;font-family:'Effra Trial','Effra',system-ui,'Segoe UI',sans-serif;outline:none;-webkit-font-smoothing:antialiased;animation:editIn .1s ease}
   @keyframes editIn{from{opacity:0}to{opacity:1}}
   .editLabel{position:fixed;z-index:71;transform:translateY(-100%) translateY(-7px);background:#201747;color:#fff;font:700 10.5px/1 system-ui,sans-serif;letter-spacing:.05em;text-transform:uppercase;padding:4px 7px;border-radius:5px;white-space:nowrap;pointer-events:none}
-  .editTip{position:fixed;z-index:71;transform:translateY(-100%) translateY(-9px);background:#201747;color:#fff;font:700 10.5px/1.3 system-ui,sans-serif;letter-spacing:.03em;padding:5px 8px;border-radius:6px;white-space:nowrap;pointer-events:none;box-shadow:0 8px 20px -8px rgba(0,0,0,.55);opacity:0;transition:opacity .12s}
+  .editTip{position:fixed;z-index:71;transform:translateY(-100%) translateY(-9px);background:#201747;color:#fff;font:700 10.5px/1.3 system-ui,sans-serif;letter-spacing:.03em;padding:5px 9px;border-radius:6px;white-space:nowrap;text-align:center;pointer-events:none;box-shadow:0 8px 20px -8px rgba(0,0,0,.55);opacity:0;transition:opacity .14s ease}
   .editTip.on{opacity:1}
   .editToast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#201747;color:#fff;font:700 12px/1 system-ui,sans-serif;padding:9px 14px;border-radius:8px;z-index:80;opacity:0;transition:opacity .2s;pointer-events:none}
   .editToast.on{opacity:1}
@@ -166,7 +166,7 @@ const esc=s=>(s||'').replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]
 function wrapWords(text,maxChars){const words=(text||'').trim().split(/\s+/).filter(Boolean);if(!words.length)return[];const lines=[];let cur='';for(const w of words){if(!cur){cur=w;continue;}if((cur+' '+w).length<=maxChars)cur+=' '+w;else{lines.push(cur);cur=w;}}if(cur)lines.push(cur);return lines;}
 function fitHead(text,w,h,max,min,charW=0.53,lh=1.0){for(let fs=max;fs>=min;fs-=Math.max(1,max*0.02)){const mc=Math.max(4,Math.floor(w/(fs*charW)));const lines=wrapWords(text,mc);const longest=lines.reduce((m,l)=>Math.max(m,l.length),0);if(longest<=mc+1&&lines.length*fs*lh<=h)return{fs,lines,lh};}const fs=min,mc=Math.max(4,Math.floor(w/(fs*charW)));return{fs,lines:wrapWords(text,mc),lh};}
 function bodyLines(text,boxW,bFs,budgetH,lh=1.3){let bl=wrapWords(text,Math.max(6,Math.floor(boxW/(bFs*0.5))));const max=Math.max(1,Math.floor(budgetH/(bFs*lh)));if(bl.length>max){bl=bl.slice(0,max);bl[bl.length-1]=bl[bl.length-1].replace(/[.,;:]?$/,'…');}return bl;}
-function tblock(lines,x,y,fs,lh,fill,weight,anchor='start',letter=-0.02,editKey){if(!lines.length)return'';const de=editKey?` data-edit="${editKey}"`:'';let t=`<text${de} x="${x}" font-size="${fs.toFixed(1)}" fill="${fill}" font-weight="${weight}" text-anchor="${anchor}" letter-spacing="${(letter*fs).toFixed(2)}">`;lines.forEach((ln,i)=>{const ly=y+fs*0.8+i*fs*lh;t+=`<tspan x="${x}" y="${ly.toFixed(1)}">${esc(ln)}</tspan>`;});return t+'</text>';}
+function tblock(lines,x,y,fs,lh,fill,weight,anchor='start',letter=-0.02,editKey,wrapW){if(!lines.length)return'';const de=editKey?` data-edit="${editKey}"${wrapW?` data-wrap="${(+wrapW).toFixed(0)}"`:''}`:'';let t=`<text${de} x="${x}" font-size="${fs.toFixed(1)}" fill="${fill}" font-weight="${weight}" text-anchor="${anchor}" letter-spacing="${(letter*fs).toFixed(2)}">`;lines.forEach((ln,i)=>{const ly=y+fs*0.8+i*fs*lh;t+=`<tspan x="${x}" y="${ly.toFixed(1)}">${esc(ln)}</tspan>`;});return t+'</text>';}
 function kicker(text,x,y,fs,fill,anchor='start',editKey){if(!text)return'';const de=editKey?` data-edit="${editKey}"`:'';return `<text${de} x="${x}" y="${y.toFixed(1)}" font-size="${fs.toFixed(1)}" fill="${fill}" font-weight="800" text-anchor="${anchor}" letter-spacing="${(fs*0.16).toFixed(2)}">${esc(text.toUpperCase())}</text>`;}
 // Brand rule: the wordmark lettering aligns to the copy edge; the ring (the "i"-dot) hangs into
 // the margin. The wordmark occupies x-fraction 0.204 .. 0.892 of the logo's width.
@@ -204,7 +204,7 @@ const LAYOUTS = [
     let y=H*0.42;
     if(c.kicker){ s+=kicker(c.kicker, m, y, u*0.028, S.accent, 'start', 'kicker'); y+=u*0.05; }
     const head=fitHead(c.title, tw, H*0.34, u*0.11, u*0.05, 0.52, 0.98);
-    s+=tblock(head.lines, m, y, head.fs, head.lh, '#ffffff', 900, 'start', -0.025, 'title');
+    s+=tblock(head.lines, m, y, head.fs, head.lh, '#ffffff', 900, 'start', -0.025, 'title', tw);
     y+=head.lines.length*head.fs*head.lh+u*0.03;
     if(c.subtitle){ s+=tblock(bodyLines(c.subtitle, tw, u*0.032, u*0.12), m, y, u*0.032, 1.3, mix('#ffffff',BRAND.navy,0.2), 500, 'start', 0, 'subtitle'); }
     return s;
@@ -221,7 +221,7 @@ const LAYOUTS = [
     let y=H*0.46;
     if(c.kicker){ s+=kicker('Section '+c.kicker, m, y, u*0.03, ink, 'start', 'kicker'); y+=u*0.055; }
     const head=fitHead(c.title, W*0.8, H*0.3, u*0.11, u*0.05, 0.52, 1.0);
-    s+=tblock(head.lines, m, y, head.fs, head.lh, ink, 900, 'start', -0.02, 'title');
+    s+=tblock(head.lines, m, y, head.fs, head.lh, ink, 900, 'start', -0.02, 'title', W*0.8);
     y+=head.lines.length*head.fs*head.lh+u*0.03;
     if(c.subtitle){ s+=tblock(bodyLines(c.subtitle, W*0.7, u*0.03, u*0.1), m, y, u*0.03, 1.3, ink===BRAND.navy?mix(BRAND.navy,'#ffffff',0.2):mix('#ffffff',acc,0.1), 500,'start',0, 'subtitle'); }
     return s;
@@ -237,7 +237,7 @@ const LAYOUTS = [
     s+=`<rect x="${W/2-u*0.05}" y="${H*0.24}" width="${u*0.1}" height="${Math.max(4,u*0.008)}" rx="2" fill="${S.accent}"/>`;
     const head=fitHead(c.title, W*0.82, H*0.4, u*0.085, u*0.045, 0.52, 1.08);
     let y=H*0.5-head.lines.length*head.fs*head.lh/2;
-    s+=tblock(head.lines, W/2, y, head.fs, head.lh, '#ffffff', 800, 'middle', -0.015, 'title');
+    s+=tblock(head.lines, W/2, y, head.fs, head.lh, '#ffffff', 800, 'middle', -0.015, 'title', W*0.82);
     y+=head.lines.length*head.fs*head.lh+u*0.04;
     if(c.subtitle){ s+=kicker(c.subtitle, W/2, y, u*0.026, S.accent, 'middle', 'subtitle'); }
     return s;
@@ -254,7 +254,7 @@ const LAYOUTS = [
     const kFs=u*0.024;
     if(c.kicker){ s+=kicker(c.kicker, m, y+kFs*0.8, kFs, acc, 'start', 'kicker'); y+=kFs*1.9; }
     const head=fitHead(c.title, W*0.72, H*0.18, u*0.066, u*0.036, 0.52, 1.0);
-    s+=tblock(head.lines, m, y, head.fs, head.lh, BRAND.navy, 900, 'start', -0.02, 'title');
+    s+=tblock(head.lines, m, y, head.fs, head.lh, BRAND.navy, 900, 'start', -0.02, 'title', W*0.72);
     y+=head.lines.length*head.fs*head.lh+u*0.018;
     s+=`<rect x="${m}" y="${y.toFixed(0)}" width="${u*0.12}" height="${Math.max(4,u*0.007)}" rx="2" fill="${acc}"/>`;
     y+=u*0.05;
@@ -280,7 +280,7 @@ const LAYOUTS = [
     s+=ring(W*0.04, H*0.05, u*0.2, S.accent, 0.45);
     s+=brandMark(c.logo, W-m-u*0.16, m, u*0.16, 'wht', acc, 'end');
     let top=m+u*0.02;
-    if(c.title){ const h=fitHead(c.title, W*0.7, H*0.14, u*0.05, u*0.03, 0.52,1.0); s+=tblock(h.lines, m, top, h.fs, h.lh, '#ffffff', 900,'start',-0.02, 'title'); top+=h.lines.length*h.fs*h.lh+u*0.04; }
+    if(c.title){ const h=fitHead(c.title, W*0.7, H*0.14, u*0.05, u*0.03, 0.52,1.0); s+=tblock(h.lines, m, top, h.fs, h.lh, '#ffffff', 900,'start',-0.02, 'title', W*0.7); top+=h.lines.length*h.fs*h.lh+u*0.04; }
     const stats=(c.body||'').split(/\n/).map(l=>l.trim()).filter(Boolean).slice(0,3).map(l=>{const i=l.indexOf(',');return i<0?[l,'']:[l.slice(0,i).trim(),l.slice(i+1).trim()];});
     const n=stats.length||1, colW=(W-2*m)/n, midY=top+(H-u*0.08-top)/2;
     stats.forEach((st,i)=>{
@@ -302,7 +302,7 @@ const LAYOUTS = [
     s+=brandMark(c.logo, W-m-u*0.16, m, u*0.16, 'nvy', lum(acc)>0.6?BRAND.navy:acc, 'end');
     let y=m+u*0.02;
     const head=fitHead(c.title, W*0.7, H*0.16, u*0.062, u*0.034, 0.52,1.0);
-    s+=tblock(head.lines, m, y, head.fs, head.lh, BRAND.navy, 900,'start',-0.02, 'title');
+    s+=tblock(head.lines, m, y, head.fs, head.lh, BRAND.navy, 900,'start',-0.02, 'title', W*0.7);
     y+=head.lines.length*head.fs*head.lh+u*0.016;
     s+=`<rect x="${m}" y="${y.toFixed(0)}" width="${u*0.12}" height="${Math.max(4,u*0.007)}" rx="2" fill="${acc}"/>`;
     y+=u*0.05;
@@ -330,7 +330,7 @@ const LAYOUTS = [
     s+=`<text x="${(m-u*0.005).toFixed(0)}" y="${(H*0.34+qSize*0.5).toFixed(0)}" font-size="${qSize}" fill="${acc}" font-weight="900">“</text>`;
     let y=H*0.34;
     const head=fitHead(c.title, W*0.8, H*0.34, u*0.068, u*0.038, 0.52, 1.1);
-    s+=tblock(head.lines, m, y, head.fs, head.lh, '#ffffff', 800,'start',-0.012, 'title');
+    s+=tblock(head.lines, m, y, head.fs, head.lh, '#ffffff', 800,'start',-0.012, 'title', W*0.8);
     y+=head.lines.length*head.fs*head.lh+u*0.04;
     if(c.subtitle){ s+=`<rect x="${m}" y="${(y-u*0.01).toFixed(0)}" width="${u*0.05}" height="${Math.max(3,u*0.006)}" fill="${acc}"/>`; s+=kicker(c.subtitle, m+u*0.07, y, u*0.024, mix('#ffffff',BRAND.navy,0.2), 'start', 'subtitle'); }
     return s;
@@ -347,7 +347,7 @@ const LAYOUTS = [
     let y=H*0.44;
     if(c.kicker){ s+=kicker(c.kicker, m, y, u*0.028, ink, 'start', 'kicker'); y+=u*0.05; }
     const head=fitHead(c.title, W*0.7, H*0.22, u*0.12, u*0.06, 0.52, 1.0);
-    s+=tblock(head.lines, m, y, head.fs, head.lh, ink, 900,'start',-0.025, 'title');
+    s+=tblock(head.lines, m, y, head.fs, head.lh, ink, 900,'start',-0.025, 'title', W*0.7);
     y+=head.lines.length*head.fs*head.lh+u*0.04;
     const lines=(c.body||'').split(/\n/).map(t=>t.trim()).filter(Boolean).slice(0,4);
     lines.forEach((l,i)=>{ s+=`<text data-edit="body#${i}" x="${m}" y="${(y+i*u*0.045).toFixed(0)}" font-size="${u*0.03}" fill="${ink===BRAND.navy?mix(BRAND.navy,'#ffffff',0.15):mix('#ffffff',acc,0.05)}" font-weight="600">${esc(l)}</text>`; });
@@ -485,8 +485,13 @@ function act(a,i){
   renderAll();
 }
 function renderPreview(){
-  document.getElementById('preview').innerHTML=buildSVG(deck[cur]);
-  const L=LAYOUT_BY[deck[cur].layout];
+  const sl=deck[cur], L=LAYOUT_BY[sl.layout];
+  // show faint example text in empty fields so they stay visible + clickable (cleared on type; never exported)
+  const ghost=Object.assign({}, sl), phKeys=[];
+  L.fields.forEach(([key,label,ph])=>{ if(ph && !(sl[key]||'').trim()){ ghost[key]=ph; phKeys.push(key); } });
+  const pv=document.getElementById('preview');
+  pv.innerHTML=buildSVG(ghost);
+  phKeys.forEach(key=>{ pv.querySelectorAll('[data-edit^="'+key+'"]').forEach(el=>{ el.style.fillOpacity='0.38'; el.setAttribute('data-ph','1'); }); });
   document.getElementById('cap').innerHTML=`<b>Slide ${cur+1}</b> of ${deck.length} · ${L.name} · 1280×720 (16:9) <span class="dlSlide" id="capDl">download this slide as PNG</span>`;
   document.getElementById('capDl').onclick=()=>exportSlidePNG(cur);
 }
@@ -629,8 +634,23 @@ function measureTextW(text, weight, fsPx, lsPx){
   const line=(text||'').split('\n').sort((a,b)=>b.length-a.length)[0]||'';
   return ctx.measureText(line).width + Math.max(0,line.length-1)*(lsPx||0);
 }
+function fieldPlaceholder(layout, key){
+  const f=((LAYOUT_BY[layout]&&LAYOUT_BY[layout].fields)||[]).find(x=>x[0]===key.split('#')[0]);
+  return f ? (f[2]||'') : '';
+}
 function previewScale(){ const r=document.getElementById('preview').getBoundingClientRect(); return r.width/W; }
 
+// Tab / Shift-Tab: commit and hop to the next/previous editable field on the slide
+function moveEdit(dir){
+  const key=editKeyCur;
+  closeEditor(true);
+  const els=[...document.querySelectorAll('#preview [data-edit]')];
+  if(!els.length) return;
+  let i=els.findIndex(e=>e.getAttribute('data-edit')===key);
+  if(i<0) i = dir>0 ? -1 : 0;
+  const next=els[(i+dir+els.length)%els.length];
+  if(next) openEditor(next);
+}
 function openEditor(el){
   closeEditor(true);
   hideHL(); hideLogoTip();
@@ -643,19 +663,31 @@ function openEditor(el){
   const b=el.getBoundingClientRect();
   const scale=previewScale();
   const fs=parseFloat(el.getAttribute('font-size')||'16')*scale;
+  const fsU=parseFloat(el.getAttribute('font-size')||'16');
   const ls=parseFloat(el.getAttribute('letter-spacing')||'0')*scale;
   const anchor=el.getAttribute('text-anchor')||'start';
   const fill=el.getAttribute('fill')||'#201747';
+  // a wrap width means this text wraps to fit the slide (titles): edit it as a
+  // wrapping box at the same width so it keeps its line breaks, instead of one long row
+  const wrapW=parseFloat(el.getAttribute('data-wrap')||'0')*scale;
+  const wrap=wrapW>0;
+  const isArea=multiline||wrap;
+  const enterCommits=!multiline;            // a wrapped title is logically one line: Enter commits
+  const ph=fieldPlaceholder(slide.layout, key);
   const padX=6, padY=3;
+  // match the rendered line spacing so wrapped lines sit where they did
+  const tspans=el.querySelectorAll('tspan'); let lineH=1.15;
+  if(tspans.length>=2 && fsU>0){ lineH=(parseFloat(tspans[1].getAttribute('y'))-parseFloat(tspans[0].getAttribute('y')))/fsU; }
   // hide the real SVG text so it reads as editing the text in place (no doubled glyphs)
   editTextEl=el; el.style.opacity='0';
-  editBox=document.createElement(multiline?'textarea':'input');
-  editBox.className='editBox'; editBox.value=value;
-  if(multiline) editBox.rows=Math.max(2,(value.split('\n').length));
+  editBox=document.createElement(isArea?'textarea':'input');
+  editBox.className='editBox'; editBox.value=value; if(ph) editBox.placeholder=ph;
+  if(isArea) editBox.rows=Math.max(1, wrap?tspans.length||1:value.split('\n').length);
   Object.assign(editBox.style,{
     fontSize:fs.toFixed(1)+'px',
     fontWeight:el.getAttribute('font-weight')||'600',
     letterSpacing:ls.toFixed(2)+'px',
+    lineHeight:isArea?lineH.toFixed(3):'1.15',
     padding:padY+'px '+padX+'px',
     color:fill, caretColor:fill,
     textAlign: anchor==='middle'?'center':anchor==='end'?'right':'left'
@@ -666,13 +698,14 @@ function openEditor(el){
   const weight=editBox.style.fontWeight;
   function layout(){
     let boxW;
-    if(multiline){ boxW=Math.min(window.innerWidth*0.9, Math.max(160, b.width+2*padX+8)); }
+    if(wrap){ boxW=Math.min(window.innerWidth*0.96, wrapW+2*padX); }
+    else if(multiline){ boxW=Math.min(window.innerWidth*0.9, Math.max(160, b.width+2*padX+8)); }
     else { boxW=Math.min(window.innerWidth*0.95, measureTextW(editBox.value, weight, fs, ls)+2*padX+3); }
     editBox.style.width=boxW+'px';
-    if(multiline) autoGrow(editBox);
+    if(isArea) autoGrow(editBox);
     const boxH=editBox.offsetHeight;
     let left = anchor==='middle' ? anchorX-boxW/2 : anchor==='end' ? anchorX+padX-boxW : anchorX-padX;
-    let top = multiline ? b.top-padY : b.top+b.height/2-boxH/2;
+    let top = isArea ? b.top-padY : b.top+b.height/2-boxH/2;
     left=Math.max(2, Math.min(left, window.innerWidth-boxW-2));
     top=Math.max(2, top);
     Object.assign(editBox.style,{left:left+'px', top:top+'px'});
@@ -683,7 +716,8 @@ function openEditor(el){
   editBox.addEventListener('input',layout);
   editBox.addEventListener('keydown',ev=>{
     if(ev.key==='Escape'){ ev.preventDefault(); closeEditor(false); }
-    else if(ev.key==='Enter' && !multiline){ ev.preventDefault(); closeEditor(true); }
+    else if(ev.key==='Tab'){ ev.preventDefault(); moveEdit(ev.shiftKey?-1:1); }
+    else if(ev.key==='Enter' && enterCommits && !ev.shiftKey){ ev.preventDefault(); closeEditor(true); }
   });
   editBox.addEventListener('blur',()=>closeEditor(true));
 }
@@ -695,10 +729,12 @@ function closeEditor(commit){
   box.remove();
 }
 
-let logoTipEl=null;
+let logoTipEl=null, logoTipTimer=null, logoTipFor=null;
 function ensureLogoTip(){ if(!logoTipEl){ logoTipEl=document.createElement('div'); logoTipEl.className='editTip'; document.body.appendChild(logoTipEl);} return logoTipEl; }
-function showLogoTip(lg){ const next=(deck[cur].logo==='ring')?'main logo':'ring mark'; const t=ensureLogoTip(); t.textContent='Click to switch to '+next; t.classList.add('on'); const b=lg.getBoundingClientRect(); const tw=t.offsetWidth; const left=Math.max(8, Math.min(b.left, window.innerWidth-tw-8)); Object.assign(t.style,{left:left+'px',top:b.top+'px'}); }
-function hideLogoTip(){ if(logoTipEl) logoTipEl.classList.remove('on'); }
+function showLogoTip(lg){ const next=(deck[cur].logo==='ring')?'main logo':'ring mark'; const t=ensureLogoTip(); t.textContent='Click to switch to '+next; t.classList.add('on'); const b=lg.getBoundingClientRect(); const tw=t.offsetWidth; const left=Math.max(8, Math.min(b.left+b.width/2-tw/2, window.innerWidth-tw-8)); Object.assign(t.style,{left:left+'px',top:b.top+'px'}); }
+// only surface the tooltip after a short hover, so it isn't twitchy
+function queueLogoTip(lg){ if(logoTipFor===lg) return; logoTipFor=lg; clearTimeout(logoTipTimer); if(logoTipEl) logoTipEl.classList.remove('on'); logoTipTimer=setTimeout(()=>{ if(logoTipFor===lg) showLogoTip(lg); }, 480); }
+function hideLogoTip(){ logoTipFor=null; clearTimeout(logoTipTimer); if(logoTipEl) logoTipEl.classList.remove('on'); }
 let toastTimer=null;
 function toast(msg){
   let t=document.querySelector('.editToast');
@@ -727,7 +763,7 @@ previewEl.addEventListener('mousedown', e=>{
 previewEl.addEventListener('mousemove',e=>{
   if(editBox) return;
   const lg=e.target.closest('[data-edit-logo]');
-  if(lg){ positionHL(lg); showLogoTip(lg); return; }
+  if(lg){ positionHL(lg); queueLogoTip(lg); return; }
   hideLogoTip();
   const t=e.target.closest('[data-edit]');
   if(t) positionHL(t); else hideHL();
