@@ -1,6 +1,6 @@
 # Deck Studio
 
-> Internal tool. Build an on-brand 16:9 slide deck, export the whole thing to PDF (or any slide as PNG).
+> Internal tool. Build an on-brand 16:9 slide deck, export the whole thing to PDF or PPTX (or any slide as PNG).
 > Built 2026-06-17 (same evening as Post Studio v2). Self-contained single HTML file.
 > Sibling product to [Post Studio](../Post%20Studio/) — shares the same SVG brand engine.
 
@@ -17,9 +17,11 @@ SVG rendering, type fitting, sphere/motif, PNG export) so they feel like a famil
 - Centre: large live 16:9 preview of the selected slide. Arrow keys move between slides.
 - Right: layout picker (8 layouts), content fields that adapt per layout, and a deck-wide colour
   (sector accent) picker.
-- Export: **Export deck (PDF)** uses the browser's own print-to-PDF with a custom 16:9 @page, one
-  slide per page (offline, no library, matches the HTML→PDF workflow). **This slide** / per-slide
-  link exports a single slide as a full-res 1280×720 PNG.
+- Export menu: **Deck as PDF** uses the browser's own print-to-PDF with a custom 16:9 @page, one
+  slide per page (offline, no library, matches the HTML→PDF workflow). **Deck as PPTX** uses the
+  browser `pptxgenjs` bundle and places each rendered slide as a full-slide PNG in PowerPoint, so
+  the exported file opens cleanly and preserves the Studio design. **This slide as PNG** exports a
+  single slide as a full-res 1280×720 PNG. **Copy share link** copies the current deck state.
 - Loads with a 6-slide starter deck so it's alive on open.
 
 ## Layouts (8)
@@ -46,8 +48,8 @@ logos embedded. Effra renders on the Mac and in export; system-font fallback els
 
 ## Status
 
-Built and locally verified (all 8 layouts, slide ops, PNG export, PDF build path). NOT deployed
-(deploy routes permission-gated). Delivered to Shea as the self-contained file. Open if it goes
-further: a true PPTX export for clients (needs a library, so not offline — the [HTML internal /
-PowerPoint external] split applies), per-slide colour override, and an image-placeholder layout.
+Built and locally verified (all 8 layouts, slide ops, PNG export, PDF build path, PPTX export path).
+NOT deployed (deploy routes permission-gated). Delivered to Shea as the self-contained file. Open if
+it goes further: editable native PowerPoint objects instead of image-based PPTX export, per-slide
+colour override, and an image-placeholder layout.
 Launch config: `deck-studio` (port 4190).
