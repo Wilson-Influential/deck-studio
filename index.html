@@ -642,10 +642,23 @@ function closeEditor(commit){
   box.remove(); if(editLabel){ editLabel.remove(); editLabel=null; }
 }
 
+let toastTimer=null;
+function toast(msg){
+  let t=document.querySelector('.editToast');
+  if(!t){ t=document.createElement('div'); t.className='editToast'; document.body.appendChild(t); }
+  t.textContent=msg; t.classList.add('on');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('on'),1400);
+}
+function cycleLogo(){
+  const sl=deck[cur]; sl.logo=(sl.logo==='ring')?'main':'ring';
+  renderPreview(); renderRailThumb(cur); renderEditor();
+  toast('Logo: '+(sl.logo==='ring'?'Ring mark':'Main logo'));
+}
 const previewEl=document.getElementById('preview');
 previewEl.addEventListener('click',e=>{
+  if(e.target.closest('[data-edit-logo]')){ closeEditor(true); hideHL(); cycleLogo(); return; }
   const t=e.target.closest('[data-edit]');
-  if(t && !e.target.closest('[data-edit-logo]')){ hideHL(); openEditor(t); }
+  if(t){ hideHL(); openEditor(t); }
 });
 previewEl.addEventListener('mousemove',e=>{
   if(editBox) return;
