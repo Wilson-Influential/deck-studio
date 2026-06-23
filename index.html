@@ -71,9 +71,11 @@
   .stage .cap .dlSlide{cursor:pointer;color:var(--navy);text-decoration:underline;text-underline-offset:3px}
 
   #preview [data-edit]{cursor:text}
-  .editHL{position:fixed;pointer-events:none;border-radius:8px;opacity:0;transition:opacity .12s;z-index:60}
+  .editHL{position:fixed;pointer-events:none;border-radius:7px;opacity:0;transition:opacity .13s ease;z-index:60}
   .editHL.on{opacity:1}
-  .editBox{position:fixed;box-sizing:border-box;z-index:70;margin:0;border:0;border-radius:10px;resize:none;overflow:hidden;line-height:1.15;font-family:'Effra Trial','Effra',system-ui,'Segoe UI',sans-serif;outline:none;-webkit-font-smoothing:antialiased}
+  #preview [data-edit]{cursor:text}
+  .editBox{position:fixed;box-sizing:border-box;z-index:70;margin:0;border:0;padding:0;background:transparent;resize:none;overflow:hidden;line-height:1.15;font-family:'Effra Trial','Effra',system-ui,'Segoe UI',sans-serif;outline:none;-webkit-font-smoothing:antialiased;animation:editIn .1s ease}
+  @keyframes editIn{from{opacity:0}to{opacity:1}}
   .editLabel{position:fixed;z-index:71;transform:translateY(-100%) translateY(-7px);background:#201747;color:#fff;font:700 10.5px/1 system-ui,sans-serif;letter-spacing:.05em;text-transform:uppercase;padding:4px 7px;border-radius:5px;white-space:nowrap;pointer-events:none}
   .editTip{position:fixed;z-index:71;transform:translateY(-100%) translateY(-9px);background:#201747;color:#fff;font:700 10.5px/1.3 system-ui,sans-serif;letter-spacing:.03em;padding:5px 8px;border-radius:6px;white-space:nowrap;pointer-events:none;box-shadow:0 8px 20px -8px rgba(0,0,0,.55);opacity:0;transition:opacity .12s}
   .editTip.on{opacity:1}
@@ -608,33 +610,45 @@ document.addEventListener('keydown',e=>{ if(e.target.matches('input,textarea'))r
   if(e.key==='ArrowUp'||e.key==='ArrowLeft'){ cur=Math.max(0,cur-1); renderAll(); } });
 
 /* ===== inline editor overlay ===== */
-let hlEl=null, editBox=null, editLabel=null, editKeyCur=null;
+let hlEl=null, editBox=null, editTextEl=null, editKeyCur=null;
 function slideBg(){ const r=document.querySelector('#preview svg rect'); return (r&&r.getAttribute('fill'))||BRAND.navy; }
 function bgIsDark(){ try{ return lum(slideBg())<0.42; }catch(e){ return true; } }
 function ensureHL(){ if(!hlEl){ hlEl=document.createElement('div'); hlEl.className='editHL'; document.body.appendChild(hlEl);} return hlEl; }
 function positionHL(el){ const h=ensureHL(); const b=el.getBoundingClientRect();
   const pad=el.closest('[data-edit-logo]')?9:5;
   const rgb=bgIsDark()?'255,255,255':'32,23,71';
+  const logo=!!el.closest('[data-edit-logo]');
   Object.assign(h.style,{left:(b.left-pad)+'px',top:(b.top-pad)+'px',width:(b.width+2*pad)+'px',height:(b.height+2*pad)+'px',
-    background:`rgba(${rgb},.12)`, boxShadow:`inset 0 0 0 1.5px rgba(${rgb},.5)`});
+    background:`rgba(${rgb},${logo?0.1:0.08})`, boxShadow:logo?`inset 0 0 0 1.5px rgba(${rgb},.4)`:`inset 0 0 0 1px rgba(${rgb},.22)`});
   h.classList.add('on'); }
 function hideHL(){ if(hlEl) hlEl.classList.remove('on'); }
 function autoGrow(t){ t.style.height='auto'; t.style.height=Math.min(t.scrollHeight, window.innerHeight*0.5)+'px'; }
+function measureTextW(text, weight, fsPx, lsPx){
+  const ctx=measureTextW._c||(measureTextW._c=document.createElement('canvas').getContext('2d'));
+  ctx.font=`${weight||400} ${fsPx}px 'Effra Trial','Effra',system-ui,'Segoe UI',sans-serif`;
+  const line=(text||'').split('\n').sort((a,b)=>b.length-a.length)[0]||'';
+  return ctx.measureText(line).width + Math.max(0,line.length-1)*(lsPx||0);
+}
 function previewScale(){ const r=document.getElementById('preview').getBoundingClientRect(); return r.width/W; }
 
 function openEditor(el){
   closeEditor(true);
   hideHL(); hideLogoTip();
-  const slide=deck[cur]; editKeyCur=el.getAttribute('data-edit');
-  const {value, multiline}=currentFieldValue(slide, editKeyCur);
+  const slide=deck[cur]; const key=el.getAttribute('data-edit');
+  // closeEditor() may have re-rendered the preview, detaching el; re-acquire the live node
+  el=document.querySelector('#preview [data-edit="'+key+'"]')||el;
+  if(!el.isConnected) return;
+  editKeyCur=key;
+  const {value, multiline}=currentFieldValue(slide, key);
   const b=el.getBoundingClientRect();
   const scale=previewScale();
   const fs=parseFloat(el.getAttribute('font-size')||'16')*scale;
   const ls=parseFloat(el.getAttribute('letter-spacing')||'0')*scale;
   const anchor=el.getAttribute('text-anchor')||'start';
   const fill=el.getAttribute('fill')||'#201747';
-  const dark=bgIsDark();
-  const padX=12, padY=7;
+  const padX=6, padY=3;
+  // hide the real SVG text so it reads as editing the text in place (no doubled glyphs)
+  editTextEl=el; el.style.opacity='0';
   editBox=document.createElement(multiline?'textarea':'input');
   editBox.className='editBox'; editBox.value=value;
   if(multiline) editBox.rows=Math.max(2,(value.split('\n').length));
@@ -643,31 +657,30 @@ function openEditor(el){
     fontWeight:el.getAttribute('font-weight')||'600',
     letterSpacing:ls.toFixed(2)+'px',
     padding:padY+'px '+padX+'px',
-    color:fill, background:slideBg(),
-    textAlign: anchor==='middle'?'center':anchor==='end'?'right':'left',
-    boxShadow:`0 16px 42px -12px rgba(0,0,0,${dark?0.6:0.32}), 0 0 0 2px ${dark?'rgba(255,255,255,.92)':'rgba(32,23,71,.9)'}`
+    color:fill, caretColor:fill,
+    textAlign: anchor==='middle'?'center':anchor==='end'?'right':'left'
   });
   document.body.append(editBox);
-  // size: even padding around the text; single-line uses <input> so titles never wrap
-  const boxW=Math.min(window.innerWidth*0.82, Math.max(multiline?160:48, b.width+2*padX+10));
-  editBox.style.width=boxW+'px';
-  if(multiline) autoGrow(editBox);
-  const boxH=editBox.offsetHeight;
-  // position so the field text stays where it was rendered (no jump on click)
-  let left = anchor==='middle' ? b.left+b.width/2-boxW/2
-           : anchor==='end'    ? b.right+padX-boxW
-           :                      b.left-padX;
-  let top = multiline ? b.top-padY : b.top+b.height/2-boxH/2;
-  left=Math.max(6, Math.min(left, window.innerWidth-boxW-6));
-  top=Math.max(6, top);
-  Object.assign(editBox.style,{left:left+'px', top:top+'px'});
-  editLabel=document.createElement('div'); editLabel.className='editLabel';
-  editLabel.textContent='Editing: '+fieldLabel(slide, editKeyCur);
-  document.body.append(editLabel);
-  const lblLeft=Math.max(6, Math.min(left, window.innerWidth-editLabel.offsetWidth-6));
-  Object.assign(editLabel.style,{left:lblLeft+'px', top:top+'px'});
-  editBox.focus(); editBox.select();
-  editBox.addEventListener('input',()=>{ if(multiline) autoGrow(editBox); });
+  // anchor point that must stay fixed as the text grows (so editing feels in-place)
+  const anchorX = anchor==='middle' ? b.left+b.width/2 : anchor==='end' ? b.right : b.left;
+  const weight=editBox.style.fontWeight;
+  function layout(){
+    let boxW;
+    if(multiline){ boxW=Math.min(window.innerWidth*0.9, Math.max(160, b.width+2*padX+8)); }
+    else { boxW=Math.min(window.innerWidth*0.95, measureTextW(editBox.value, weight, fs, ls)+2*padX+3); }
+    editBox.style.width=boxW+'px';
+    if(multiline) autoGrow(editBox);
+    const boxH=editBox.offsetHeight;
+    let left = anchor==='middle' ? anchorX-boxW/2 : anchor==='end' ? anchorX+padX-boxW : anchorX-padX;
+    let top = multiline ? b.top-padY : b.top+b.height/2-boxH/2;
+    left=Math.max(2, Math.min(left, window.innerWidth-boxW-2));
+    top=Math.max(2, top);
+    Object.assign(editBox.style,{left:left+'px', top:top+'px'});
+  }
+  layout();
+  editBox.focus();
+  const end=editBox.value.length; try{ editBox.setSelectionRange(end,end); }catch(e){}
+  editBox.addEventListener('input',layout);
   editBox.addEventListener('keydown',ev=>{
     if(ev.key==='Escape'){ ev.preventDefault(); closeEditor(false); }
     else if(ev.key==='Enter' && !multiline){ ev.preventDefault(); closeEditor(true); }
@@ -676,9 +689,10 @@ function openEditor(el){
 }
 function closeEditor(commit){
   if(!editBox) return;
-  const box=editBox, key=editKeyCur; editBox=null; editKeyCur=null;
+  const box=editBox, key=editKeyCur, txt=editTextEl; editBox=null; editKeyCur=null; editTextEl=null;
+  if(txt) txt.style.opacity='';           // restore the SVG text (a commit re-renders it anyway)
   if(commit){ applyEdit(deck[cur], key, box.value); renderPreview(); renderRailThumb(cur); renderEditor(); }
-  box.remove(); if(editLabel){ editLabel.remove(); editLabel=null; }
+  box.remove();
 }
 
 let logoTipEl=null;
