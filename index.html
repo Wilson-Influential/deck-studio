@@ -71,10 +71,12 @@
   .stage .cap .dlSlide{cursor:pointer;color:var(--navy);text-decoration:underline;text-underline-offset:3px}
 
   #preview [data-edit]{cursor:text}
-  .editHL{position:fixed;pointer-events:none;border-radius:6px;background:rgba(183,227,11,.18);box-shadow:inset 0 0 0 1.5px rgba(183,227,11,.7);opacity:0;transition:opacity .12s;z-index:60}
+  .editHL{position:fixed;pointer-events:none;border-radius:8px;opacity:0;transition:opacity .12s;z-index:60}
   .editHL.on{opacity:1}
-  .editBox{position:fixed;z-index:70;margin:0;border:0;padding:6px 9px;border-radius:9px;background:#fff;box-shadow:0 14px 36px -10px rgba(32,23,71,.5),0 0 0 2px #b7e30b;resize:none;overflow:hidden;line-height:1.12;font-family:'Effra Trial','Effra',system-ui,'Segoe UI',sans-serif;outline:none}
-  .editLabel{position:fixed;z-index:71;transform:translateY(-100%) translateY(-6px);background:#201747;color:#fff;font:700 10.5px/1 system-ui,sans-serif;letter-spacing:.05em;text-transform:uppercase;padding:4px 7px;border-radius:5px;white-space:nowrap;pointer-events:none}
+  .editBox{position:fixed;box-sizing:border-box;z-index:70;margin:0;border:0;border-radius:10px;resize:none;overflow:hidden;line-height:1.15;font-family:'Effra Trial','Effra',system-ui,'Segoe UI',sans-serif;outline:none;-webkit-font-smoothing:antialiased}
+  .editLabel{position:fixed;z-index:71;transform:translateY(-100%) translateY(-7px);background:#201747;color:#fff;font:700 10.5px/1 system-ui,sans-serif;letter-spacing:.05em;text-transform:uppercase;padding:4px 7px;border-radius:5px;white-space:nowrap;pointer-events:none}
+  .editTip{position:fixed;z-index:71;transform:translateY(-100%) translateY(-9px);background:#201747;color:#fff;font:700 10.5px/1.3 system-ui,sans-serif;letter-spacing:.03em;padding:5px 8px;border-radius:6px;white-space:nowrap;pointer-events:none;box-shadow:0 8px 20px -8px rgba(0,0,0,.55);opacity:0;transition:opacity .12s}
+  .editTip.on{opacity:1}
   .editToast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#201747;color:#fff;font:700 12px/1 system-ui,sans-serif;padding:9px 14px;border-radius:8px;z-index:80;opacity:0;transition:opacity .2s;pointer-events:none}
   .editToast.on{opacity:1}
 
@@ -178,8 +180,8 @@ function ring(cx,cy,R,color,op=1){const rc=R*0.795,sw=R*0.41;return `<circle cx=
 function brandMark(opt,x,y,w,variant,ringColor,anchor='start'){
   opt=opt||'main';
   if(opt==='off') return '';
-  if(opt==='ring'){ const R=w*0.27, cx=x+R, cy=y+w/LOGO_AR/2, rr=R*0.795;
-    const hot=`<rect x="${(cx-rr).toFixed(1)}" y="${(cy-rr).toFixed(1)}" width="${(2*rr).toFixed(1)}" height="${(2*rr).toFixed(1)}" fill="transparent"/>`;
+  if(opt==='ring'){ const R=w*0.32, cx=x+R, cy=y+w/LOGO_AR/2, rr=R*0.795, hp=rr*1.6;
+    const hot=`<rect x="${(cx-hp).toFixed(1)}" y="${(cy-hp).toFixed(1)}" width="${(2*hp).toFixed(1)}" height="${(2*hp).toFixed(1)}" fill="transparent"/>`;
     return `<g data-edit-logo="1" style="cursor:pointer">${hot}${ring(cx,cy,R,ringColor)}</g>`; }
   return `<g data-edit-logo="1" style="cursor:pointer">${logoTag(variant,x,y,w,anchor)}</g>`;
 }
@@ -607,36 +609,65 @@ document.addEventListener('keydown',e=>{ if(e.target.matches('input,textarea'))r
 
 /* ===== inline editor overlay ===== */
 let hlEl=null, editBox=null, editLabel=null, editKeyCur=null;
+function slideBg(){ const r=document.querySelector('#preview svg rect'); return (r&&r.getAttribute('fill'))||BRAND.navy; }
+function bgIsDark(){ try{ return lum(slideBg())<0.42; }catch(e){ return true; } }
 function ensureHL(){ if(!hlEl){ hlEl=document.createElement('div'); hlEl.className='editHL'; document.body.appendChild(hlEl);} return hlEl; }
-function positionHL(el){ const h=ensureHL(); const b=el.getBoundingClientRect(); Object.assign(h.style,{left:b.left+'px',top:b.top+'px',width:b.width+'px',height:b.height+'px'}); h.classList.add('on'); }
+function positionHL(el){ const h=ensureHL(); const b=el.getBoundingClientRect();
+  const pad=el.closest('[data-edit-logo]')?9:5;
+  const rgb=bgIsDark()?'255,255,255':'32,23,71';
+  Object.assign(h.style,{left:(b.left-pad)+'px',top:(b.top-pad)+'px',width:(b.width+2*pad)+'px',height:(b.height+2*pad)+'px',
+    background:`rgba(${rgb},.12)`, boxShadow:`inset 0 0 0 1.5px rgba(${rgb},.5)`});
+  h.classList.add('on'); }
 function hideHL(){ if(hlEl) hlEl.classList.remove('on'); }
 function autoGrow(t){ t.style.height='auto'; t.style.height=Math.min(t.scrollHeight, window.innerHeight*0.5)+'px'; }
 function previewScale(){ const r=document.getElementById('preview').getBoundingClientRect(); return r.width/W; }
 
 function openEditor(el){
   closeEditor(true);
-  hideHL();
+  hideHL(); hideLogoTip();
   const slide=deck[cur]; editKeyCur=el.getAttribute('data-edit');
   const {value, multiline}=currentFieldValue(slide, editKeyCur);
   const b=el.getBoundingClientRect();
-  const fs=parseFloat(el.getAttribute('font-size')||'16')*previewScale();
+  const scale=previewScale();
+  const fs=parseFloat(el.getAttribute('font-size')||'16')*scale;
+  const ls=parseFloat(el.getAttribute('letter-spacing')||'0')*scale;
   const anchor=el.getAttribute('text-anchor')||'start';
-  editBox=document.createElement('textarea');
-  editBox.className='editBox'; editBox.value=value; editBox.rows=multiline?3:1;
+  const fill=el.getAttribute('fill')||'#201747';
+  const dark=bgIsDark();
+  const padX=12, padY=7;
+  editBox=document.createElement(multiline?'textarea':'input');
+  editBox.className='editBox'; editBox.value=value;
+  if(multiline) editBox.rows=Math.max(2,(value.split('\n').length));
   Object.assign(editBox.style,{
-    left:b.left+'px', top:b.top+'px',
-    width:Math.max(70,b.width+16)+'px',
     fontSize:fs.toFixed(1)+'px',
     fontWeight:el.getAttribute('font-weight')||'600',
-    color:el.getAttribute('fill')||'#201747',
-    textAlign: anchor==='middle'?'center':anchor==='end'?'right':'left'
+    letterSpacing:ls.toFixed(2)+'px',
+    padding:padY+'px '+padX+'px',
+    color:fill, background:slideBg(),
+    textAlign: anchor==='middle'?'center':anchor==='end'?'right':'left',
+    boxShadow:`0 16px 42px -12px rgba(0,0,0,${dark?0.6:0.32}), 0 0 0 2px ${dark?'rgba(255,255,255,.92)':'rgba(32,23,71,.9)'}`
   });
+  document.body.append(editBox);
+  // size: even padding around the text; single-line uses <input> so titles never wrap
+  const boxW=Math.min(window.innerWidth*0.82, Math.max(multiline?160:48, b.width+2*padX+10));
+  editBox.style.width=boxW+'px';
+  if(multiline) autoGrow(editBox);
+  const boxH=editBox.offsetHeight;
+  // position so the field text stays where it was rendered (no jump on click)
+  let left = anchor==='middle' ? b.left+b.width/2-boxW/2
+           : anchor==='end'    ? b.right+padX-boxW
+           :                      b.left-padX;
+  let top = multiline ? b.top-padY : b.top+b.height/2-boxH/2;
+  left=Math.max(6, Math.min(left, window.innerWidth-boxW-6));
+  top=Math.max(6, top);
+  Object.assign(editBox.style,{left:left+'px', top:top+'px'});
   editLabel=document.createElement('div'); editLabel.className='editLabel';
   editLabel.textContent='Editing: '+fieldLabel(slide, editKeyCur);
-  Object.assign(editLabel.style,{left:b.left+'px', top:b.top+'px'});
-  document.body.append(editLabel, editBox);
-  editBox.focus(); editBox.select(); autoGrow(editBox);
-  editBox.addEventListener('input',()=>autoGrow(editBox));
+  document.body.append(editLabel);
+  const lblLeft=Math.max(6, Math.min(left, window.innerWidth-editLabel.offsetWidth-6));
+  Object.assign(editLabel.style,{left:lblLeft+'px', top:top+'px'});
+  editBox.focus(); editBox.select();
+  editBox.addEventListener('input',()=>{ if(multiline) autoGrow(editBox); });
   editBox.addEventListener('keydown',ev=>{
     if(ev.key==='Escape'){ ev.preventDefault(); closeEditor(false); }
     else if(ev.key==='Enter' && !multiline){ ev.preventDefault(); closeEditor(true); }
@@ -650,6 +681,10 @@ function closeEditor(commit){
   box.remove(); if(editLabel){ editLabel.remove(); editLabel=null; }
 }
 
+let logoTipEl=null;
+function ensureLogoTip(){ if(!logoTipEl){ logoTipEl=document.createElement('div'); logoTipEl.className='editTip'; document.body.appendChild(logoTipEl);} return logoTipEl; }
+function showLogoTip(lg){ const next=(deck[cur].logo==='ring')?'main logo':'ring mark'; const t=ensureLogoTip(); t.textContent='Click to switch to '+next; t.classList.add('on'); const b=lg.getBoundingClientRect(); const tw=t.offsetWidth; const left=Math.max(8, Math.min(b.left, window.innerWidth-tw-8)); Object.assign(t.style,{left:left+'px',top:b.top+'px'}); }
+function hideLogoTip(){ if(logoTipEl) logoTipEl.classList.remove('on'); }
 let toastTimer=null;
 function toast(msg){
   let t=document.querySelector('.editToast');
@@ -677,10 +712,13 @@ previewEl.addEventListener('mousedown', e=>{
 });
 previewEl.addEventListener('mousemove',e=>{
   if(editBox) return;
-  const t=e.target.closest('[data-edit],[data-edit-logo]');
+  const lg=e.target.closest('[data-edit-logo]');
+  if(lg){ positionHL(lg); showLogoTip(lg); return; }
+  hideLogoTip();
+  const t=e.target.closest('[data-edit]');
   if(t) positionHL(t); else hideHL();
 });
-previewEl.addEventListener('mouseleave',hideHL);
+previewEl.addEventListener('mouseleave',()=>{ hideHL(); hideLogoTip(); });
 window.addEventListener('scroll',e=>{ if(e.target===editBox) return; closeEditor(true); },true);
 window.addEventListener('resize',()=>closeEditor(true));
 
