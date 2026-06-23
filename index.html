@@ -696,9 +696,17 @@ function openEditor(el){
   // anchor point that must stay fixed as the text grows (so editing feels in-place)
   const anchorX = anchor==='middle' ? b.left+b.width/2 : anchor==='end' ? b.right : b.left;
   const weight=editBox.style.fontWeight;
+  const renderedLines=tspans.length||1;
+  const idealW=b.width+3;   // the balanced width the title already renders at (not the full max)
   function layout(){
     let boxW;
-    if(wrap){ boxW=Math.min(window.innerWidth*0.96, wrapW+2*padX); }
+    if(wrap){
+      // sit at the title's existing balanced width so clicking doesn't widen it;
+      // an already-wrapped title keeps that width (new text wraps within it), a one-liner
+      // grows with the text up to the slide's max before it wraps
+      let contentW = renderedLines>=2 ? idealW : Math.min(wrapW, Math.max(idealW, measureTextW(editBox.value, weight, fs, ls)));
+      boxW=Math.min(window.innerWidth*0.96, contentW+2*padX);
+    }
     else if(multiline){ boxW=Math.min(window.innerWidth*0.9, Math.max(160, b.width+2*padX+8)); }
     else { boxW=Math.min(window.innerWidth*0.95, measureTextW(editBox.value, weight, fs, ls)+2*padX+3); }
     editBox.style.width=boxW+'px';
@@ -749,7 +757,7 @@ function cycleLogo(){
 }
 const previewEl=document.getElementById('preview');
 previewEl.addEventListener('click',e=>{
-  if(e.target.closest('[data-edit-logo]')){ closeEditor(true); hideHL(); cycleLogo(); return; }
+  if(e.target.closest('[data-edit-logo]')){ closeEditor(true); hideHL(); hideLogoTip(); cycleLogo(); return; }
   const t=e.target.closest('[data-edit]');
   if(t){ hideHL(); openEditor(t); }
 });
