@@ -413,6 +413,27 @@ function buildSVG(slide){
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}"><style>text{font-family:'Effra Trial','Effra',system-ui,'Segoe UI',sans-serif;}</style>${inner}</svg>`;
 }
 
+/* ===== inline edit: field read/write by edit-key ===== */
+const MULTILINE_FIELDS=['body','colA','colB','subtitle'];
+function currentFieldValue(slide,key){
+  const p=key.split('#');
+  if(p.length===1) return {value:slide[p[0]]||'', multiline:MULTILINE_FIELDS.includes(p[0])};
+  const lines=(slide[p[0]]||'').split('\n'); const line=lines[+p[1]]||'';
+  const ci=line.indexOf(','); const val=ci<0?line.trim():line.slice(0,ci).trim(); const lab=ci<0?'':line.slice(ci+1).trim();
+  if(p.length===2) return {value:val, multiline:false};
+  return {value: p[2]==='label'?lab:val, multiline:false};
+}
+function applyEdit(slide,key,text){
+  const p=key.split('#');
+  if(p.length===1){ slide[p[0]]=text; return; }
+  const field=p[0], idx=+p[1]; const lines=(slide[field]||'').split('\n');
+  while(lines.length<=idx) lines.push('');
+  if(p.length===2){ lines[idx]=text; }
+  else { const cur=lines[idx]||''; const ci=cur.indexOf(','); let val=ci<0?cur.trim():cur.slice(0,ci).trim(); let lab=ci<0?'':cur.slice(ci+1).trim(); if(p[2]==='label') lab=text; else val=text; lines[idx]= lab?`${val}, ${lab}`:val; }
+  slide[field]=lines.join('\n');
+}
+function fieldLabel(slide,key){ const field=key.split('#')[0]; const f=LAYOUT_BY[slide.layout].fields.find(x=>x[0]===field); const base=f?f[1]:field; return key.endsWith('#value')?base+' value':key.endsWith('#label')?base+' label':base; }
+
 /* ===== render UI ===== */
 function renderRail(){
   const r=document.getElementById('rail'); r.innerHTML='';
