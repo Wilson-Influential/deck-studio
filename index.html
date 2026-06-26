@@ -104,6 +104,47 @@
   .sw:hover{transform:translateY(-2px)}
   .sw.on{border-color:var(--navy)}
 
+  /* image field (editor) */
+  .imgField{border:1.5px solid var(--line);border-radius:12px;padding:10px;background:var(--soft)}
+  .imgThumb{width:100%;aspect-ratio:16/9;border-radius:8px;background-color:#fff;background-size:contain;background-position:center;background-repeat:no-repeat;border:1px solid var(--line);margin-bottom:9px}
+  .imgEmpty{width:100%;aspect-ratio:16/9;border-radius:8px;border:1.5px dashed #cfc9e0;display:flex;align-items:center;justify-content:center;color:#a7a2b8;font-size:12px;font-weight:800;margin-bottom:9px}
+  .imgBtns{display:flex;gap:6px}
+  .imgBtn{flex:1;border:1.5px solid var(--line);background:#fff;color:var(--navy);border-radius:8px;padding:7px 6px;font:inherit;font-size:12px;font-weight:900;cursor:pointer;transition:.12s}
+  .imgBtn:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .imgBtn.ghost{flex:0 0 auto;color:var(--charcoal)}
+  .imgBtn.ghost:hover{background:var(--red);border-color:var(--red);color:#fff}
+
+  /* library panel (non-modal side panel) */
+  .libPanel{position:fixed;top:60px;right:0;width:400px;max-width:94vw;height:calc(100vh - 60px);background:#fff;border-left:1px solid var(--line);
+    box-shadow:-26px 0 64px -42px rgba(32,23,71,.85);transform:translateX(102%);transition:transform .22s cubic-bezier(.4,0,.2,1);z-index:50;display:flex;flex-direction:column}
+  .libPanel.on{transform:none}
+  .libHead{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line)}
+  .libHead h3{margin:0;font-size:15px;font-weight:900;letter-spacing:-.3px}
+  .libHead .sub{display:block;font-size:11px;font-weight:700;color:var(--charcoal);margin-top:2px}
+  .libX{width:30px;height:30px;border:0;border-radius:8px;background:var(--soft);color:var(--navy);font-size:16px;cursor:pointer;line-height:1}
+  .libX:hover{background:var(--red);color:#fff}
+  .libTabs{display:flex;gap:6px;padding:12px 16px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+  .libTab{border:1.5px solid var(--line);background:var(--soft);border-radius:999px;padding:6px 12px;font:inherit;font-size:12px;font-weight:900;color:var(--charcoal);cursor:pointer;transition:.12s}
+  .libTab:hover{border-color:#cfc9e0}
+  .libTab.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .libGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:16px;overflow-y:auto;align-content:start}
+  .libItem{border:1.5px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;background:#fff;transition:.12s}
+  .libItem:hover{border-color:var(--navy);transform:translateY(-2px);box-shadow:0 12px 24px -16px rgba(32,23,71,.7)}
+  .libThumb{aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;background:#f4f2f8;padding:14px}
+  .libThumb img{max-width:80%;max-height:80%;display:block}
+  .libItem .nm{font-size:11px;font-weight:800;padding:7px 9px;color:var(--charcoal);border-top:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .libEmpty{grid-column:1/-1;padding:34px 20px;text-align:center;color:var(--charcoal);font-size:13px;font-weight:700;line-height:1.5}
+  .libUpload{margin:0 16px 16px;border:1.5px dashed #cfc9e0;border-radius:10px;padding:12px;text-align:center;color:var(--charcoal);font-size:12px;font-weight:800;cursor:pointer}
+  .libUpload:hover{border-color:var(--navy);color:var(--navy)}
+
+  /* drag-to-reorder slides */
+  .slideItem{cursor:grab}
+  .slideItem:active{cursor:grabbing}
+  .slideItem .thumb{cursor:pointer}
+  .slideItem.dragging{opacity:.35}
+  .slideItem.dropBefore{box-shadow:0 -3px 0 0 var(--red),0 6px 16px -12px rgba(32,23,71,.7)}
+  .slideItem.dropAfter{box-shadow:0 3px 0 0 var(--red),0 6px 16px -12px rgba(32,23,71,.7)}
+
   .printRoot{display:none}
   @media print{
     @page{ size:338mm 190mm; margin:0; }
@@ -194,6 +235,15 @@ function brandMark(opt,x,y,w,variant,ringColor,anchor='start'){
 }
 
 function footer(page,total,dark){const ink=dark?mix('#ffffff',BRAND.navy,0.5):mix(BRAND.navy,'#ffffff',0.45);const fs=H*0.022,m=W*0.06;return `<text x="${W-m}" y="${(H-H*0.045).toFixed(0)}" font-size="${fs}" fill="${ink}" font-weight="800" text-anchor="end" letter-spacing="1">${String(page).padStart(2,'0')} / ${String(total).padStart(2,'0')}</text>`;}
+
+/* ===== image helpers (embedded base64 images, same export-safe path as the logo) ===== */
+// branded empty state shown until an image is added — keeps image slides alive + clickable
+function imgPlaceholder(x,y,w,h,accent,prompt){
+  const cx=x+w/2, cy=y+h/2;
+  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${mix(BRAND.navy,'#000000',0.12)}"/>`+
+    ring(cx, cy-h*0.08, Math.min(w,h)*0.15, accent, 0.9)+
+    `<text x="${cx}" y="${(cy+h*0.2).toFixed(0)}" font-size="${u*0.028}" fill="#ffffff" fill-opacity="0.62" font-weight="800" text-anchor="middle">${esc(prompt||'Add an image')}</text>`;
+}
 
 /* ===== slide layouts ===== */
 const u=Math.min(W,H), m=Math.round(W*0.06);
@@ -358,6 +408,72 @@ const LAYOUTS = [
     lines.forEach((l,i)=>{ s+=`<text data-edit="body#${i}" x="${m}" y="${(y+i*u*0.045).toFixed(0)}" font-size="${u*0.03}" fill="${ink===BRAND.navy?mix(BRAND.navy,'#ffffff',0.15):mix('#ffffff',acc,0.05)}" font-weight="600">${esc(l)}</text>`; });
     return s;
   }
+},
+{
+  id:'image', name:'Image',
+  fields:[['image','Image','','image'],['kicker','Eyebrow','optional'],['title','Caption','optional caption over the image']],
+  render(c,S,uid){
+    const acc=S.accent;
+    let s='';
+    if(c.image){ s+=`<image href="${c.image}" x="0" y="0" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice"/>`; }
+    else { s+=imgPlaceholder(0,0,W,H,acc,'Add an image — full-bleed'); }
+    // scrim under the caption so white text stays legible over any photo
+    if(c.image && (c.kicker||c.title)){
+      s+=`<defs><linearGradient id="sc${uid}" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="${BRAND.navy}" stop-opacity="0.84"/><stop offset="100%" stop-color="${BRAND.navy}" stop-opacity="0"/></linearGradient></defs>`+
+        `<rect x="0" y="${(H*0.46).toFixed(0)}" width="${W}" height="${(H*0.54).toFixed(0)}" fill="url(#sc${uid})"/>`;
+    }
+    s+=brandMark(c.logo, m, m, u*0.18, 'wht', acc);
+    let y=H*0.72;
+    if(c.kicker){ s+=kicker(c.kicker, m, y, u*0.028, '#ffffff', 'start', 'kicker'); y+=u*0.05; }
+    if(c.title){ const head=fitHead(c.title, W*0.82, H*0.2, u*0.062, u*0.036, 0.52, 1.05); s+=tblock(head.lines, m, y, head.fs, head.lh, '#ffffff', 800, 'start', -0.015, 'title', W*0.82); }
+    return s;
+  }
+},
+{
+  id:'imagetext', name:'Image + text',
+  fields:[['image','Image','','image'],['title','Title','Slide title'],['body','Text (one point per line)','Explain what the image shows.\nAdd a supporting line.']],
+  render(c,S,uid){
+    const acc=S.accent, imgW=Math.round(W*0.46);
+    let s=`<rect width="${W}" height="${H}" fill="#ffffff"/>`;
+    if(c.image){ s+=`<image href="${c.image}" x="0" y="0" width="${imgW}" height="${H}" preserveAspectRatio="xMidYMid slice"/>`; }
+    else { s+=imgPlaceholder(0,0,imgW,H,acc,'Add an image'); }
+    const tx=imgW+m*0.85, tw=W-tx-m, headW=tw-u*0.2;   // keep the heading clear of the top-right logo
+    s+=brandMark(c.logo, W-m-u*0.16, m, u*0.16, 'nvy', lum(acc)>0.6?BRAND.navy:acc, 'end');
+    let y=m+u*0.05;
+    const head=fitHead(c.title, headW, H*0.22, u*0.056, u*0.032, 0.52, 1.0);
+    s+=tblock(head.lines, tx, y, head.fs, head.lh, BRAND.navy, 900, 'start', -0.02, 'title', headW);
+    y+=head.lines.length*head.fs*head.lh+u*0.02;
+    s+=`<rect x="${tx}" y="${y.toFixed(0)}" width="${u*0.12}" height="${Math.max(4,u*0.007)}" rx="2" fill="${acc}"/>`;
+    y+=u*0.045;
+    const lines=(c.body||'').split(/\n/).map(t=>t.trim()).filter(Boolean).slice(0,6);
+    let by=y;
+    lines.forEach((ln,i)=>{ const bl=bodyLines(ln, tw, u*0.028, u*0.11, 1.3); s+=tblock(bl, tx, by, u*0.028, 1.35, mix(BRAND.navy,'#ffffff',0.08), 500,'start',0,'body#'+i); by+=bl.length*u*0.028*1.35+u*0.02; });
+    return s;
+  }
+},
+{
+  id:'screenshot', name:'Screenshot',
+  fields:[['image','Screenshot','','image'],['kicker','Eyebrow','optional'],['title','Title','What this shows']],
+  render(c,S,uid){
+    const acc=S.accent;
+    let s=`<rect width="${W}" height="${H}" fill="${BRAND.navy}"/>`;
+    s+=ring(W*0.02, H*0.05, u*0.18, acc, 0.4);
+    s+=brandMark(c.logo, W-m-u*0.15, m, u*0.15, 'wht', acc, 'end');
+    let y=m+u*0.02;
+    if(c.kicker){ s+=kicker(c.kicker, m, y+u*0.018, u*0.024, acc, 'start','kicker'); y+=u*0.05; }
+    if(c.title){ const head=fitHead(c.title, W*0.7, H*0.13, u*0.05, u*0.03, 0.52,1.0); s+=tblock(head.lines, m, y, head.fs, head.lh, '#ffffff', 900,'start',-0.02,'title', W*0.7); y+=head.lines.length*head.fs*head.lh+u*0.03; }
+    // white frame card; the screenshot sits contained inside so its edges are never cropped
+    const fx=m, fw=W-2*m, fy=Math.round(y), fh=Math.round(H-m-y);
+    s+=`<rect x="${fx}" y="${fy}" width="${fw}" height="${fh}" rx="${(u*0.02).toFixed(0)}" fill="#ffffff"/>`;
+    const pad=Math.round(u*0.022);
+    if(c.image){
+      s+=`<defs><clipPath id="ic${uid}"><rect x="${fx+pad}" y="${fy+pad}" width="${fw-2*pad}" height="${fh-2*pad}" rx="${(u*0.012).toFixed(0)}"/></clipPath></defs>`+
+        `<image href="${c.image}" x="${fx+pad}" y="${fy+pad}" width="${fw-2*pad}" height="${fh-2*pad}" preserveAspectRatio="xMidYMid meet" clip-path="url(#ic${uid})"/>`;
+    } else {
+      s+=`<text x="${(fx+fw/2).toFixed(0)}" y="${(fy+fh/2).toFixed(0)}" font-size="${u*0.03}" fill="${BRAND.navy}" fill-opacity="0.5" font-weight="800" text-anchor="middle">Upload a screenshot →</text>`;
+    }
+    return s;
+  }
 }
 ];
 const LAYOUT_BY = Object.fromEntries(LAYOUTS.map(l=>[l.id,l]));
@@ -486,8 +602,29 @@ function renderRail(){
     d.querySelector('.thumb').onclick=()=>{ cur=i; renderAll(); };
     d.querySelector('.nm').onclick=()=>{ cur=i; renderAll(); };
     d.querySelectorAll('.miniBtn').forEach(b=>b.onclick=e=>{ e.stopPropagation(); act(b.dataset.a, i); });
+    // drag to reorder
+    d.draggable=true;
+    d.addEventListener('dragstart',ev=>{ dragFrom=i; d.classList.add('dragging'); ev.dataTransfer.effectAllowed='move'; try{ev.dataTransfer.setData('text/plain',String(i));}catch(_){}
+      const th=d.querySelector('.thumb'); if(th&&ev.dataTransfer.setDragImage) ev.dataTransfer.setDragImage(th, th.clientWidth/2, th.clientHeight/2); });
+    d.addEventListener('dragend',()=>{ dragFrom=null; clearDropMarks(); d.classList.remove('dragging'); });
+    d.addEventListener('dragover',ev=>{ if(dragFrom===null) return; ev.preventDefault(); ev.dataTransfer.dropEffect='move';
+      const b=d.getBoundingClientRect(); const after=ev.clientY > b.top+b.height/2; clearDropMarks(); d.classList.add(after?'dropAfter':'dropBefore'); });
+    d.addEventListener('drop',ev=>{ if(dragFrom===null) return; ev.preventDefault();
+      const b=d.getBoundingClientRect(); const after=ev.clientY > b.top+b.height/2; moveSlide(dragFrom, i+(after?1:0)); });
     r.appendChild(d);
   });
+}
+let dragFrom=null;
+function clearDropMarks(){ document.querySelectorAll('.slideItem.dropBefore,.slideItem.dropAfter').forEach(el=>el.classList.remove('dropBefore','dropAfter')); }
+function moveSlide(from,to){
+  if(from===null||from===to){ clearDropMarks(); return; }
+  const item=deck.splice(from,1)[0];
+  if(from<to) to--;                       // removing an earlier slide shifts the target down one
+  to=Math.max(0,Math.min(to,deck.length));
+  deck.splice(to,0,item);
+  cur=to;                                 // keep the selection on the slide you moved
+  dragFrom=null;
+  renderAll();
 }
 function act(a,i){
   if(a==='up'&&i>0){ [deck[i-1],deck[i]]=[deck[i],deck[i-1]]; cur=i-1; }
@@ -512,7 +649,9 @@ function renderEditor(){
   let h=`<h2>Layout</h2><div class="layoutGrid">`;
   LAYOUTS.forEach(l=>{ h+=`<button class="${l.id===sl.layout?'on':''}" data-l="${l.id}">${l.name}</button>`; });
   h+=`</div><h2>Content</h2>`;
-  L.fields.forEach(([key,label,ph])=>{
+  L.fields.forEach((f)=>{
+    const [key,label,ph]=f;
+    if(f[3]==='image'){ h+=imageFieldHTML(key,label,sl); return; }
     const val=esc(sl[key]||'');
     const multi=['body','subtitle','colA','colB'].includes(key) || (sl[key]||'').length>40;
     h+= `<div class="field"><label>${label}</label>`+
@@ -528,6 +667,12 @@ function renderEditor(){
   e.innerHTML=h;
   e.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>{ sl.layout=b.dataset.l; renderAll(); });
   e.querySelectorAll('[data-logo]').forEach(b=>b.onclick=()=>{ sl.logo=b.dataset.logo; renderAll(); });
+  e.querySelectorAll('[data-imgact]').forEach(b=>b.onclick=()=>{
+    const key=b.closest('[data-imgk]').dataset.imgk;
+    if(b.dataset.imgact==='upload') pickImageFile(key);
+    else if(b.dataset.imgact==='library') openLibrary(key);
+    else { delete sl[key]; renderAll(); }
+  });
   e.querySelectorAll('[data-k]').forEach(inp=>inp.addEventListener('input',()=>{ sl[inp.dataset.k]=inp.value; renderPreview(); renderRailThumb(cur); }));
   const secs=e.querySelector('#secs');
   SECTORS.forEach(sec=>{ const d=document.createElement('div'); d.className='sw'+(sec.id===sectorId?' on':''); d.style.background=sec.accent; d.title=sec.name; d.onclick=()=>{ sectorId=sec.id; renderAll(); }; secs.appendChild(d); });
@@ -610,6 +755,8 @@ async function copyShareLink(){
   const btn=document.getElementById('btnExport'), old=btn.innerHTML;
   btn.innerHTML='Link copied';
   setTimeout(()=>btn.innerHTML=old,1400);
+  // embedded images make links long; warn past a practical URL length (export still carries them fine)
+  if(url.length>28000) toast('Heavy images make this link very long — share the exported file instead, or use fewer/lighter images.');
 }
 function runExport(action){
   setExportMenu(false);
@@ -626,7 +773,7 @@ document.getElementById('menuPDF').onclick=()=>runExport(printPDF);
 document.getElementById('menuLink').onclick=()=>runExport(copyShareLink);
 document.addEventListener('click',()=>setExportMenu(false));
 document.addEventListener('keydown',e=>{ if(e.target.matches('input,textarea'))return;
-  if(e.key==='Escape') setExportMenu(false);
+  if(e.key==='Escape'){ setExportMenu(false); closeLibrary(); }
   if(e.key==='ArrowDown'||e.key==='ArrowRight'){ cur=Math.min(deck.length-1,cur+1); renderAll(); }
   if(e.key==='ArrowUp'||e.key==='ArrowLeft'){ cur=Math.max(0,cur-1); renderAll(); } });
 
@@ -799,7 +946,96 @@ window.addEventListener('resize',()=>closeEditor(true));
 const deckNameEl=document.getElementById('deckName');
 deckNameEl.addEventListener('input',()=>{ deckName=deckNameEl.value; updateDocTitle(); });
 
+/* ===== images: editor field, upload + downscale ===== */
+function imageFieldHTML(key,label,sl){
+  const has=!!sl[key];
+  const safe=has? sl[key].replace(/"/g,'&quot;') : '';
+  return `<div class="field"><label>${esc(label)}</label>
+    <div class="imgField" data-imgk="${esc(key)}">
+      ${has?`<div class="imgThumb" style="background-image:url(&quot;${safe}&quot;)"></div>`:`<div class="imgEmpty">No image yet</div>`}
+      <div class="imgBtns">
+        <button class="imgBtn" data-imgact="upload">Upload</button>
+        <button class="imgBtn" data-imgact="library">Library</button>
+        ${has?`<button class="imgBtn ghost" data-imgact="clear" title="Remove image">✕</button>`:''}
+      </div>
+    </div></div>`;
+}
+function pickImageFile(key){
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*';
+  inp.onchange=async()=>{ const f=inp.files&&inp.files[0]; if(!f) return;
+    try{ deck[cur][key]=await fileToDataURL(f); renderAll(); }
+    catch(e){ console.warn(e); toast('Could not read that image'); } };
+  inp.click();
+}
+const IMG_MAX=1600;   // longest edge after downscale — keeps state + exports + share links sane
+function fileToDataURL(file){
+  return new Promise((res,rej)=>{
+    if(file.type==='image/svg+xml'){ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); return; }
+    const r=new FileReader();
+    r.onload=()=>{ const img=new Image(); img.onload=()=>res(downscaleToDataURL(img,file.type)); img.onerror=rej; img.src=r.result; };
+    r.onerror=rej; r.readAsDataURL(file);
+  });
+}
+function downscaleToDataURL(img,type){
+  let w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
+  const scale=Math.min(1, IMG_MAX/Math.max(w,h||1));
+  w=Math.max(1,Math.round(w*scale)); h=Math.max(1,Math.round(h*scale));
+  const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+  cv.getContext('2d').drawImage(img,0,0,w,h);
+  const keepAlpha = type==='image/png' || type==='image/webp';
+  try{ return cv.toDataURL(keepAlpha?'image/png':'image/jpeg', keepAlpha?undefined:0.85); }
+  catch(e){ return cv.toDataURL('image/png'); }
+}
+
+/* ===== the shared Library (data-driven, non-modal side panel) ===== */
+let LIB=null, libTargetKey='image', libCat=null, libPanelEl=null;
+async function loadLibrary(){
+  try{ const r=await fetch('library.json',{cache:'no-cache'}); if(r.ok){ const j=await r.json(); if(j&&Array.isArray(j.assets)) LIB=j; } }
+  catch(e){ /* library is optional — Upload still works without it */ }
+}
+function ensureLibPanel(){ if(libPanelEl) return libPanelEl; const p=document.createElement('aside'); p.className='libPanel'; p.id='libPanel'; document.body.appendChild(p); libPanelEl=p; return p; }
+function openLibrary(key){
+  libTargetKey=key||'image';
+  ensureLibPanel();
+  if(LIB&&LIB.categories&&LIB.categories.length){ if(!libCat||!LIB.categories.some(c=>c.id===libCat)) libCat=LIB.categories[0].id; }
+  renderLibrary();
+  requestAnimationFrame(()=>libPanelEl.classList.add('on'));
+}
+function closeLibrary(){ if(libPanelEl) libPanelEl.classList.remove('on'); }
+function renderLibrary(){
+  const p=ensureLibPanel();
+  let h=`<div class="libHead"><div><h3>Library</h3><span class="sub">Approved brand assets — click to add</span></div><button class="libX" title="Close">✕</button></div>`;
+  if(!LIB||!LIB.assets||!LIB.assets.length){
+    h+=`<div class="libGrid"><div class="libEmpty">No library assets loaded yet.<br>Your team adds them in <b>library.json</b>.<br><br>You can still use <b>Upload</b> for your own images.</div></div><div class="libUpload">⬆ Upload your own image instead</div>`;
+    p.innerHTML=h; p.querySelector('.libX').onclick=closeLibrary; p.querySelector('.libUpload').onclick=()=>{ closeLibrary(); pickImageFile(libTargetKey); }; return;
+  }
+  h+=`<div class="libTabs">`;
+  (LIB.categories||[]).forEach(c=>{ h+=`<button class="libTab${c.id===libCat?' on':''}" data-cat="${esc(c.id)}">${esc(c.name)}</button>`; });
+  h+=`</div><div class="libGrid">`;
+  const assets=LIB.assets.filter(a=>a.category===libCat);
+  if(!assets.length){ h+=`<div class="libEmpty">Nothing in this category yet.<br>Drop approved assets here in <b>library.json</b>.</div>`; }
+  assets.forEach(a=>{ h+=`<div class="libItem" data-asset="${esc(a.id)}"><div class="libThumb"${a.bg?` style="background:${esc(a.bg)}"`:''}><img src="${esc(a.src)}" alt="${esc(a.name)}" loading="lazy"></div><div class="nm">${esc(a.name)}</div></div>`; });
+  h+=`</div><div class="libUpload">⬆ Upload your own image instead</div>`;
+  p.innerHTML=h;
+  p.querySelector('.libX').onclick=closeLibrary;
+  p.querySelectorAll('.libTab').forEach(b=>b.onclick=()=>{ libCat=b.dataset.cat; renderLibrary(); });
+  p.querySelectorAll('.libItem').forEach(el=>el.onclick=()=>insertLibraryAsset(el.dataset.asset));
+  p.querySelector('.libUpload').onclick=()=>{ closeLibrary(); pickImageFile(libTargetKey); };
+}
+async function insertLibraryAsset(id){
+  const a=((LIB&&LIB.assets)||[]).find(x=>x.id===id); if(!a) return;
+  try{ deck[cur][libTargetKey]=await assetToDataURL(a.src); renderAll(); renderLibrary(); libPanelEl.classList.add('on'); toast('Added '+a.name); }
+  catch(e){ console.warn(e); toast('Could not load that asset'); }
+}
+async function assetToDataURL(src){
+  const r=await fetch(src,{cache:'no-cache'}); if(!r.ok) throw new Error('fetch failed');
+  if(/\.svg($|\?)/i.test(src)){ const txt=await r.text(); return 'data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(txt))); }
+  const blob=await r.blob();
+  return await new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>{ const img=new Image(); img.onload=()=>res(downscaleToDataURL(img,blob.type)); img.onerror=()=>res(fr.result); img.src=fr.result; }; fr.onerror=rej; fr.readAsDataURL(blob); });
+}
+
 (async function init(){
+  await loadLibrary();
   const hash=location.hash || '';
   if(hash.startsWith('#z=') || hash.startsWith('#d=')){
     try{ loadState(await decodeShareFragment(hash.slice(1))); }

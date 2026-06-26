@@ -1,0 +1,26 @@
+{
+  "_note": "Influential Studio shared asset library. To add an asset: drop the file in library-assets/ and add a line to the matching category below. id must be unique. category must match one of the ids in categories. src is the path. bg is an optional thumbnail background (use it so light assets like the white logo stay visible).",
+  "categories": [
+    { "id": "shapes", "name": "Brand shapes" },
+    { "id": "icons",  "name": "Icons" },
+    { "id": "logos",  "name": "Logos" },
+    { "id": "photos", "name": "Photography" }
+  ],
+  "assets": [
+    { "id": "ring-red",    "name": "Ring · Red",    "category": "shapes", "src": "library-assets/inf-ring-red.svg" },
+    { "id": "ring-navy",   "name": "Ring · Navy",   "category": "shapes", "src": "library-assets/inf-ring-navy.svg" },
+    { "id": "ring-green",  "name": "Ring · Green",  "category": "shapes", "src": "library-assets/inf-ring-green.svg" },
+    { "id": "ring-blue",   "name": "Ring · Blue",   "category": "shapes", "src": "library-assets/inf-ring-blue.svg" },
+    { "id": "ring-yellow", "name": "Ring · Yellow", "category": "shapes", "src": "library-assets/inf-ring-yellow.svg" },
+    { "id": "ring-orange", "name": "Ring · Orange", "category": "shapes", "src": "library-assets/inf-ring-orange.svg" },
+
+    { "id": "icon-target", "name": "Target",  "category": "icons", "src": "library-assets/icon-target.svg" },
+    { "id": "icon-growth", "name": "Growth",  "category": "icons", "src": "library-assets/icon-growth.svg" },
+    { "id": "icon-check",  "name": "Check",   "category": "icons", "src": "library-assets/icon-check.svg" },
+    { "id": "icon-spark",  "name": "Spark",   "category": "icons", "src": "library-assets/icon-spark.svg" },
+
+    { "id": "logo-navy",  "name": "Logo · Navy",  "category": "logos", "src": "library-assets/logo-navy.png" },
+    { "id": "logo-red",   "name": "Logo · Red",   "category": "logos", "src": "library-assets/logo-red.png" },
+    { "id": "logo-white", "name": "Logo · White", "category": "logos", "src": "library-assets/logo-white.png", "bg": "#201747" }
+  ]
+}

@@ -1,2 +1,6 @@
 .vercel
 .superpowers/
+.claude/
+node_modules/
+.env
+.env.*
