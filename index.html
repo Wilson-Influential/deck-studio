@@ -69,6 +69,7 @@
   /* the preview fills the stage: grow to the column width, but never taller than the
      viewport allows for a 16:9 slide, so wide screens lose the dead side space */
   .stage .frame{width:100%;max-width:min(1180px, calc((100vh - 150px) * 16 / 9));border-radius:14px;overflow:hidden;box-shadow:0 40px 90px -50px rgba(32,23,71,.9)}
+  .stage .frame.drop{box-shadow:0 0 0 4px var(--navy),0 40px 90px -50px rgba(32,23,71,.9)}
   .stage .frame svg{display:block;width:100%;height:auto}
   .stage .cap{margin-top:14px;font-size:13px;color:var(--charcoal);font-weight:700;display:flex;gap:14px;align-items:center}
   .stage .cap b{color:var(--navy)}
@@ -78,6 +79,13 @@
   .editHL{position:fixed;pointer-events:none;border-radius:7px;opacity:0;transition:opacity .13s ease;z-index:60}
   .editHL.on{opacity:1}
   #preview [data-edit]{cursor:text}
+  #preview [data-imgslot]{cursor:pointer}
+  /* split handle: invisible at rest (matches export), faint glassy on slide-hover,
+     full when you hover the handle itself or drag — so it's discoverable but never reads as chrome */
+  #preview [data-split]{opacity:0;transition:opacity .16s ease}
+  #preview:hover [data-split]{opacity:.4}
+  #preview [data-split]:hover{opacity:1}
+  .frame.splitting [data-split]{opacity:1}
   .editBox{position:fixed;box-sizing:border-box;z-index:70;margin:0;border:0;padding:0;background:transparent;resize:none;overflow:hidden;line-height:1.15;font-family:'Effra Trial','Effra',system-ui,'Segoe UI',sans-serif;outline:none;-webkit-font-smoothing:antialiased;animation:editIn .1s ease}
   @keyframes editIn{from{opacity:0}to{opacity:1}}
   .editLabel{position:fixed;z-index:71;transform:translateY(-100%) translateY(-7px);background:#201747;color:#fff;font:700 10.5px/1 system-ui,sans-serif;letter-spacing:.05em;text-transform:uppercase;padding:4px 7px;border-radius:5px;white-space:nowrap;pointer-events:none}
@@ -113,6 +121,8 @@
   .imgBtn:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
   .imgBtn.ghost{flex:0 0 auto;color:var(--charcoal)}
   .imgBtn.ghost:hover{background:var(--red);border-color:var(--red);color:#fff}
+  .imgField.drop{border-color:var(--navy);background:#fff;box-shadow:0 0 0 4px rgba(32,23,71,.10)}
+  .imgField.drop *{pointer-events:none}
 
   /* library panel (non-modal side panel) */
   .libPanel{position:fixed;top:60px;right:0;width:400px;max-width:94vw;height:calc(100vh - 60px);background:#fff;border-left:1px solid var(--line);
@@ -237,12 +247,31 @@ function brandMark(opt,x,y,w,variant,ringColor,anchor='start'){
 function footer(page,total,dark){const ink=dark?mix('#ffffff',BRAND.navy,0.5):mix(BRAND.navy,'#ffffff',0.45);const fs=H*0.022,m=W*0.06;return `<text x="${W-m}" y="${(H-H*0.045).toFixed(0)}" font-size="${fs}" fill="${ink}" font-weight="800" text-anchor="end" letter-spacing="1">${String(page).padStart(2,'0')} / ${String(total).padStart(2,'0')}</text>`;}
 
 /* ===== image helpers (embedded base64 images, same export-safe path as the logo) ===== */
-// branded empty state shown until an image is added — keeps image slides alive + clickable
+// Empty image slot — a neutral "add an image here" well. Light-grey fill (matches the
+// unpressed editor buttons, --soft), a grey dashed frame, and the real Lucide
+// `image-plus` icon. Reads as an empty placeholder you must fill, not a design choice.
+const PH_FILL='#f0eef7', PH_LINE='#cdc7de', PH_INK='#8a86a0';   // --soft, mid-line, muted ink
+// Image+text split: drag snaps to these designed ratios so every result looks intentional.
+const SPLIT_STOPS=[1/3, 0.4, 0.5, 0.6, 2/3];
+function snapSplit(frac){ return SPLIT_STOPS.reduce((b,s)=>Math.abs(s-frac)<Math.abs(b-frac)?s:b, SPLIT_STOPS[0]); }
+// transparent hit layer over an image region — click an empty slot to upload, drop a file onto it.
+// Rendered BELOW captions/handles so text-edit + handle clicks still win.
+function imgSlotHit(key,x,y,w,h){ return `<rect data-imgslot="${esc(key)}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" fill="transparent"/>`; }
+// skeleton bar (rounded grey lozenge) — used to sketch where text will sit in an empty slide
+function skelBar(x,y,w,h){ return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="${(h/2).toFixed(1)}" fill="${PH_LINE}" fill-opacity="0.6" pointer-events="none"/>`; }
+// Lucide image-plus (24×24, MIT) — the "+" corner signals "add"
+const LUCIDE_IMAGE_PLUS='<path d="M16 5h6"/><path d="M19 2v6"/><path d="M21 11.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7.5"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/><circle cx="9" cy="9" r="2"/>';
 function imgPlaceholder(x,y,w,h,accent,prompt){
-  const cx=x+w/2, cy=y+h/2;
-  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${mix(BRAND.navy,'#000000',0.12)}"/>`+
-    ring(cx, cy-h*0.08, Math.min(w,h)*0.15, accent, 0.9)+
-    `<text x="${cx}" y="${(cy+h*0.2).toFixed(0)}" font-size="${u*0.028}" fill="#ffffff" fill-opacity="0.62" font-weight="800" text-anchor="middle">${esc(prompt||'Add an image')}</text>`;
+  const cx=x+w/2, cy=y+h/2, s=Math.min(w,h);
+  // dashed drop frame, inset — neutral grey so it reads as "empty, add here"
+  const inset=s*0.05;
+  const frame=`<rect x="${(x+inset).toFixed(1)}" y="${(y+inset).toFixed(1)}" width="${(w-2*inset).toFixed(1)}" height="${(h-2*inset).toFixed(1)}" rx="${(s*0.025).toFixed(1)}" fill="none" stroke="${PH_LINE}" stroke-width="${Math.max(2,s*0.006).toFixed(1)}" stroke-dasharray="${(s*0.03).toFixed(1)} ${(s*0.022).toFixed(1)}"/>`;
+  // Lucide icon, scaled into the box, centred a touch above the label
+  const isz=s*0.2, sc=isz/24, ix=cx-isz/2, iy=cy-isz/2-h*0.05;
+  const icon=`<g transform="translate(${ix.toFixed(1)},${iy.toFixed(1)}) scale(${sc.toFixed(3)})" fill="none" stroke="${PH_INK}" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">${LUCIDE_IMAGE_PLUS}</g>`;
+  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${PH_FILL}"/>`+frame+icon+
+    `<text x="${cx}" y="${(cy+h*0.17).toFixed(0)}" font-size="${u*0.03}" fill="${PH_INK}" font-weight="800" text-anchor="middle">${esc(prompt||'Add an image')}</text>`+
+    `<text x="${cx}" y="${(cy+h*0.17+u*0.04).toFixed(0)}" font-size="${u*0.02}" fill="${PH_INK}" fill-opacity="0.75" font-weight="700" text-anchor="middle">Click to add, or drag a file in</text>`;
 }
 
 /* ===== slide layouts ===== */
@@ -413,30 +442,45 @@ const LAYOUTS = [
   id:'image', name:'Image',
   fields:[['image','Image','','image'],['kicker','Eyebrow','optional'],['title','Caption','optional caption over the image']],
   render(c,S,uid){
-    const acc=S.accent;
+    const acc=S.accent, has=!!c.image;
     let s='';
-    if(c.image){ s+=`<image href="${c.image}" x="0" y="0" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice"/>`; }
-    else { s+=imgPlaceholder(0,0,W,H,acc,'Add an image — full-bleed'); }
-    // scrim under the caption so white text stays legible over any photo
-    if(c.image && (c.kicker||c.title)){
-      s+=`<defs><linearGradient id="sc${uid}" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="${BRAND.navy}" stop-opacity="0.84"/><stop offset="100%" stop-color="${BRAND.navy}" stop-opacity="0"/></linearGradient></defs>`+
-        `<rect x="0" y="${(H*0.46).toFixed(0)}" width="${W}" height="${(H*0.54).toFixed(0)}" fill="url(#sc${uid})"/>`;
+    if(has){ s+=`<image href="${c.image}" x="0" y="0" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice"/>`; }
+    else { s+=imgPlaceholder(0,0,W,H,acc,'Add an image'); }
+    s+=imgSlotHit('image',0,0,W,H);   // click/drop layer, below the caption
+    if(has){
+      // scrim under the caption — near-opaque navy where the text sits so a WHITE photo
+      // can't wash the white caption out; fades to clear up the slide
+      if(c.kicker||c.title){
+        s+=`<defs><linearGradient id="sc${uid}" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="${BRAND.navy}" stop-opacity="0.96"/><stop offset="55%" stop-color="${BRAND.navy}" stop-opacity="0.72"/><stop offset="100%" stop-color="${BRAND.navy}" stop-opacity="0"/></linearGradient></defs>`+
+          `<rect x="0" y="${(H*0.42).toFixed(0)}" width="${W}" height="${(H*0.58).toFixed(0)}" fill="url(#sc${uid})"/>`;
+      }
+      // subtle top scrim so the white logo survives a light/white photo too
+      if((c.logo||'main')!=='off'){
+        s+=`<defs><linearGradient id="tc${uid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${BRAND.navy}" stop-opacity="0.5"/><stop offset="100%" stop-color="${BRAND.navy}" stop-opacity="0"/></linearGradient></defs>`+
+          `<rect x="0" y="0" width="${W}" height="${(H*0.26).toFixed(0)}" fill="url(#tc${uid})"/>`;
+      }
+      s+=brandMark(c.logo, m, m, u*0.18, 'wht', acc);
+      let y=H*0.72;
+      if(c.kicker){ s+=kicker(c.kicker, m, y, u*0.028, '#ffffff', 'start', 'kicker'); y+=u*0.05; }
+      if(c.title){ const head=fitHead(c.title, W*0.82, H*0.2, u*0.062, u*0.036, 0.52, 1.05); s+=tblock(head.lines, m, y, head.fs, head.lh, '#ffffff', 800, 'start', -0.015, 'title', W*0.82); }
+    } else {
+      // EMPTY = a deliberate skeleton: navy (visible) logo + grey caption bars, no white-on-grey
+      s+=brandMark(c.logo, m, m, u*0.18, 'nvy', lum(acc)>0.6?BRAND.navy:acc);
+      const y=H*0.72;
+      s+=skelBar(m, y, u*0.16, u*0.02)+skelBar(m, y+u*0.05, W*0.46, u*0.05)+skelBar(m, y+u*0.12, W*0.3, u*0.05);
     }
-    s+=brandMark(c.logo, m, m, u*0.18, 'wht', acc);
-    let y=H*0.72;
-    if(c.kicker){ s+=kicker(c.kicker, m, y, u*0.028, '#ffffff', 'start', 'kicker'); y+=u*0.05; }
-    if(c.title){ const head=fitHead(c.title, W*0.82, H*0.2, u*0.062, u*0.036, 0.52, 1.05); s+=tblock(head.lines, m, y, head.fs, head.lh, '#ffffff', 800, 'start', -0.015, 'title', W*0.82); }
     return s;
   }
 },
 {
   id:'imagetext', name:'Image + text',
   fields:[['image','Image','','image'],['title','Title','Slide title'],['body','Text (one point per line)','Explain what the image shows.\nAdd a supporting line.']],
-  render(c,S,uid){
-    const acc=S.accent, imgW=Math.round(W*0.46);
+  render(c,S,uid,interactive){
+    const acc=S.accent, split=Math.min(2/3,Math.max(1/3, +c.split||0.5)), imgW=Math.round(W*split);
     let s=`<rect width="${W}" height="${H}" fill="#ffffff"/>`;
     if(c.image){ s+=`<image href="${c.image}" x="0" y="0" width="${imgW}" height="${H}" preserveAspectRatio="xMidYMid slice"/>`; }
     else { s+=imgPlaceholder(0,0,imgW,H,acc,'Add an image'); }
+    s+=imgSlotHit('image',0,0,imgW,H);   // click/drop the image side
     const tx=imgW+m*0.85, tw=W-tx-m, headW=tw-u*0.2;   // keep the heading clear of the top-right logo
     s+=brandMark(c.logo, W-m-u*0.16, m, u*0.16, 'nvy', lum(acc)>0.6?BRAND.navy:acc, 'end');
     let y=m+u*0.05;
@@ -448,6 +492,27 @@ const LAYOUTS = [
     const lines=(c.body||'').split(/\n/).map(t=>t.trim()).filter(Boolean).slice(0,6);
     let by=y;
     lines.forEach((ln,i)=>{ const bl=bodyLines(ln, tw, u*0.028, u*0.11, 1.3); s+=tblock(bl, tx, by, u*0.028, 1.35, mix(BRAND.navy,'#ffffff',0.08), 500,'start',0,'body#'+i); by+=bl.length*u*0.028*1.35+u*0.02; });
+    // draggable split handle — preview only, never exported. Snaps to designed ratios.
+    if(interactive){
+      const hx=imgW, dragging=(typeof splitDrag!=='undefined' && splitDrag);
+      // while dragging, show the snap stops as faint guides so the "steps" are visible
+      if(dragging){ SPLIT_STOPS.forEach(st=>{ const gx=Math.round(W*st); s+=`<line x1="${gx}" y1="0" x2="${gx}" y2="${H}" stroke="${BRAND.navy}" stroke-opacity="0.13" stroke-width="2" stroke-dasharray="7 11"/>`; }); }
+      s+=`<g data-split="1" style="cursor:ew-resize">`+
+        `<rect x="${(hx-18).toFixed(0)}" y="0" width="36" height="${H}" fill="transparent"/>`+
+        `<rect x="${(hx-1).toFixed(0)}" y="0" width="2" height="${H}" fill="#ffffff" fill-opacity="0.6"/>`+
+        `<g transform="translate(${hx},${(H/2).toFixed(0)})">`+
+          // glassy translucent pill so it reads as a control, not part of the design
+          `<rect x="-11" y="-30" width="22" height="60" rx="11" fill="#ffffff" fill-opacity="0.66" stroke="${BRAND.navy}" stroke-opacity="0.5" stroke-width="1.6"/>`+
+          `<line x1="-3.5" y1="-11" x2="-3.5" y2="11" stroke="${BRAND.navy}" stroke-opacity="0.85" stroke-width="2.2" stroke-linecap="round"/>`+
+          `<line x1="3.5" y1="-11" x2="3.5" y2="11" stroke="${BRAND.navy}" stroke-opacity="0.85" stroke-width="2.2" stroke-linecap="round"/>`+
+        `</g>`+
+        // ratio readout while dragging — makes it read as a deliberate ratio, not a freehand drag
+        (dragging?(()=>{ const ip=Math.round(split*100), lbl=`${ip} / ${100-ip}`, lw=u*0.13, ly=H*0.5-u*0.085;
+          return `<g transform="translate(${hx},${ly.toFixed(0)})" text-anchor="middle">`+
+            `<rect x="${(-lw/2).toFixed(0)}" y="${(-u*0.022).toFixed(0)}" width="${lw.toFixed(0)}" height="${(u*0.044).toFixed(0)}" rx="${(u*0.022).toFixed(0)}" fill="${BRAND.navy}"/>`+
+            `<text y="${(u*0.011).toFixed(0)}" font-size="${u*0.024}" fill="#ffffff" font-weight="900" letter-spacing="0.5">${lbl}</text></g>`; })():'')+
+        `</g>`;
+    }
     return s;
   }
 },
@@ -462,16 +527,39 @@ const LAYOUTS = [
     let y=m+u*0.02;
     if(c.kicker){ s+=kicker(c.kicker, m, y+u*0.018, u*0.024, acc, 'start','kicker'); y+=u*0.05; }
     if(c.title){ const head=fitHead(c.title, W*0.7, H*0.13, u*0.05, u*0.03, 0.52,1.0); s+=tblock(head.lines, m, y, head.fs, head.lh, '#ffffff', 900,'start',-0.02,'title', W*0.7); y+=head.lines.length*head.fs*head.lh+u*0.03; }
-    // white frame card; the screenshot sits contained inside so its edges are never cropped
     const fx=m, fw=W-2*m, fy=Math.round(y), fh=Math.round(H-m-y);
-    s+=`<rect x="${fx}" y="${fy}" width="${fw}" height="${fh}" rx="${(u*0.02).toFixed(0)}" fill="#ffffff"/>`;
     const pad=Math.round(u*0.022);
     if(c.image){
-      s+=`<defs><clipPath id="ic${uid}"><rect x="${fx+pad}" y="${fy+pad}" width="${fw-2*pad}" height="${fh-2*pad}" rx="${(u*0.012).toFixed(0)}"/></clipPath></defs>`+
+      // white frame card; the screenshot sits contained inside so its edges are never cropped
+      s+=`<rect x="${fx}" y="${fy}" width="${fw}" height="${fh}" rx="${(u*0.02).toFixed(0)}" fill="#ffffff"/>`+
+        `<defs><clipPath id="ic${uid}"><rect x="${fx+pad}" y="${fy+pad}" width="${fw-2*pad}" height="${fh-2*pad}" rx="${(u*0.012).toFixed(0)}"/></clipPath></defs>`+
         `<image href="${c.image}" x="${fx+pad}" y="${fy+pad}" width="${fw-2*pad}" height="${fh-2*pad}" preserveAspectRatio="xMidYMid meet" clip-path="url(#ic${uid})"/>`;
     } else {
-      s+=`<text x="${(fx+fw/2).toFixed(0)}" y="${(fy+fh/2).toFixed(0)}" font-size="${u*0.03}" fill="${BRAND.navy}" fill-opacity="0.5" font-weight="800" text-anchor="middle">Upload a screenshot →</text>`;
+      // empty = the same grey "add an image" well as the other image layouts (consistency)
+      s+=imgPlaceholder(fx,fy,fw,fh,acc,'Add a screenshot');
     }
+    s+=imgSlotHit('image',fx,fy,fw,fh);   // click/drop onto the screenshot area
+    return s;
+  }
+},
+{
+  id:'twoup', name:'Two images',
+  fields:[['image','Left image','','image'],['image2','Right image','','image'],['title','Title','optional title across the top'],['capA','Left caption','optional'],['capB','Right caption','optional']],
+  render(c,S,uid){
+    const acc=S.accent;
+    let s=`<rect width="${W}" height="${H}" fill="#ffffff"/>`;
+    s+=brandMark(c.logo, W-m-u*0.15, m, u*0.15, 'nvy', lum(acc)>0.6?BRAND.navy:acc, 'end');
+    let top=m;
+    if(c.title){ const head=fitHead(c.title, W-2*m-u*0.2, H*0.16, u*0.05, u*0.03, 0.52,1.0); s+=tblock(head.lines, m, top+u*0.01, head.fs, head.lh, BRAND.navy, 900,'start',-0.02,'title', W-2*m-u*0.2); top+=head.lines.length*head.fs*head.lh+u*0.03; }
+    // reserve the caption strip always so the live preview matches the export exactly
+    const capH=u*0.055, gap=u*0.028, gy=Math.round(top), colW=(W-2*m-gap)/2, gh=Math.round(H-m-gy-capH);
+    [['image',c.image,m,'capA',c.capA],['image2',c.image2,m+colW+gap,'capB',c.capB]].forEach(([key,img,cx,capKey,cap])=>{
+      if(img){ s+=`<defs><clipPath id="cl${uid}${key}"><rect x="${cx.toFixed(1)}" y="${gy}" width="${colW.toFixed(1)}" height="${gh}" rx="${(u*0.014).toFixed(0)}"/></clipPath></defs>`+
+        `<image href="${img}" x="${cx.toFixed(1)}" y="${gy}" width="${colW.toFixed(1)}" height="${gh}" preserveAspectRatio="xMidYMid slice" clip-path="url(#cl${uid}${key})"/>`; }
+      else { s+=imgPlaceholder(cx,gy,colW,gh,acc,'Add an image'); }
+      s+=imgSlotHit(key,cx,gy,colW,gh);
+      s+=tblock([cap||''], cx, gy+gh+u*0.016, u*0.024, 1.2, mix(BRAND.navy,'#ffffff',0.1), 700,'start',0,capKey);
+    });
     return s;
   }
 }
@@ -543,10 +631,10 @@ async function decodeShareFragment(frag){
   throw new Error('unrecognised link');
 }
 
-function buildSVG(slide){
+function buildSVG(slide, interactive=false){
   const L=LAYOUT_BY[slide.layout]; const uid=++UID;
   const idx=deck.indexOf(slide), pageOk = slide.layout!=='cover';
-  let inner=L.render(slide, S(), uid);
+  let inner=L.render(slide, S(), uid, interactive);
   // page footer for content layouts
   if(['bullets','columns'].includes(slide.layout)) inner+=footer(idx+1, deck.length, false);
   if(['stat','section','statement','quote'].includes(slide.layout)) inner+=footer(idx+1, deck.length, slide.layout!=='section'? true : (inkOn(S().accent)==='#ffffff'));
@@ -639,7 +727,7 @@ function renderPreview(){
   const ghost=Object.assign({}, sl), phKeys=[];
   L.fields.forEach(([key,label,ph])=>{ if(ph && !(sl[key]||'').trim()){ ghost[key]=ph; phKeys.push(key); } });
   const pv=document.getElementById('preview');
-  pv.innerHTML=buildSVG(ghost);
+  pv.innerHTML=buildSVG(ghost, true);
   phKeys.forEach(key=>{ pv.querySelectorAll('[data-edit^="'+key+'"]').forEach(el=>{ el.style.fillOpacity='0.38'; el.setAttribute('data-ph','1'); }); });
   document.getElementById('cap').innerHTML=`<b>Slide ${cur+1}</b> of ${deck.length} · ${L.name} · 1280×720 (16:9) <span class="dlSlide" id="capDl">download this slide as PNG</span>`;
   document.getElementById('capDl').onclick=()=>exportSlidePNG(cur);
@@ -672,6 +760,12 @@ function renderEditor(){
     if(b.dataset.imgact==='upload') pickImageFile(key);
     else if(b.dataset.imgact==='library') openLibrary(key);
     else { delete sl[key]; renderAll(); }
+  });
+  e.querySelectorAll('.imgField').forEach(box=>{
+    const key=box.dataset.imgk;
+    box.addEventListener('dragover',ev=>{ if(!dtHasFiles(ev)) return; ev.preventDefault(); box.classList.add('drop'); });
+    box.addEventListener('dragleave',ev=>{ if(ev.target===box) box.classList.remove('drop'); });
+    box.addEventListener('drop',ev=>{ if(!dtHasFiles(ev)) return; ev.preventDefault(); box.classList.remove('drop'); dropImageFile(ev,key); });
   });
   e.querySelectorAll('[data-k]').forEach(inp=>inp.addEventListener('input',()=>{ sl[inp.dataset.k]=inp.value; renderPreview(); renderRailThumb(cur); }));
   const secs=e.querySelector('#secs');
@@ -922,7 +1016,10 @@ const previewEl=document.getElementById('preview');
 previewEl.addEventListener('click',e=>{
   if(e.target.closest('[data-edit-logo]')){ closeEditor(true); hideHL(); hideLogoTip(); cycleLogo(); return; }
   const t=e.target.closest('[data-edit]');
-  if(t){ hideHL(); openEditor(t); }
+  if(t){ hideHL(); openEditor(t); return; }
+  // click an empty (or filled) image slot to upload/replace
+  const slot=e.target.closest('[data-imgslot]');
+  if(slot){ hideHL(); closeEditor(true); pickImageFile(slot.dataset.imgslot); }
 });
 // While an editor is open, clicking another editable target must not let the
 // textarea blur first (blur->closeEditor->renderPreview detaches the target
@@ -939,7 +1036,25 @@ previewEl.addEventListener('mousemove',e=>{
   const t=e.target.closest('[data-edit]');
   if(t) positionHL(t); else hideHL();
 });
-previewEl.addEventListener('mouseleave',()=>{ hideHL(); hideLogoTip(); });
+previewEl.addEventListener('mouseleave',()=>{ if(!splitDrag){ hideHL(); hideLogoTip(); } });
+// drag the Image+text split handle to rebalance image vs text
+let splitDrag=false;
+previewEl.addEventListener('pointerdown',e=>{
+  if(!e.target.closest('[data-split]')) return;
+  e.preventDefault(); splitDrag=true; previewEl.classList.add('splitting'); closeEditor(true); hideHL(); hideLogoTip();
+  document.body.style.cursor='ew-resize';
+});
+window.addEventListener('pointermove',e=>{
+  if(!splitDrag) return;
+  const r=previewEl.getBoundingClientRect();
+  const frac=snapSplit((e.clientX-r.left)/r.width);
+  if(deck[cur].split!==frac){ deck[cur].split=frac; renderPreview(); }
+});
+window.addEventListener('pointerup',()=>{ if(splitDrag){ splitDrag=false; previewEl.classList.remove('splitting'); document.body.style.cursor=''; renderRailThumb(cur); } });
+// drop an image file straight onto the preview (when the layout has an image slot)
+previewEl.addEventListener('dragover',e=>{ if(!dtHasFiles(e)||!currentImageKey()) return; e.preventDefault(); e.dataTransfer.dropEffect='copy'; previewEl.classList.add('drop'); });
+previewEl.addEventListener('dragleave',e=>{ if(e.target===previewEl||!previewEl.contains(e.relatedTarget)) previewEl.classList.remove('drop'); });
+previewEl.addEventListener('drop',e=>{ if(!dtHasFiles(e)) return; const slot=e.target.closest('[data-imgslot]'); const key=(slot&&slot.dataset.imgslot)||currentImageKey(); if(!key) return; e.preventDefault(); previewEl.classList.remove('drop'); dropImageFile(e,key); });
 window.addEventListener('scroll',e=>{ if(e.target===editBox) return; closeEditor(true); },true);
 window.addEventListener('resize',()=>closeEditor(true));
 
@@ -966,6 +1081,16 @@ function pickImageFile(key){
     try{ deck[cur][key]=await fileToDataURL(f); renderAll(); }
     catch(e){ console.warn(e); toast('Could not read that image'); } };
   inp.click();
+}
+// shared file-drop helpers (editor image box + live preview)
+function dtHasFiles(ev){ const t=ev.dataTransfer&&ev.dataTransfer.types; return !!t && Array.prototype.indexOf.call(t,'Files')>-1; }
+function currentImageKey(){ const f=LAYOUT_BY[deck[cur].layout].fields.find(x=>x[3]==='image'); return f?f[0]:null; }
+async function dropImageFile(ev,key){
+  const f=ev.dataTransfer.files&&ev.dataTransfer.files[0];
+  if(!f){ return; }
+  if(!/^image\//.test(f.type)){ toast('Drop an image file (PNG, JPG, SVG…)'); return; }
+  try{ deck[cur][key]=await fileToDataURL(f); renderAll(); }
+  catch(e){ console.warn(e); toast('Could not read that image'); }
 }
 const IMG_MAX=1600;   // longest edge after downscale — keeps state + exports + share links sane
 function fileToDataURL(file){
