@@ -1,0 +1,649 @@
+[
+  {
+    "id": "exclamation-mark",
+    "name": "Exclamation mark",
+    "category": "graphics",
+    "src": "assets/studio-library/2026-06/exclamation-mark.png",
+    "deckSrc": "library-assets/studio-2026-06/exclamation-mark.png",
+    "type": "PNG",
+    "tags": [
+      "punctuation",
+      "emphasis",
+      "bang"
+    ]
+  },
+  {
+    "id": "100-percent",
+    "name": "100%",
+    "category": "graphics",
+    "src": "assets/studio-library/2026-06/100-percent.png",
+    "deckSrc": "library-assets/studio-2026-06/100-percent.png",
+    "type": "PNG",
+    "tags": [
+      "number",
+      "approval",
+      "complete"
+    ]
+  },
+  {
+    "id": "boom-mark",
+    "name": "Boom mark",
+    "category": "graphics",
+    "src": "assets/studio-library/2026-06/boom-mark.png",
+    "deckSrc": "library-assets/studio-2026-06/boom-mark.png",
+    "type": "PNG",
+    "tags": [
+      "burst",
+      "impact",
+      "emphasis"
+    ]
+  },
+  {
+    "id": "bracket",
+    "name": "Bracket",
+    "category": "graphics",
+    "src": "assets/studio-library/2026-06/bracket.png",
+    "deckSrc": "library-assets/studio-2026-06/bracket.png",
+    "type": "PNG",
+    "tags": [
+      "bracket",
+      "annotation"
+    ]
+  },
+  {
+    "id": "circle",
+    "name": "Circle",
+    "category": "graphics",
+    "src": "assets/studio-library/2026-06/circle.png",
+    "deckSrc": "library-assets/studio-2026-06/circle.png",
+    "type": "PNG",
+    "tags": [
+      "circle",
+      "highlight"
+    ]
+  },
+  {
+    "id": "coffee-mug",
+    "name": "Coffee mug",
+    "category": "illustrations",
+    "src": "assets/studio-library/2026-06/coffee-mug.png",
+    "deckSrc": "library-assets/studio-2026-06/coffee-mug.png",
+    "type": "PNG",
+    "tags": [
+      "coffee",
+      "mug",
+      "object"
+    ]
+  },
+  {
+    "id": "cogs",
+    "name": "Cogs",
+    "category": "illustrations",
+    "src": "assets/studio-library/2026-06/cogs.png",
+    "deckSrc": "library-assets/studio-2026-06/cogs.png",
+    "type": "PNG",
+    "tags": [
+      "settings",
+      "process",
+      "operations"
+    ]
+  },
+  {
+    "id": "dotted-line",
+    "name": "Dotted line",
+    "category": "graphics",
+    "src": "assets/studio-library/2026-06/dotted-line.png",
+    "deckSrc": "library-assets/studio-2026-06/dotted-line.png",
+    "type": "PNG",
+    "tags": [
+      "line",
+      "divider",
+      "dotted"
+    ]
+  },
+  {
+    "id": "film",
+    "name": "Film",
+    "category": "illustrations",
+    "src": "assets/studio-library/2026-06/film.png",
+    "deckSrc": "library-assets/studio-2026-06/film.png",
+    "type": "PNG",
+    "tags": [
+      "video",
+      "media",
+      "content"
+    ]
+  },
+  {
+    "id": "finger-pointing",
+    "name": "Finger pointing",
+    "category": "illustrations",
+    "src": "assets/studio-library/2026-06/finger-pointing.png",
+    "deckSrc": "library-assets/studio-2026-06/finger-pointing.png",
+    "type": "PNG",
+    "tags": [
+      "hand",
+      "point",
+      "gesture"
+    ]
+  },
+  {
+    "id": "hand-heart",
+    "name": "Hand heart",
+    "category": "illustrations",
+    "src": "assets/studio-library/2026-06/hand-heart.png",
+    "deckSrc": "library-assets/studio-2026-06/hand-heart.png",
+    "type": "PNG",
+    "tags": [
+      "hand",
+      "heart",
+      "care"
+    ]
+  },
+  {
+    "id": "handshake",
+    "name": "Handshake",
+    "category": "illustrations",
+    "src": "assets/studio-library/2026-06/handshake.png",
+    "deckSrc": "library-assets/studio-2026-06/handshake.png",
+    "type": "PNG",
+    "tags": [
+      "hand",
+      "partnership",
+      "agreement"
+    ]
+  },
+  {
+    "id": "head-brain",
+    "name": "Head and brain",
+    "category": "illustrations",
+    "src": "assets/studio-library/2026-06/head-brain.png",
+    "deckSrc": "library-assets/studio-2026-06/head-brain.png",
+    "type": "PNG",
+    "tags": [
+      "thinking",
+      "insight",
+      "brain"
+    ]
+  },
+  {
+    "id": "headphones",
+    "name": "Headphones",
+    "category": "illustrations",
+    "src": "assets/studio-library/2026-06/headphones.png",
+    "deckSrc": "library-assets/studio-2026-06/headphones.png",
+    "type": "PNG",
+    "tags": [
+      "audio",
+      "listening",
+      "podcast"
+    ]
+  },
+  {
+    "id": "idea-work",
+    "name": "Idea work",
+    "category": "illustrations",
+    "src": "assets/studio-library/2026-06/idea-work.png",
+    "deckSrc": "library-assets/studio-2026-06/idea-work.png",
+    "type": "PNG",
+    "tags": [
+      "idea",
+      "work",
+      "creative"
+    ]
+  },
+  {
+    "id": "ipad-hands",
+    "name": "iPad hands",
+    "category": "illustrations",
+    "src": "assets/studio-library/2026-06/ipad-hands.png",
+    "deckSrc": "library-assets/studio-2026-06/ipad-hands.png",
+    "type": "PNG",
+    "tags": [
+      "ipad",
+      "tablet",
+      "hands"
+    ]
+  },
+  {
+    "id": "istock-1319057404-removebg",
+    "name": "Cut-out stock illustration",
+    "category": "illustrations",
+    "src": "assets/studio-library/2026-06/istock-1319057404-removebg.png",
+    "deckSrc": "library-assets/studio-2026-06/istock-1319057404-removebg.png",
+    "type": "PNG",
+    "tags": [
+      "stock",
+      "cutout",
+      "illustration"
+    ]
+  },
+  {
+    "id": "jigsaw",
+    "name": "Jigsaw",
+    "category": "illustrations",
+    "src": "assets/studio-library/2026-06/jigsaw.png",
+    "deckSrc": "library-assets/studio-2026-06/jigsaw.png",
+    "type": "PNG",
+    "tags": [
+      "puzzle",
+      "fit",
+      "strategy"
+    ]
+  },
+  {
+    "id": "laptop",
+    "name": "Laptop",
+    "category": "illustrations",
+    "src": "assets/studio-library/2026-06/laptop.png",
+    "deckSrc": "library-assets/studio-2026-06/laptop.png",
+    "type": "PNG",
+    "tags": [
+      "computer",
+      "digital",
+      "work"
+    ]
+  },
+  {
+    "id": "lightbulb-hand",
+    "name": "Lightbulb hand",
+    "category": "illustrations",
+    "src": "assets/studio-library/2026-06/lightbulb-hand.png",
+    "deckSrc": "library-assets/studio-2026-06/lightbulb-hand.png",
+    "type": "PNG",
+    "tags": [
+      "idea",
+      "lightbulb",
+      "hand"
+    ]
+  },
+  {
+    "id": "lightbulb",
+    "name": "Lightbulb",
+    "category": "illustrations",
+    "src": "assets/studio-library/2026-06/lightbulb.png",
+    "deckSrc": "library-assets/studio-2026-06/lightbulb.png",
+    "type": "PNG",
+    "tags": [
+      "idea",
+      "innovation"
+    ]
+  },
+  {
+    "id": "like-quote",
+    "name": "Like quote",
+    "category": "graphics",
+    "src": "assets/studio-library/2026-06/like-quote.png",
+    "deckSrc": "library-assets/studio-2026-06/like-quote.png",
+    "type": "PNG",
+    "tags": [
+      "quote",
+      "like",
+      "social"
+    ]
+  },
+  {
+    "id": "love-icon-hands",
+    "name": "Love icon hands",
+    "category": "illustrations",
+    "src": "assets/studio-library/2026-06/love-icon-hands.png",
+    "deckSrc": "library-assets/studio-2026-06/love-icon-hands.png",
+    "type": "PNG",
+    "tags": [
+      "love",
+      "heart",
+      "hands"
+    ]
+  },
+  {
+    "id": "love-tattoo",
+    "name": "Love tattoo",
+    "category": "graphics",
+    "src": "assets/studio-library/2026-06/love-tattoo.png",
+    "deckSrc": "library-assets/studio-2026-06/love-tattoo.png",
+    "type": "PNG",
+    "tags": [
+      "love",
+      "heart",
+      "mark"
+    ]
+  },
+  {
+    "id": "magnifying-glass",
+    "name": "Magnifying glass",
+    "category": "illustrations",
+    "src": "assets/studio-library/2026-06/magnifying-glass.png",
+    "deckSrc": "library-assets/studio-2026-06/magnifying-glass.png",
+    "type": "PNG",
+    "tags": [
+      "search",
+      "research",
+      "inspect"
+    ]
+  },
+  {
+    "id": "megaphone-hand",
+    "name": "Megaphone hand",
+    "category": "illustrations",
+    "src": "assets/studio-library/2026-06/megaphone-hand.png",
+    "deckSrc": "library-assets/studio-2026-06/megaphone-hand.png",
+    "type": "PNG",
+    "tags": [
+      "megaphone",
+      "announce",
+      "hand"
+    ]
+  },
+  {
+    "id": "megaphone",
+    "name": "Megaphone",
+    "category": "illustrations",
+    "src": "assets/studio-library/2026-06/megaphone.png",
+    "deckSrc": "library-assets/studio-2026-06/megaphone.png",
+    "type": "PNG",
+    "tags": [
+      "announcement",
+      "pr",
+      "campaign"
+    ]
+  },
+  {
+    "id": "mobile-messages",
+    "name": "Mobile messages",
+    "category": "illustrations",
+    "src": "assets/studio-library/2026-06/mobile-messages.png",
+    "deckSrc": "library-assets/studio-2026-06/mobile-messages.png",
+    "type": "PNG",
+    "tags": [
+      "phone",
+      "messages",
+      "social"
+    ]
+  },
+  {
+    "id": "money-grater",
+    "name": "Money grater",
+    "category": "illustrations",
+    "src": "assets/studio-library/2026-06/money-grater.png",
+    "deckSrc": "library-assets/studio-2026-06/money-grater.png",
+    "type": "PNG",
+    "tags": [
+      "money",
+      "finance",
+      "value"
+    ]
+  },
+  {
+    "id": "number-one",
+    "name": "Number 1",
+    "category": "graphics",
+    "src": "assets/studio-library/2026-06/number-one.png",
+    "deckSrc": "library-assets/studio-2026-06/number-one.png",
+    "type": "PNG",
+    "tags": [
+      "number",
+      "ranking",
+      "one"
+    ]
+  },
+  {
+    "id": "online-word",
+    "name": "Online word",
+    "category": "graphics",
+    "src": "assets/studio-library/2026-06/online-word.png",
+    "deckSrc": "library-assets/studio-2026-06/online-word.png",
+    "type": "PNG",
+    "tags": [
+      "online",
+      "digital",
+      "word"
+    ]
+  },
+  {
+    "id": "pencil",
+    "name": "Pencil",
+    "category": "illustrations",
+    "src": "assets/studio-library/2026-06/pencil.png",
+    "deckSrc": "library-assets/studio-2026-06/pencil.png",
+    "type": "PNG",
+    "tags": [
+      "write",
+      "edit",
+      "creative"
+    ]
+  },
+  {
+    "id": "pointing-hand",
+    "name": "Pointing hand",
+    "category": "illustrations",
+    "src": "assets/studio-library/2026-06/pointing-hand.png",
+    "deckSrc": "library-assets/studio-2026-06/pointing-hand.png",
+    "type": "PNG",
+    "tags": [
+      "hand",
+      "point",
+      "gesture"
+    ]
+  },
+  {
+    "id": "opening-quote",
+    "name": "Opening quote",
+    "category": "graphics",
+    "src": "assets/studio-library/2026-06/opening-quote.png",
+    "deckSrc": "library-assets/studio-2026-06/opening-quote.png",
+    "type": "PNG",
+    "tags": [
+      "quote",
+      "opening",
+      "speech"
+    ]
+  },
+  {
+    "id": "red-arrow",
+    "name": "Red arrow",
+    "category": "graphics",
+    "src": "assets/studio-library/2026-06/red-arrow.png",
+    "deckSrc": "library-assets/studio-2026-06/red-arrow.png",
+    "type": "PNG",
+    "tags": [
+      "arrow",
+      "red",
+      "direction"
+    ]
+  },
+  {
+    "id": "red-line-small",
+    "name": "Red line small",
+    "category": "graphics",
+    "src": "assets/studio-library/2026-06/red-line-small.png",
+    "deckSrc": "library-assets/studio-2026-06/red-line-small.png",
+    "type": "PNG",
+    "tags": [
+      "line",
+      "red",
+      "underline"
+    ]
+  },
+  {
+    "id": "red-line",
+    "name": "Red line",
+    "category": "graphics",
+    "src": "assets/studio-library/2026-06/red-line.png",
+    "deckSrc": "library-assets/studio-2026-06/red-line.png",
+    "type": "PNG",
+    "tags": [
+      "line",
+      "red",
+      "underline"
+    ]
+  },
+  {
+    "id": "rocket-hand",
+    "name": "Rocket hand",
+    "category": "illustrations",
+    "src": "assets/studio-library/2026-06/rocket-hand.png",
+    "deckSrc": "library-assets/studio-2026-06/rocket-hand.png",
+    "type": "PNG",
+    "tags": [
+      "rocket",
+      "launch",
+      "hand"
+    ]
+  },
+  {
+    "id": "rocket",
+    "name": "Rocket",
+    "category": "illustrations",
+    "src": "assets/studio-library/2026-06/rocket.png",
+    "deckSrc": "library-assets/studio-2026-06/rocket.png",
+    "type": "PNG",
+    "tags": [
+      "launch",
+      "growth",
+      "rocket"
+    ]
+  },
+  {
+    "id": "sales-arrow",
+    "name": "Sales arrow",
+    "category": "graphics",
+    "src": "assets/studio-library/2026-06/sales-arrow.png",
+    "deckSrc": "library-assets/studio-2026-06/sales-arrow.png",
+    "type": "PNG",
+    "tags": [
+      "sales",
+      "arrow",
+      "growth"
+    ]
+  },
+  {
+    "id": "sales-chart",
+    "name": "Sales chart",
+    "category": "illustrations",
+    "src": "assets/studio-library/2026-06/sales-chart.png",
+    "deckSrc": "library-assets/studio-2026-06/sales-chart.png",
+    "type": "PNG",
+    "tags": [
+      "chart",
+      "sales",
+      "growth"
+    ]
+  },
+  {
+    "id": "star-explosion",
+    "name": "Star explosion",
+    "category": "graphics",
+    "src": "assets/studio-library/2026-06/star-explosion.png",
+    "deckSrc": "library-assets/studio-2026-06/star-explosion.png",
+    "type": "PNG",
+    "tags": [
+      "star",
+      "burst",
+      "impact"
+    ]
+  },
+  {
+    "id": "star",
+    "name": "Star",
+    "category": "graphics",
+    "src": "assets/studio-library/2026-06/star.png",
+    "deckSrc": "library-assets/studio-2026-06/star.png",
+    "type": "PNG",
+    "tags": [
+      "star",
+      "rating",
+      "spark"
+    ]
+  },
+  {
+    "id": "strategy-work",
+    "name": "Strategy work",
+    "category": "illustrations",
+    "src": "assets/studio-library/2026-06/strategy-work.png",
+    "deckSrc": "library-assets/studio-2026-06/strategy-work.png",
+    "type": "PNG",
+    "tags": [
+      "strategy",
+      "work",
+      "planning"
+    ]
+  },
+  {
+    "id": "target",
+    "name": "Target",
+    "category": "illustrations",
+    "src": "assets/studio-library/2026-06/target.png",
+    "deckSrc": "library-assets/studio-2026-06/target.png",
+    "type": "PNG",
+    "tags": [
+      "target",
+      "goal",
+      "focus"
+    ]
+  },
+  {
+    "id": "think",
+    "name": "Think",
+    "category": "illustrations",
+    "src": "assets/studio-library/2026-06/think.png",
+    "deckSrc": "library-assets/studio-2026-06/think.png",
+    "type": "PNG",
+    "tags": [
+      "think",
+      "idea",
+      "thought"
+    ]
+  },
+  {
+    "id": "thinking",
+    "name": "Thinking",
+    "category": "illustrations",
+    "src": "assets/studio-library/2026-06/thinking.png",
+    "deckSrc": "library-assets/studio-2026-06/thinking.png",
+    "type": "PNG",
+    "tags": [
+      "thinking",
+      "thought",
+      "idea"
+    ]
+  },
+  {
+    "id": "to-do-list",
+    "name": "To-do list",
+    "category": "illustrations",
+    "src": "assets/studio-library/2026-06/to-do-list.png",
+    "deckSrc": "library-assets/studio-2026-06/to-do-list.png",
+    "type": "PNG",
+    "tags": [
+      "task",
+      "list",
+      "planning"
+    ]
+  },
+  {
+    "id": "wow",
+    "name": "Wow",
+    "category": "graphics",
+    "src": "assets/studio-library/2026-06/wow.png",
+    "deckSrc": "library-assets/studio-2026-06/wow.png",
+    "type": "PNG",
+    "tags": [
+      "wow",
+      "reaction",
+      "emphasis"
+    ]
+  },
+  {
+    "id": "writing",
+    "name": "Writing",
+    "category": "illustrations",
+    "src": "assets/studio-library/2026-06/writing.png",
+    "deckSrc": "library-assets/studio-2026-06/writing.png",
+    "type": "PNG",
+    "tags": [
+      "writing",
+      "copy",
+      "content"
+    ]
+  }
+]

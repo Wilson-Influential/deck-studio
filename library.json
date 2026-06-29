@@ -1,26 +1,460 @@
 {
   "_note": "Influential Studio shared asset library. To add an asset: drop the file in library-assets/ and add a line to the matching category below. id must be unique. category must match one of the ids in categories. src is the path. bg is an optional thumbnail background (use it so light assets like the white logo stay visible).",
   "categories": [
-    { "id": "shapes", "name": "Brand shapes" },
-    { "id": "icons",  "name": "Icons" },
-    { "id": "logos",  "name": "Logos" },
-    { "id": "photos", "name": "Photography" }
+    {
+      "id": "shapes",
+      "name": "Brand shapes"
+    },
+    {
+      "id": "graphics",
+      "name": "Graphics"
+    },
+    {
+      "id": "icons",
+      "name": "Icons"
+    },
+    {
+      "id": "illustrations",
+      "name": "Illustrations"
+    },
+    {
+      "id": "logos",
+      "name": "Logos"
+    },
+    {
+      "id": "photos",
+      "name": "Photography"
+    }
   ],
   "assets": [
-    { "id": "ring-red",    "name": "Ring · Red",    "category": "shapes", "src": "library-assets/inf-ring-red.svg" },
-    { "id": "ring-navy",   "name": "Ring · Navy",   "category": "shapes", "src": "library-assets/inf-ring-navy.svg" },
-    { "id": "ring-green",  "name": "Ring · Green",  "category": "shapes", "src": "library-assets/inf-ring-green.svg" },
-    { "id": "ring-blue",   "name": "Ring · Blue",   "category": "shapes", "src": "library-assets/inf-ring-blue.svg" },
-    { "id": "ring-yellow", "name": "Ring · Yellow", "category": "shapes", "src": "library-assets/inf-ring-yellow.svg" },
-    { "id": "ring-orange", "name": "Ring · Orange", "category": "shapes", "src": "library-assets/inf-ring-orange.svg" },
-
-    { "id": "icon-target", "name": "Target",  "category": "icons", "src": "library-assets/icon-target.svg" },
-    { "id": "icon-growth", "name": "Growth",  "category": "icons", "src": "library-assets/icon-growth.svg" },
-    { "id": "icon-check",  "name": "Check",   "category": "icons", "src": "library-assets/icon-check.svg" },
-    { "id": "icon-spark",  "name": "Spark",   "category": "icons", "src": "library-assets/icon-spark.svg" },
-
-    { "id": "logo-navy",  "name": "Logo · Navy",  "category": "logos", "src": "library-assets/logo-navy.png" },
-    { "id": "logo-red",   "name": "Logo · Red",   "category": "logos", "src": "library-assets/logo-red.png" },
-    { "id": "logo-white", "name": "Logo · White", "category": "logos", "src": "library-assets/logo-white.png", "bg": "#201747" }
+    {
+      "id": "ring-red",
+      "name": "Ring · Red",
+      "category": "shapes",
+      "src": "library-assets/inf-ring-red.svg"
+    },
+    {
+      "id": "ring-navy",
+      "name": "Ring · Navy",
+      "category": "shapes",
+      "src": "library-assets/inf-ring-navy.svg"
+    },
+    {
+      "id": "ring-green",
+      "name": "Ring · Green",
+      "category": "shapes",
+      "src": "library-assets/inf-ring-green.svg"
+    },
+    {
+      "id": "ring-blue",
+      "name": "Ring · Blue",
+      "category": "shapes",
+      "src": "library-assets/inf-ring-blue.svg"
+    },
+    {
+      "id": "ring-yellow",
+      "name": "Ring · Yellow",
+      "category": "shapes",
+      "src": "library-assets/inf-ring-yellow.svg"
+    },
+    {
+      "id": "ring-orange",
+      "name": "Ring · Orange",
+      "category": "shapes",
+      "src": "library-assets/inf-ring-orange.svg"
+    },
+    {
+      "id": "studio-exclamation-mark",
+      "name": "Exclamation mark",
+      "category": "graphics",
+      "src": "library-assets/studio-2026-06/exclamation-mark.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-100-percent",
+      "name": "100%",
+      "category": "graphics",
+      "src": "library-assets/studio-2026-06/100-percent.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-boom-mark",
+      "name": "Boom mark",
+      "category": "graphics",
+      "src": "library-assets/studio-2026-06/boom-mark.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-bracket",
+      "name": "Bracket",
+      "category": "graphics",
+      "src": "library-assets/studio-2026-06/bracket.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-circle",
+      "name": "Circle",
+      "category": "graphics",
+      "src": "library-assets/studio-2026-06/circle.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-dotted-line",
+      "name": "Dotted line",
+      "category": "graphics",
+      "src": "library-assets/studio-2026-06/dotted-line.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-like-quote",
+      "name": "Like quote",
+      "category": "graphics",
+      "src": "library-assets/studio-2026-06/like-quote.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-love-tattoo",
+      "name": "Love tattoo",
+      "category": "graphics",
+      "src": "library-assets/studio-2026-06/love-tattoo.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-number-one",
+      "name": "Number 1",
+      "category": "graphics",
+      "src": "library-assets/studio-2026-06/number-one.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-online-word",
+      "name": "Online word",
+      "category": "graphics",
+      "src": "library-assets/studio-2026-06/online-word.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-opening-quote",
+      "name": "Opening quote",
+      "category": "graphics",
+      "src": "library-assets/studio-2026-06/opening-quote.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-red-arrow",
+      "name": "Red arrow",
+      "category": "graphics",
+      "src": "library-assets/studio-2026-06/red-arrow.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-red-line-small",
+      "name": "Red line small",
+      "category": "graphics",
+      "src": "library-assets/studio-2026-06/red-line-small.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-red-line",
+      "name": "Red line",
+      "category": "graphics",
+      "src": "library-assets/studio-2026-06/red-line.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-sales-arrow",
+      "name": "Sales arrow",
+      "category": "graphics",
+      "src": "library-assets/studio-2026-06/sales-arrow.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-star-explosion",
+      "name": "Star explosion",
+      "category": "graphics",
+      "src": "library-assets/studio-2026-06/star-explosion.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-star",
+      "name": "Star",
+      "category": "graphics",
+      "src": "library-assets/studio-2026-06/star.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-wow",
+      "name": "Wow",
+      "category": "graphics",
+      "src": "library-assets/studio-2026-06/wow.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "icon-target",
+      "name": "Target",
+      "category": "icons",
+      "src": "library-assets/icon-target.svg"
+    },
+    {
+      "id": "icon-growth",
+      "name": "Growth",
+      "category": "icons",
+      "src": "library-assets/icon-growth.svg"
+    },
+    {
+      "id": "icon-check",
+      "name": "Check",
+      "category": "icons",
+      "src": "library-assets/icon-check.svg"
+    },
+    {
+      "id": "icon-spark",
+      "name": "Spark",
+      "category": "icons",
+      "src": "library-assets/icon-spark.svg"
+    },
+    {
+      "id": "studio-coffee-mug",
+      "name": "Coffee mug",
+      "category": "illustrations",
+      "src": "library-assets/studio-2026-06/coffee-mug.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-cogs",
+      "name": "Cogs",
+      "category": "illustrations",
+      "src": "library-assets/studio-2026-06/cogs.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-film",
+      "name": "Film",
+      "category": "illustrations",
+      "src": "library-assets/studio-2026-06/film.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-finger-pointing",
+      "name": "Finger pointing",
+      "category": "illustrations",
+      "src": "library-assets/studio-2026-06/finger-pointing.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-hand-heart",
+      "name": "Hand heart",
+      "category": "illustrations",
+      "src": "library-assets/studio-2026-06/hand-heart.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-handshake",
+      "name": "Handshake",
+      "category": "illustrations",
+      "src": "library-assets/studio-2026-06/handshake.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-head-brain",
+      "name": "Head and brain",
+      "category": "illustrations",
+      "src": "library-assets/studio-2026-06/head-brain.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-headphones",
+      "name": "Headphones",
+      "category": "illustrations",
+      "src": "library-assets/studio-2026-06/headphones.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-idea-work",
+      "name": "Idea work",
+      "category": "illustrations",
+      "src": "library-assets/studio-2026-06/idea-work.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-ipad-hands",
+      "name": "iPad hands",
+      "category": "illustrations",
+      "src": "library-assets/studio-2026-06/ipad-hands.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-istock-1319057404-removebg",
+      "name": "Cut-out stock illustration",
+      "category": "illustrations",
+      "src": "library-assets/studio-2026-06/istock-1319057404-removebg.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-jigsaw",
+      "name": "Jigsaw",
+      "category": "illustrations",
+      "src": "library-assets/studio-2026-06/jigsaw.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-laptop",
+      "name": "Laptop",
+      "category": "illustrations",
+      "src": "library-assets/studio-2026-06/laptop.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-lightbulb-hand",
+      "name": "Lightbulb hand",
+      "category": "illustrations",
+      "src": "library-assets/studio-2026-06/lightbulb-hand.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-lightbulb",
+      "name": "Lightbulb",
+      "category": "illustrations",
+      "src": "library-assets/studio-2026-06/lightbulb.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-love-icon-hands",
+      "name": "Love icon hands",
+      "category": "illustrations",
+      "src": "library-assets/studio-2026-06/love-icon-hands.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-magnifying-glass",
+      "name": "Magnifying glass",
+      "category": "illustrations",
+      "src": "library-assets/studio-2026-06/magnifying-glass.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-megaphone-hand",
+      "name": "Megaphone hand",
+      "category": "illustrations",
+      "src": "library-assets/studio-2026-06/megaphone-hand.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-megaphone",
+      "name": "Megaphone",
+      "category": "illustrations",
+      "src": "library-assets/studio-2026-06/megaphone.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-mobile-messages",
+      "name": "Mobile messages",
+      "category": "illustrations",
+      "src": "library-assets/studio-2026-06/mobile-messages.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-money-grater",
+      "name": "Money grater",
+      "category": "illustrations",
+      "src": "library-assets/studio-2026-06/money-grater.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-pencil",
+      "name": "Pencil",
+      "category": "illustrations",
+      "src": "library-assets/studio-2026-06/pencil.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-pointing-hand",
+      "name": "Pointing hand",
+      "category": "illustrations",
+      "src": "library-assets/studio-2026-06/pointing-hand.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-rocket-hand",
+      "name": "Rocket hand",
+      "category": "illustrations",
+      "src": "library-assets/studio-2026-06/rocket-hand.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-rocket",
+      "name": "Rocket",
+      "category": "illustrations",
+      "src": "library-assets/studio-2026-06/rocket.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-sales-chart",
+      "name": "Sales chart",
+      "category": "illustrations",
+      "src": "library-assets/studio-2026-06/sales-chart.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-strategy-work",
+      "name": "Strategy work",
+      "category": "illustrations",
+      "src": "library-assets/studio-2026-06/strategy-work.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-target",
+      "name": "Target",
+      "category": "illustrations",
+      "src": "library-assets/studio-2026-06/target.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-think",
+      "name": "Think",
+      "category": "illustrations",
+      "src": "library-assets/studio-2026-06/think.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-thinking",
+      "name": "Thinking",
+      "category": "illustrations",
+      "src": "library-assets/studio-2026-06/thinking.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-to-do-list",
+      "name": "To-do list",
+      "category": "illustrations",
+      "src": "library-assets/studio-2026-06/to-do-list.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "studio-writing",
+      "name": "Writing",
+      "category": "illustrations",
+      "src": "library-assets/studio-2026-06/writing.png",
+      "bg": "#ffffff"
+    },
+    {
+      "id": "logo-navy",
+      "name": "Logo · Navy",
+      "category": "logos",
+      "src": "library-assets/logo-navy.png"
+    },
+    {
+      "id": "logo-red",
+      "name": "Logo · Red",
+      "category": "logos",
+      "src": "library-assets/logo-red.png"
+    },
+    {
+      "id": "logo-white",
+      "name": "Logo · White",
+      "category": "logos",
+      "src": "library-assets/logo-white.png",
+      "bg": "#201747"
+    }
   ]
 }

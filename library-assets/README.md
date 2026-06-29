@@ -26,3 +26,11 @@ Edit the `"categories"` list in `library.json` to add or rename tabs.
 
 The picker shows a clear empty state for any category with no assets yet (e.g. Photography),
 so it's fine to add a category before you have assets for it.
+
+## 2026-06 Studio asset import
+
+Assets from `OneDrive_1_29-06-2026.zip` live in `studio-2026-06/` and are listed in
+`../library.json` under **Graphics** and **Illustrations**.
+
+Only PNG files are added to Deck Studio because the picker places browser-renderable images
+onto slides.
