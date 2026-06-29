@@ -602,6 +602,28 @@ function loadState(payload){
   cur = Math.max(0, Math.min(Number(payload.active || 0), deck.length - 1));
   return true;
 }
+const AUTOSAVE_KEY='deck-studio:auto-save:v2';
+let autosaveReady=false, autosaveTimer=null, autosaveWarned=false;
+function saveDraftNow(){
+  if(!autosaveReady) return;
+  try{ localStorage.setItem(AUTOSAVE_KEY, JSON.stringify({ savedAt:Date.now(), payload:currentPayload() })); }
+  catch(e){
+    if(!autosaveWarned){ autosaveWarned=true; toast('Draft autosave is full. Export or copy a share link.'); }
+  }
+}
+function saveDraftSoon(){
+  if(!autosaveReady) return;
+  clearTimeout(autosaveTimer);
+  autosaveTimer=setTimeout(saveDraftNow, 250);
+}
+function loadDraft(){
+  try{
+    const raw=localStorage.getItem(AUTOSAVE_KEY);
+    if(!raw) return false;
+    const draft=JSON.parse(raw);
+    return !!(draft && loadState(draft.payload));
+  }catch(e){ return false; }
+}
 function b64urlEncode(obj){ return btoa(unescape(encodeURIComponent(JSON.stringify(obj)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
 function b64urlDecode(s){ s=s.replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4) s+='='; return JSON.parse(decodeURIComponent(escape(atob(s)))); }
 function bytesToB64url(bytes){ let bin=''; for(const b of bytes) bin+=String.fromCharCode(b); return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
@@ -723,6 +745,7 @@ function act(a,i){
 }
 function renderPreview(){
   const sl=deck[cur], L=LAYOUT_BY[sl.layout];
+  saveDraftSoon();
   // show faint example text in empty fields so they stay visible + clickable (cleared on type; never exported)
   const ghost=Object.assign({}, sl), phKeys=[];
   L.fields.forEach(([key,label,ph])=>{ if(ph && !(sl[key]||'').trim()){ ghost[key]=ph; phKeys.push(key); } });
@@ -1176,7 +1199,8 @@ window.addEventListener('scroll',e=>{ if(e.target===editBox) return; closeEditor
 window.addEventListener('resize',()=>closeEditor(true));
 
 const deckNameEl=document.getElementById('deckName');
-deckNameEl.addEventListener('input',()=>{ deckName=deckNameEl.value; updateDocTitle(); });
+deckNameEl.addEventListener('input',()=>{ deckName=deckNameEl.value; updateDocTitle(); saveDraftSoon(); });
+window.addEventListener('beforeunload',()=>{ closeEditor(true); saveDraftNow(); });
 
 /* ===== images: editor field, upload + downscale ===== */
 function imageFieldHTML(key,label,sl){
@@ -1282,7 +1306,10 @@ async function assetToDataURL(src){
   if(hash.startsWith('#z=') || hash.startsWith('#d=')){
     try{ loadState(await decodeShareFragment(hash.slice(1))); }
     catch(e){ console.warn('Deck Studio link could not be read:', e.message); }
+  } else if(loadDraft()){
+    setTimeout(()=>toast('Restored your last draft'), 250);
   }
+  autosaveReady=true;
   syncDeckName();
   renderAll();
 })();

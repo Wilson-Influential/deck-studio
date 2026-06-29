@@ -22,6 +22,8 @@ SVG rendering, type fitting, sphere/motif, PNG export) so they feel like a famil
   browser `pptxgenjs` bundle and exports native PowerPoint text boxes, shapes, logos, and placed
   images so decks are editable after export. **This slide as PNG** exports a single slide as a
   2560×1440 PNG for sharper sharing and reuse. **Copy share link** copies the current deck state.
+- Autosaves the current deck in the browser, so a normal refresh restores the last draft. Shared
+  links still take priority when the URL contains a deck payload.
 - Loads with a 6-slide starter deck so it's alive on open.
 
 ## Layouts (12)
@@ -49,8 +51,8 @@ logos embedded. Effra renders on the Mac and in export; system-font fallback els
 
 ## Status
 
-Built and locally verified (all layouts, slide ops, high-res PNG export, PDF build path, editable
-PPTX export path).
+Built and locally verified (all layouts, slide ops, browser autosave/refresh restore, high-res PNG
+export, PDF build path, editable PPTX export path).
 NOT deployed (deploy routes permission-gated). Delivered to Shea as the self-contained file. Open if
 it goes further: per-slide colour override and richer PowerPoint image crop parity.
 Launch config: `deck-studio` (port 4190).
