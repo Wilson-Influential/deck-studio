@@ -15,7 +15,7 @@ SVG rendering, type fitting, sphere/motif, PNG export) so they feel like a famil
 
 - Left rail: the slide list. Add, duplicate, reorder (↑/↓), delete. Click to select. Live thumbnails.
 - Centre: large live 16:9 preview of the selected slide. Arrow keys move between slides.
-- Right: layout picker (8 layouts), content fields that adapt per layout, and a deck-wide colour
+- Right: layout picker (12 layouts), content fields that adapt per layout, and a deck-wide colour
   (sector accent) picker.
 - Export menu: **Deck as PDF** uses the browser's own print-to-PDF with a custom 16:9 @page, one
   slide per page (offline, no library, matches the HTML→PDF workflow). **Deck as PPTX** uses the
@@ -24,11 +24,12 @@ SVG rendering, type fitting, sphere/motif, PNG export) so they feel like a famil
   2560×1440 PNG for sharper sharing and reuse. **Copy share link** copies the current deck state.
 - Loads with a 6-slide starter deck so it's alive on open.
 
-## Layouts (8)
+## Layouts (12)
 
 Cover, Section divider, Statement, Bullets, Stats (row of up to 3 "value, label" figures),
-Two columns, Quote, Closing/contact. Light content slides (Bullets, Two columns on white) alternate
-with dark statement/stat/quote slides for rhythm. Page-number footer on content slides.
+Two columns, Quote, Closing/contact, Image, Image + text, Screenshot, Two images. Light content
+slides (Bullets, Two columns on white) alternate with dark statement/stat/quote slides for rhythm.
+Page-number footer on content slides.
 
 ## Logo toggle + ring (2026-06-17, Shea's round 2)
 

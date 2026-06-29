@@ -295,23 +295,6 @@ const LAYOUTS = [
   }
 },
 {
-  id:'forumCover', name:'Forum cover',
-  fields:[['title','Title','INFLUENTIAL\nFORUM'],['subtitle','Date','June 2026'],['kicker','Page number','1']],
-  render(c,S,uid){
-    const bg=S.accent || '#fe2458';
-    let s=`<rect width="${W}" height="${H}" fill="${bg}"/>`;
-    s+=ring(-18, H*0.53, u*0.34, '#ffffff');
-    s+=`<circle cx="${W*0.985}" cy="${H*0.56}" r="${u*0.36}" fill="${BRAND.navy}"/>`;
-    s+=ring(W*0.922, H*0.165, u*0.055, '#ffffff');
-    const lines=(c.title||'INFLUENTIAL\nFORUM').split(/\n+/).map(t=>t.trim()).filter(Boolean);
-    const x=W*0.44, y=H*0.39, fs=u*0.062;
-    s+=tblock(lines, x, y, fs, 1.18, '#ffffff', 900, 'start', 0, 'title', W*0.36);
-    if(c.subtitle){ s+=tblock([c.subtitle], x, y+lines.length*fs*1.18+u*0.035, u*0.045, 1.1, '#ffffff', 900, 'start', 0, 'subtitle', W*0.36); }
-    if(c.kicker){ s+=`<text data-edit="kicker" x="${W*0.952}" y="${H*0.884}" font-size="${u*0.021}" fill="#ffffff" font-weight="700" text-anchor="middle">${esc(c.kicker)}</text>`; }
-    return s;
-  }
-},
-{
   id:'section', name:'Section',
   fields:[['kicker','Section number','01'],['title','Section title','Where we are today'],['subtitle','Note','optional one-liner']],
   render(c,S,uid){
@@ -862,11 +845,6 @@ function addNativeSlide(slide,sl,i){
     if(sl.kicker){ addKickerPpt(slide,sl.kicker,m,y,tw,u*0.028,acc); y+=u*0.05; }
     const h=fitHead(sl.title,tw,H*0.34,u*0.11,u*0.05,0.52,0.98); addTBlockPpt(slide,h.lines,m,y,tw,h.fs,h.lh,'#ffffff',900); y+=h.lines.length*h.fs*h.lh+u*0.03;
     addTBlockPpt(slide,bodyLines(sl.subtitle,tw,u*0.032,u*0.12),m,y,tw,u*0.032,1.3,mix('#ffffff',BRAND.navy,0.2),500);
-  } else if(sl.layout==='forumCover'){
-    addRect(slide,0,0,W,H,acc); addRingPpt(slide,-18,H*0.53,u*0.34,'#ffffff'); addCircle(slide,W*0.985,H*0.56,u*0.36,BRAND.navy); addRingPpt(slide,W*0.922,H*0.165,u*0.055,'#ffffff');
-    const lines=(sl.title||'INFLUENTIAL\nFORUM').split(/\n+/).map(t=>t.trim()).filter(Boolean), x=W*0.44, y=H*0.39, fs=u*0.062;
-    addTBlockPpt(slide,lines,x,y,W*0.36,fs,1.18,'#ffffff',900); addTextBox(slide,sl.subtitle,x,y+lines.length*fs*1.18+u*0.035,W*0.36,u*0.06,u*0.045,'#ffffff',900);
-    addTextBox(slide,sl.kicker,W*0.92,H*0.85,W*0.065,u*0.04,u*0.021,'#ffffff',700,'center');
   } else if(sl.layout==='section'){
     addRect(slide,0,0,W,H,acc); addTextBox(slide,(sl.kicker||'').slice(0,2),W*0.46,H*0.24,W*0.5,H*0.62,u*0.55,ink,900,'right'); addBrandPpt(slide,sl.logo,m,m,u*0.2,logoOn(acc),ink);
     let y=H*0.46; if(sl.kicker){ addKickerPpt(slide,'Section '+sl.kicker,m,y,W*0.5,u*0.03,ink); y+=u*0.055; }
@@ -930,7 +908,7 @@ function addNativeSlide(slide,sl,i){
   }
 }
 async function addPptSlide(slide,sl,i){
-  const nativeLayouts=['cover','forumCover','section','statement','bullets','stat','columns','quote','closing','image','imagetext','screenshot','twoup'];
+  const nativeLayouts=['cover','section','statement','bullets','stat','columns','quote','closing','image','imagetext','screenshot','twoup'];
   if(nativeLayouts.includes(sl.layout)){ addNativeSlide(slide,sl,i); return; }
   const data=await svgToPngDataUri(buildSVG(sl),EXPORT_SCALE);
   slide.addImage({data,x:0,y:0,w:PPT_W,h:PPT_H});
