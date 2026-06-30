@@ -352,6 +352,72 @@ function unresolvedComments(slide){ return (slide.comments||[]).filter(c=>!c.don
 
 /* ===== slide layouts ===== */
 const u=Math.min(W,H), m=Math.round(W*0.06);
+const CAPTION_BAND=0.70;   // photo band height for the imagecaption arrangement
+// shared renderer for the Left / Right image arrangements (mirror by `side`)
+function imageTextSide(c,S,uid,interactive,side){
+  const acc=S.accent, split=Math.min(2/3,Math.max(1/3, +c.split||0.5)), imgW=Math.round(W*split);
+  const right=side==='right', imgX=right?W-imgW:0;
+  let s=`<rect width="${W}" height="${H}" fill="#ffffff"/>`;
+  if(c.image){ s+=`<rect x="${imgX}" y="0" width="${imgW}" height="${H}" fill="${BRAND.navy}"/><image href="${c.image}" x="${imgX}" y="0" width="${imgW}" height="${H}" preserveAspectRatio="${parMode(c)}"/>`; }
+  else { s+=imgPlaceholder(imgX,0,imgW,H,acc,'Add an image'); }
+  s+=imgSlotHit('image',imgX,0,imgW,H);
+  const tx=right?m:imgW+m*0.85, tw=right?(imgX-m-tx):(W-tx-m), headW=tw-u*0.2;
+  // logo sits on the text side's outer top corner
+  if(right) s+=brandMark(c.logo, m, m, u*0.16, 'nvy', lum(acc)>0.6?BRAND.navy:acc, 'start');
+  else s+=brandMark(c.logo, W-m-u*0.16, m, u*0.16, 'nvy', lum(acc)>0.6?BRAND.navy:acc, 'end');
+  let y=m+u*0.05;
+  const head=fitHead(c.title, headW, H*0.22, u*0.056, u*0.032, 0.52, 1.0);
+  s+=tblock(head.lines, tx, y, head.fs, head.lh, BRAND.navy, 900, 'start', -0.02, 'title', headW);
+  y+=head.lines.length*head.fs*head.lh+u*0.02;
+  s+=`<rect x="${tx}" y="${y.toFixed(0)}" width="${u*0.12}" height="${Math.max(4,u*0.007)}" rx="2" fill="${acc}"/>`;
+  y+=u*0.045;
+  const lines=(c.body||'').split(/\n/).map(t=>t.trim()).filter(Boolean).slice(0,6);
+  let by=y;
+  lines.forEach((ln,i)=>{ const bl=bodyLines(ln, tw, u*0.028, u*0.11, 1.3); s+=tblock(bl, tx, by, u*0.028, 1.35, mix(BRAND.navy,'#ffffff',0.08), 500,'start',0,'body#'+i); by+=bl.length*u*0.028*1.35+u*0.02; });
+  if(interactive && c.image && selectedPhoto==='image') s+=photoControlSVG('image',imgX,0,imgW,H,c);
+  // draggable split handle — preview only, never exported. Snaps to designed ratios.
+  if(interactive){
+    const hx=right?imgX:imgW, dragging=(typeof splitDrag!=='undefined' && splitDrag);
+    if(dragging){ SPLIT_STOPS.forEach(st=>{ const gx=Math.round(W*st); s+=`<line x1="${gx}" y1="0" x2="${gx}" y2="${H}" stroke="${BRAND.navy}" stroke-opacity="0.13" stroke-width="2" stroke-dasharray="7 11"/>`; }); }
+    s+=`<g data-split="1" style="cursor:ew-resize">`+
+      `<rect x="${(hx-18).toFixed(0)}" y="0" width="36" height="${H}" fill="transparent"/>`+
+      `<rect x="${(hx-1).toFixed(0)}" y="0" width="2" height="${H}" fill="#ffffff" fill-opacity="0.6"/>`+
+      `<g transform="translate(${hx},${(H/2).toFixed(0)})">`+
+        `<rect x="-11" y="-30" width="22" height="60" rx="11" fill="#ffffff" fill-opacity="0.66" stroke="${BRAND.navy}" stroke-opacity="0.5" stroke-width="1.6"/>`+
+        `<line x1="-3.5" y1="-11" x2="-3.5" y2="11" stroke="${BRAND.navy}" stroke-opacity="0.85" stroke-width="2.2" stroke-linecap="round"/>`+
+        `<line x1="3.5" y1="-11" x2="3.5" y2="11" stroke="${BRAND.navy}" stroke-opacity="0.85" stroke-width="2.2" stroke-linecap="round"/>`+
+      `</g>`+
+      (dragging?(()=>{ const ip=Math.round(split*100), lbl=`${ip} / ${100-ip}`, lw=u*0.13, ly=H*0.5-u*0.085;
+        return `<g transform="translate(${hx},${ly.toFixed(0)})" text-anchor="middle">`+
+          `<rect x="${(-lw/2).toFixed(0)}" y="${(-u*0.022).toFixed(0)}" width="${lw.toFixed(0)}" height="${(u*0.044).toFixed(0)}" rx="${(u*0.022).toFixed(0)}" fill="${BRAND.navy}"/>`+
+          `<text y="${(u*0.011).toFixed(0)}" font-size="${u*0.024}" fill="#ffffff" font-weight="900" letter-spacing="0.5">${lbl}</text></g>`; })():'')+
+      `</g>`;
+  }
+  return s;
+}
+// full-width photo + caption band (the Caption arrangement)
+function imageCaptionRender(c,S,uid,interactive){
+  const acc=S.accent, bandH=Math.round(H*CAPTION_BAND), has=!!c.image;
+  let s=`<rect width="${W}" height="${H}" fill="#ffffff"/>`;
+  if(has){ s+=`<rect x="0" y="0" width="${W}" height="${bandH}" fill="${BRAND.navy}"/><image href="${c.image}" x="0" y="0" width="${W}" height="${bandH}" preserveAspectRatio="${parMode(c)}"/>`; }
+  else { s+=imgPlaceholder(0,0,W,bandH,acc,'Add an image'); }
+  s+=imgSlotHit('image',0,0,W,bandH);
+  if(has && (c.logo||'main')!=='off'){
+    s+=`<defs><linearGradient id="cap${uid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${BRAND.navy}" stop-opacity="0.5"/><stop offset="100%" stop-color="${BRAND.navy}" stop-opacity="0"/></linearGradient></defs>`+
+      `<rect x="0" y="0" width="${W}" height="${Math.round(bandH*0.3)}" fill="url(#cap${uid})"/>`;
+  }
+  s+=brandMark(c.logo, m, m, u*0.16, has?'wht':'nvy', has?acc:(lum(acc)>0.6?BRAND.navy:acc));
+  let y=bandH+u*0.05;
+  const head=fitHead(c.title, W-2*m, H*0.12, u*0.045, u*0.028, 0.52, 1.0);
+  s+=tblock(head.lines, m, y, head.fs, head.lh, BRAND.navy, 900, 'start', -0.02, 'title', W-2*m);
+  y+=head.lines.length*head.fs*head.lh+u*0.012;
+  s+=`<rect x="${m}" y="${y.toFixed(0)}" width="${u*0.12}" height="${Math.max(4,u*0.007)}" rx="2" fill="${acc}"/>`;
+  y+=u*0.03;
+  const body=(c.body||'').split(/\n/).map(t=>t.trim()).filter(Boolean).join('  ·  ');
+  if(body){ const bl=bodyLines(body, W-2*m, u*0.026, u*0.1, 1.3).slice(0,2); s+=tblock(bl, m, y, u*0.026, 1.3, mix(BRAND.navy,'#ffffff',0.08), 500, 'start', 0, 'body#0'); }
+  if(interactive && has && selectedPhoto==='image') s+=photoControlSVG('image',0,0,W,bandH,c);
+  return s;
+}
 const LAYOUTS = [
 {
   id:'cover', name:'Cover',
@@ -655,47 +721,17 @@ const LAYOUTS = [
 {
   id:'imagetext', name:'Image + text',
   fields:[['image','Image','','image'],['title','Title','Slide title'],['body','Text (one point per line)','Explain what the image shows.\nAdd a supporting line.']],
-  render(c,S,uid,interactive){
-    const acc=S.accent, split=Math.min(2/3,Math.max(1/3, +c.split||0.5)), imgW=Math.round(W*split);
-    let s=`<rect width="${W}" height="${H}" fill="#ffffff"/>`;
-    if(c.image){ s+=`<rect x="0" y="0" width="${imgW}" height="${H}" fill="${BRAND.navy}"/><image href="${c.image}" x="0" y="0" width="${imgW}" height="${H}" preserveAspectRatio="${parMode(c)}"/>`; }
-    else { s+=imgPlaceholder(0,0,imgW,H,acc,'Add an image'); }
-    s+=imgSlotHit('image',0,0,imgW,H);   // click/drop the image side
-    const tx=imgW+m*0.85, tw=W-tx-m, headW=tw-u*0.2;   // keep the heading clear of the top-right logo
-    s+=brandMark(c.logo, W-m-u*0.16, m, u*0.16, 'nvy', lum(acc)>0.6?BRAND.navy:acc, 'end');
-    let y=m+u*0.05;
-    const head=fitHead(c.title, headW, H*0.22, u*0.056, u*0.032, 0.52, 1.0);
-    s+=tblock(head.lines, tx, y, head.fs, head.lh, BRAND.navy, 900, 'start', -0.02, 'title', headW);
-    y+=head.lines.length*head.fs*head.lh+u*0.02;
-    s+=`<rect x="${tx}" y="${y.toFixed(0)}" width="${u*0.12}" height="${Math.max(4,u*0.007)}" rx="2" fill="${acc}"/>`;
-    y+=u*0.045;
-    const lines=(c.body||'').split(/\n/).map(t=>t.trim()).filter(Boolean).slice(0,6);
-    let by=y;
-    lines.forEach((ln,i)=>{ const bl=bodyLines(ln, tw, u*0.028, u*0.11, 1.3); s+=tblock(bl, tx, by, u*0.028, 1.35, mix(BRAND.navy,'#ffffff',0.08), 500,'start',0,'body#'+i); by+=bl.length*u*0.028*1.35+u*0.02; });
-    if(interactive && c.image && selectedPhoto==='image') s+=photoControlSVG('image',0,0,imgW,H,c);
-    // draggable split handle — preview only, never exported. Snaps to designed ratios.
-    if(interactive){
-      const hx=imgW, dragging=(typeof splitDrag!=='undefined' && splitDrag);
-      // while dragging, show the snap stops as faint guides so the "steps" are visible
-      if(dragging){ SPLIT_STOPS.forEach(st=>{ const gx=Math.round(W*st); s+=`<line x1="${gx}" y1="0" x2="${gx}" y2="${H}" stroke="${BRAND.navy}" stroke-opacity="0.13" stroke-width="2" stroke-dasharray="7 11"/>`; }); }
-      s+=`<g data-split="1" style="cursor:ew-resize">`+
-        `<rect x="${(hx-18).toFixed(0)}" y="0" width="36" height="${H}" fill="transparent"/>`+
-        `<rect x="${(hx-1).toFixed(0)}" y="0" width="2" height="${H}" fill="#ffffff" fill-opacity="0.6"/>`+
-        `<g transform="translate(${hx},${(H/2).toFixed(0)})">`+
-          // glassy translucent pill so it reads as a control, not part of the design
-          `<rect x="-11" y="-30" width="22" height="60" rx="11" fill="#ffffff" fill-opacity="0.66" stroke="${BRAND.navy}" stroke-opacity="0.5" stroke-width="1.6"/>`+
-          `<line x1="-3.5" y1="-11" x2="-3.5" y2="11" stroke="${BRAND.navy}" stroke-opacity="0.85" stroke-width="2.2" stroke-linecap="round"/>`+
-          `<line x1="3.5" y1="-11" x2="3.5" y2="11" stroke="${BRAND.navy}" stroke-opacity="0.85" stroke-width="2.2" stroke-linecap="round"/>`+
-        `</g>`+
-        // ratio readout while dragging — makes it read as a deliberate ratio, not a freehand drag
-        (dragging?(()=>{ const ip=Math.round(split*100), lbl=`${ip} / ${100-ip}`, lw=u*0.13, ly=H*0.5-u*0.085;
-          return `<g transform="translate(${hx},${ly.toFixed(0)})" text-anchor="middle">`+
-            `<rect x="${(-lw/2).toFixed(0)}" y="${(-u*0.022).toFixed(0)}" width="${lw.toFixed(0)}" height="${(u*0.044).toFixed(0)}" rx="${(u*0.022).toFixed(0)}" fill="${BRAND.navy}"/>`+
-            `<text y="${(u*0.011).toFixed(0)}" font-size="${u*0.024}" fill="#ffffff" font-weight="900" letter-spacing="0.5">${lbl}</text></g>`; })():'')+
-        `</g>`;
-    }
-    return s;
-  }
+  render(c,S,uid,interactive){ return imageTextSide(c,S,uid,interactive,'left'); }
+},
+{
+  id:'imageright', name:'Image right', hidden:true,
+  fields:[['image','Image','','image'],['title','Title','Slide title'],['body','Text (one point per line)','Explain what the image shows.\nAdd a supporting line.']],
+  render(c,S,uid,interactive){ return imageTextSide(c,S,uid,interactive,'right'); }
+},
+{
+  id:'imagecaption', name:'Image + caption', hidden:true,
+  fields:[['image','Image','','image'],['title','Title','Slide title'],['body','Caption (one line or two)','A short caption under the photo.']],
+  render(c,S,uid,interactive){ return imageCaptionRender(c,S,uid,interactive); }
 },
 {
   id:'screenshot', name:'Screenshot',
@@ -1018,15 +1054,11 @@ function findGraphicById(id){ return slideGraphics(deck[cur]).find(g=>g.id===id)
 let selectedPhoto=null;
 // inline fit/focal control drawn over a selected photo. interactive-only; never exported.
 function photoControlSVG(key,x,y,w,h,c){
-  const fit=(c.fit||'cover'), cover=fit!=='contain';
+  const cover=(c.fit||'cover')!=='contain';
   const fx=c.focusX==null?0.5:+c.focusX, fy=c.focusY==null?0.5:+c.focusY;
-  const pad=Math.round(u*0.03), bh=Math.round(u*0.05), bw=Math.round(u*0.115);
-  const bx=x+pad, by=y+pad;
-  const seg=(label,val,active,ox)=>`<g data-fit="${val}" style="cursor:pointer">`+
-    `<rect x="${ox}" y="${by}" width="${bw}" height="${bh}" rx="${(bh/2).toFixed(0)}" fill="${active?BRAND.navy:'#ffffff'}" stroke="${BRAND.navy}" stroke-width="1.5" ${active?'':'fill-opacity="0.92"'}/>`+
-    `<text x="${ox+bw/2}" y="${by+bh*0.66}" font-size="${(u*0.024).toFixed(1)}" font-weight="800" text-anchor="middle" fill="${active?'#ffffff':BRAND.navy}">${label}</text></g>`;
+  // selection outline on the photo
   let s=`<rect x="${(x+1).toFixed(1)}" y="${(y+1).toFixed(1)}" width="${(w-2).toFixed(1)}" height="${(h-2).toFixed(1)}" fill="none" stroke="${BRAND.navy}" stroke-width="2.5" opacity="0.85"/>`;
-  s+=seg('Cover','cover',cover,bx)+seg('Fit','contain',!cover,bx+bw+Math.round(u*0.012));
+  // focal dot (cover only)
   if(cover){
     const dx=x+fx*w, dy=y+fy*h, r=Math.round(u*0.026);
     s+=`<g data-focal="${esc(key)}" style="cursor:grab">`+
@@ -1034,11 +1066,35 @@ function photoControlSVG(key,x,y,w,h,c){
       `<circle cx="${dx.toFixed(1)}" cy="${dy.toFixed(1)}" r="${r}" fill="#ffffff" stroke="${BRAND.navy}" stroke-width="2.5"/>`+
       `<circle cx="${dx.toFixed(1)}" cy="${dy.toFixed(1)}" r="2.5" fill="${BRAND.navy}"/></g>`;
   }
+  // unified top toolbar: arrangement + fit (the "Apple/Notion" bar)
+  s+=imageToolbarSVG(c);
+  return s;
+}
+// one cohesive control bar at the top of the slide: choose arrangement, then Cover/Fit
+function imageToolbarSVG(c){
+  const arr=[['Left','imagetext'],['Right','imageright'],['Caption','imagecaption'],['Full','image']];
+  const fits=[['Cover','cover'],['Fit','contain']];
+  const segW=Math.round(u*0.11), segH=Math.round(u*0.05), grpGap=Math.round(u*0.035);
+  const totalW=arr.length*segW+grpGap+fits.length*segW;
+  const bx=Math.round(W/2-totalW/2), by=Math.round(u*0.035);
+  const curFit=(c.fit||'cover');
+  const seg=(label,attr,val,active,ox)=>`<g ${attr}="${val}" style="cursor:pointer">`+
+    `<rect x="${ox}" y="${by}" width="${segW}" height="${segH}" rx="${(segH/2)}" fill="${active?BRAND.navy:'transparent'}"/>`+
+    `<text x="${ox+segW/2}" y="${by+segH*0.66}" font-size="${(u*0.022).toFixed(1)}" font-weight="800" text-anchor="middle" fill="${active?'#ffffff':BRAND.navy}">${label}</text></g>`;
+  let s=`<rect x="${bx-9}" y="${by-7}" width="${totalW+18}" height="${segH+14}" rx="${(segH/2+7)}" fill="#ffffff" fill-opacity="0.95" stroke="${BRAND.navy}" stroke-opacity="0.14" stroke-width="1.5"/>`;
+  // faint divider between the two groups
+  s+=`<line x1="${bx+arr.length*segW+grpGap/2}" y1="${by+segH*0.18}" x2="${bx+arr.length*segW+grpGap/2}" y2="${by+segH*0.82}" stroke="${BRAND.navy}" stroke-opacity="0.18" stroke-width="1.5"/>`;
+  let ox=bx;
+  arr.forEach(([lb,id])=>{ s+=seg(lb,'data-arrange',id, c.layout===id, ox); ox+=segW; });
+  ox+=grpGap;
+  fits.forEach(([lb,v])=>{ s+=seg(lb,'data-fit',v, (v==='contain'?curFit==='contain':curFit!=='contain'), ox); ox+=segW; });
   return s;
 }
 function photoRect(){
   const c=deck[cur];
-  if(c.layout==='imagetext'){ const split=Math.min(2/3,Math.max(1/3,+c.split||0.5)); return {x:0,y:0,w:Math.round(W*split),h:H}; }
+  if(c.layout==='imagetext'){ const sp=Math.min(2/3,Math.max(1/3,+c.split||0.5)); return {x:0,y:0,w:Math.round(W*sp),h:H}; }
+  if(c.layout==='imageright'){ const sp=Math.min(2/3,Math.max(1/3,+c.split||0.5)); const iw=Math.round(W*sp); return {x:W-iw,y:0,w:iw,h:H}; }
+  if(c.layout==='imagecaption'){ return {x:0,y:0,w:W,h:Math.round(H*CAPTION_BAND)}; }
   return {x:0,y:0,w:W,h:H};
 }
 function graphicsSVG(slide,interactive=false){
@@ -1168,7 +1224,7 @@ function renderPreview(){
 function renderEditor(){
   const e=document.getElementById('editor'); const sl=deck[cur]; const L=LAYOUT_BY[sl.layout];
   let h=`<h2>Layout</h2><div class="layoutGrid">`;
-  LAYOUTS.forEach(l=>{ h+=`<button class="${l.id===sl.layout?'on':''}" data-l="${l.id}">${l.name}</button>`; });
+  LAYOUTS.forEach(l=>{ if(l.hidden) return; h+=`<button class="${l.id===sl.layout?'on':''}" data-l="${l.id}">${l.name}</button>`; });
   h+=`</div><h2>Content</h2>`;
   L.fields.forEach((f)=>{
     const [key,label,ph]=f;
@@ -1670,6 +1726,9 @@ function cycleLogo(){
 const previewEl=document.getElementById('preview');
 previewEl.addEventListener('click',e=>{
   if(e.target.closest('[data-edit-logo]')){ closeEditor(true); hideHL(); hideLogoTip(); cycleLogo(); return; }
+  // arrangement toolbar on a selected photo (Left / Right / Caption / Full) — swap layout, keep content
+  const ar=e.target.closest('[data-arrange]');
+  if(ar){ deck[cur].layout=ar.dataset.arrange; selectedPhoto='image'; renderPreview(); renderRailThumb(cur); renderEditor(); saveDraftSoon(); commitHistorySoon(); return; }
   // fit toggle on a selected photo (Cover / Fit)
   const ft=e.target.closest('[data-fit]');
   if(ft){ deck[cur].fit=ft.dataset.fit; renderPreview(); renderRailThumb(cur); saveDraftSoon(); commitHistorySoon(); return; }
@@ -1712,7 +1771,9 @@ previewEl.addEventListener('pointerdown',e=>{
 window.addEventListener('pointermove',e=>{
   if(!splitDrag) return;
   const r=previewEl.getBoundingClientRect();
-  const frac=snapSplit((e.clientX-r.left)/r.width);
+  let f=(e.clientX-r.left)/r.width;
+  if(deck[cur].layout==='imageright') f=1-f;   // divider mirrored: dragging it sets the right photo's width
+  const frac=snapSplit(f);
   if(deck[cur].split!==frac){ deck[cur].split=frac; renderPreview(); }
 });
 window.addEventListener('pointerup',()=>{ if(splitDrag){ splitDrag=false; previewEl.classList.remove('splitting'); document.body.style.cursor=''; renderRailThumb(cur); } });
@@ -1720,7 +1781,8 @@ window.addEventListener('pointerup',()=>{ if(splitDrag){ splitDrag=false; previe
 previewEl.addEventListener('dragover',e=>{ if(!dtHasFiles(e)) return; e.preventDefault(); e.dataTransfer.dropEffect='copy'; previewEl.classList.add('drop'); });
 previewEl.addEventListener('dragleave',e=>{ if(e.target===previewEl||!previewEl.contains(e.relatedTarget)) previewEl.classList.remove('drop'); });
 previewEl.addEventListener('drop',e=>{ if(!dtHasFiles(e)) return; const slot=e.target.closest('[data-imgslot]'); let key=(slot&&slot.dataset.imgslot)||currentImageKey();
-  if(!key){ deck[cur].layout='imagetext'; key='image'; }   // dropped on a text slide: become Image + text, keep title/body
+  if(!key){ const hasText=!!(deck[cur].title||deck[cur].body); deck[cur].layout=hasText?'imagetext':'image'; key='image'; }   // dropped on a slide with no photo: text -> Image+text (Left), else full-bleed
+  if(key==='image' && ['imagetext','imageright','imagecaption','image'].includes(deck[cur].layout)) selectedPhoto='image';   // show the arrangement/fit bar right away
   e.preventDefault(); previewEl.classList.remove('drop'); dropImageFile(e,key); });
 // ----- graphics direct manipulation (select / move / corner-resize). Preview only; never exported. -----
 let gDrag=null;
@@ -1754,7 +1816,7 @@ previewEl.addEventListener('pointerdown',ev=>{
     ev.preventDefault(); return;
   }
   // clicked empty area: deselect, but let text/image/split handlers run untouched
-  if(ev.target.closest('[data-edit],[data-imgslot],[data-split],[data-add-graphic],[data-fit]')) return;
+  if(ev.target.closest('[data-edit],[data-imgslot],[data-split],[data-add-graphic],[data-fit],[data-arrange]')) return;
   if(selectedGraphicId!==null||selectedPhoto!==null){ selectedGraphicId=null; selectedPhoto=null; renderPreview(); renderEditor(); }
 });
 previewEl.addEventListener('pointermove',ev=>{
