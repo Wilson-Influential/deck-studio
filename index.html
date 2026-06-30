@@ -215,6 +215,21 @@
     .pslide{width:100%;height:100vh;page-break-after:always;overflow:hidden}
     .pslide svg{display:block;width:100%;height:100%}
   }
+  .paletteScrim{position:fixed;inset:0;background:rgba(32,23,71,.22);z-index:90;display:none}
+  .paletteScrim.on{display:block}
+  .palette{position:fixed;z-index:91;top:14vh;left:50%;transform:translateX(-50%);width:min(540px,92vw);
+    background:#fff;border:1.5px solid var(--line);border-radius:14px;box-shadow:0 24px 70px rgba(32,23,71,.28);
+    overflow:hidden;display:none;font-family:inherit}
+  .palette.on{display:block}
+  .palette input{width:100%;border:0;border-bottom:1.5px solid var(--line);padding:15px 16px;font:inherit;
+    font-size:15px;color:var(--navy);outline:none}
+  .paletteList{max-height:340px;overflow-y:auto;padding:6px}
+  .paletteItem{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;cursor:pointer}
+  .paletteItem.sel{background:var(--soft)}
+  .paletteItem .lab{font-size:13.5px;font-weight:800;color:var(--navy)}
+  .paletteItem .hint{margin-left:auto;font-size:11px;font-weight:900;color:var(--charcoal);
+    border:1.5px solid var(--line);border-radius:6px;padding:2px 7px}
+  .paletteEmpty{padding:18px;text-align:center;color:var(--charcoal);font-size:13px}
 </style>
 </head>
 <body>
@@ -252,6 +267,12 @@
 <div class="printRoot" id="printRoot"></div>
 <section class="homeView" id="homeView" aria-label="Deck library"></section>
 <aside class="sidePanel" id="versionPanel" aria-label="Version history"></aside>
+
+<div id="paletteScrim" class="paletteScrim"></div>
+<div id="palette" class="palette" role="dialog" aria-label="Command palette">
+  <input id="paletteInput" placeholder="Type a command…" autocomplete="off" spellcheck="false">
+  <div id="paletteList" class="paletteList"></div>
+</div>
 
 <script src="vendor/pptxgen.bundle.js"></script>
 <script>
@@ -1481,6 +1502,46 @@ document.addEventListener('keydown',e=>{
   if(e.key==='ArrowUp'||e.key==='ArrowLeft'){ gotoSlide(cur-1); return; }
   if(k==='n'){ addSlideAfter(cur); return; }
   if(e.key==='Backspace'||e.key==='Delete'){ deleteSlide(cur); return; }
+});
+
+/* ===== command palette ===== */
+let palSel=0, palFiltered=[];
+function openPalette(){
+  document.getElementById('paletteScrim').classList.add('on');
+  document.getElementById('palette').classList.add('on');
+  const inp=document.getElementById('paletteInput');
+  inp.value=''; palSel=0; renderPalette(''); setTimeout(()=>inp.focus(),0);
+}
+function closePalette(){
+  document.getElementById('paletteScrim').classList.remove('on');
+  document.getElementById('palette').classList.remove('on');
+}
+function renderPalette(q){
+  q=(q||'').toLowerCase().trim();
+  palFiltered = q ? ACTIONS.filter(a=>a.label.toLowerCase().includes(q)) : ACTIONS.slice();
+  if(palSel>=palFiltered.length) palSel=Math.max(0,palFiltered.length-1);
+  const list=document.getElementById('paletteList');
+  if(!palFiltered.length){ list.innerHTML='<div class="paletteEmpty">No command found.</div>'; return; }
+  list.innerHTML=palFiltered.map((a,i)=>
+    `<div class="paletteItem${i===palSel?' sel':''}" data-i="${i}">
+       <span class="lab">${a.label}</span>${a.hint?`<span class="hint">${a.hint}</span>`:''}
+     </div>`).join('');
+  list.querySelectorAll('.paletteItem').forEach(el=>{
+    el.onmouseenter=()=>{ palSel=+el.dataset.i; highlightPalette(); };
+    el.onclick=()=>runPalette(+el.dataset.i);
+  });
+}
+function highlightPalette(){
+  document.querySelectorAll('#paletteList .paletteItem').forEach(el=>el.classList.toggle('sel',+el.dataset.i===palSel));
+}
+function runPalette(i){ const a=palFiltered[i]; if(!a) return; closePalette(); a.run(); }
+document.getElementById('paletteScrim').onclick=closePalette;
+document.getElementById('paletteInput').addEventListener('input',e=>{ palSel=0; renderPalette(e.target.value); });
+document.getElementById('paletteInput').addEventListener('keydown',e=>{
+  if(e.key==='ArrowDown'){ e.preventDefault(); palSel=Math.min(palFiltered.length-1,palSel+1); highlightPalette(); }
+  else if(e.key==='ArrowUp'){ e.preventDefault(); palSel=Math.max(0,palSel-1); highlightPalette(); }
+  else if(e.key==='Enter'){ e.preventDefault(); runPalette(palSel); }
+  else if(e.key==='Escape'){ e.preventDefault(); closePalette(); }
 });
 
 /* ===== inline editor overlay ===== */
