@@ -129,6 +129,7 @@
 
   .graphicList{display:grid;gap:8px;margin-bottom:12px}
   .graphicRow{border:1.5px solid var(--line);border-radius:10px;background:var(--soft);padding:8px}
+  .graphicRow.sel{border-color:var(--navy);box-shadow:0 0 0 1.5px var(--navy)}
   .graphicTop{display:flex;align-items:center;gap:8px;margin-bottom:8px}
   .graphicTop img{width:38px;height:30px;object-fit:contain;background:#fff;border:1px solid var(--line);border-radius:7px;padding:4px}
   .graphicTop b{flex:1;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -993,20 +994,35 @@ function buildSVG(slide, interactive=false, sectorOverride=null){
 }
 
 function slideGraphics(slide){ return Array.isArray(slide.graphics) ? slide.graphics : []; }
+let selectedGraphicId=null;
+function graphicRect(g){
+  const gw=Math.max(24, Math.min(W, (+g.w||0.18)*W));
+  const ar=Math.max(0.1, Math.min(8, +g.ar||1));
+  const gh=gw/ar;
+  const x=Math.max(0, Math.min(W-gw, (+g.x||0.08)*W));
+  const y=Math.max(0, Math.min(H-gh, (+g.y||0.08)*H));
+  return {x,y,gw,gh};
+}
+function findGraphicById(id){ return slideGraphics(deck[cur]).find(g=>g.id===id); }
 function graphicsSVG(slide,interactive=false){
   const items=slideGraphics(slide);
   if(!items.length) return '';
   return items.map(g=>{
-    const gw=Math.max(24, Math.min(W, (+g.w||0.18)*W));
-    const ar=Math.max(0.1, Math.min(8, +g.ar||1));
-    const gh=gw/ar;
-    const x=Math.max(0, Math.min(W-gw, (+g.x||0.08)*W));
-    const y=Math.max(0, Math.min(H-gh, (+g.y||0.08)*H));
-    const rot=+g.rot||0;
-    return `<g transform="rotate(${rot.toFixed(1)} ${(x+gw/2).toFixed(1)} ${(y+gh/2).toFixed(1)})">`+
-      `<image href="${g.src}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${gw.toFixed(1)}" height="${gh.toFixed(1)}" preserveAspectRatio="xMidYMid meet"/>`+
-      (interactive?`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${gw.toFixed(1)}" height="${gh.toFixed(1)}" fill="none" stroke="${BRAND.navy}" stroke-width="1.5" stroke-dasharray="5 5" opacity="0.35"/>`:'')+
-      `</g>`;
+    const {x,y,gw,gh}=graphicRect(g);
+    const rot=+g.rot||0, cx=x+gw/2, cy=y+gh/2;
+    const sel=interactive && g.id && g.id===selectedGraphicId;
+    let out=`<g transform="rotate(${rot.toFixed(1)} ${cx.toFixed(1)} ${cy.toFixed(1)})">`+
+      `<image ${interactive?`data-graphic-img="${esc(g.id||'')}" style="cursor:move"`:''} href="${g.src}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${gw.toFixed(1)}" height="${gh.toFixed(1)}" preserveAspectRatio="xMidYMid meet"/>`;
+    if(interactive){
+      if(sel){
+        out+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${gw.toFixed(1)}" height="${gh.toFixed(1)}" fill="none" stroke="${BRAND.navy}" stroke-width="2.5" opacity="0.9"/>`+
+          `<rect data-graphic-handle="${esc(g.id||'')}" x="${(x+gw-9).toFixed(1)}" y="${(y+gh-9).toFixed(1)}" width="18" height="18" rx="3" fill="#ffffff" stroke="${BRAND.navy}" stroke-width="2.5" style="cursor:nwse-resize"/>`;
+      } else {
+        out+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${gw.toFixed(1)}" height="${gh.toFixed(1)}" fill="none" stroke="${BRAND.navy}" stroke-width="1.5" stroke-dasharray="5 5" opacity="0.35"/>`;
+      }
+    }
+    out+=`</g>`;
+    return out;
   }).join('');
 }
 
@@ -1146,10 +1162,9 @@ function renderEditor(){
     else { delete sl[key]; renderAll(); }
   });
   e.querySelector('[data-add-graphic]')?.addEventListener('click',()=>openLibrary('__graphic'));
-  e.querySelectorAll('[data-graphic-range]').forEach(inp=>inp.addEventListener('input',()=>{
-    const g=slideGraphics(sl)[+inp.dataset.graphicIndex]; if(!g) return;
-    g[inp.dataset.graphicRange]=+inp.value;
-    renderPreview(); renderRailThumb(cur); saveDraftSoon(); commitHistorySoon();
+  e.querySelectorAll('[data-graphic-select]').forEach(row=>row.addEventListener('click',ev=>{
+    if(ev.target.closest('[data-graphic-remove]')) return;
+    selectedGraphicId=row.dataset.graphicSelect||null; renderPreview(); renderEditor();
   }));
   e.querySelectorAll('[data-graphic-remove]').forEach(btn=>btn.onclick=()=>{
     sl.graphics=slideGraphics(sl).filter((_,i)=>i!==+btn.dataset.graphicRemove);
@@ -1174,15 +1189,11 @@ function graphicsEditorHTML(sl){
   if(graphics.length){
     h+=`<div class="graphicList">`;
     graphics.forEach((g,i)=>{
-      h+=`<div class="graphicRow">
+      h+=`<div class="graphicRow${g.id===selectedGraphicId?' sel':''}" data-graphic-select="${esc(g.id||'')}">
         <div class="graphicTop"><img src="${g.src}" alt=""><b>${esc(g.name||'Graphic')}</b><button data-graphic-remove="${i}">Remove</button></div>
-        <div class="graphicCtrls">
-          <label>X <input type="range" min="0" max="0.92" step="0.01" value="${Math.max(0,Math.min(0.92,+g.x||0))}" data-graphic-index="${i}" data-graphic-range="x"></label>
-          <label>Y <input type="range" min="0" max="0.9" step="0.01" value="${Math.max(0,Math.min(0.9,+g.y||0))}" data-graphic-index="${i}" data-graphic-range="y"></label>
-          <label>Size <input type="range" min="0.04" max="0.55" step="0.01" value="${Math.max(0.04,Math.min(0.55,+g.w||0.18))}" data-graphic-index="${i}" data-graphic-range="w"></label>
-        </div>
       </div>`;
     });
+    h+=`<div class="hint" style="margin:6px 0 10px">Click a graphic on the slide to select it, drag to move, and drag the corner to resize.</div>`;
     h+=`</div>`;
   } else {
     h+=`<div class="hint" style="margin:-4px 0 10px">Add arrows, scribbles, marks or cut-out illustrations without changing the slide photo.</div>`;
@@ -1662,6 +1673,51 @@ window.addEventListener('pointerup',()=>{ if(splitDrag){ splitDrag=false; previe
 previewEl.addEventListener('dragover',e=>{ if(!dtHasFiles(e)||!currentImageKey()) return; e.preventDefault(); e.dataTransfer.dropEffect='copy'; previewEl.classList.add('drop'); });
 previewEl.addEventListener('dragleave',e=>{ if(e.target===previewEl||!previewEl.contains(e.relatedTarget)) previewEl.classList.remove('drop'); });
 previewEl.addEventListener('drop',e=>{ if(!dtHasFiles(e)) return; const slot=e.target.closest('[data-imgslot]'); const key=(slot&&slot.dataset.imgslot)||currentImageKey(); if(!key) return; e.preventDefault(); previewEl.classList.remove('drop'); dropImageFile(e,key); });
+// ----- graphics direct manipulation (select / move / corner-resize). Preview only; never exported. -----
+let gDrag=null;
+function slidePoint(ev){
+  const svg=previewEl.querySelector('svg'); if(!svg) return null;
+  const r=svg.getBoundingClientRect();
+  return { x:(ev.clientX-r.left)/r.width*W, y:(ev.clientY-r.top)/r.height*H };
+}
+previewEl.addEventListener('pointerdown',ev=>{
+  const handle=ev.target.closest('[data-graphic-handle]');
+  const img=ev.target.closest('[data-graphic-img]');
+  if(handle){
+    selectedGraphicId=handle.dataset.graphicHandle||null;
+    gDrag={mode:'resize',id:selectedGraphicId};
+    try{ previewEl.setPointerCapture(ev.pointerId); }catch(e){}
+    ev.preventDefault(); return;
+  }
+  if(img){
+    selectedGraphicId=img.dataset.graphicImg||null;
+    const g=findGraphicById(selectedGraphicId); if(!g) return;
+    const {x,y}=graphicRect(g), p=slidePoint(ev); if(!p) return;
+    gDrag={mode:'move',id:selectedGraphicId,offX:p.x-x,offY:p.y-y};
+    renderPreview(); renderEditor();
+    try{ previewEl.setPointerCapture(ev.pointerId); }catch(e){}
+    ev.preventDefault(); return;
+  }
+  // clicked empty area: deselect, but let text/image/split handlers run untouched
+  if(ev.target.closest('[data-edit],[data-imgslot],[data-split],[data-add-graphic]')) return;
+  if(selectedGraphicId!==null){ selectedGraphicId=null; renderPreview(); renderEditor(); }
+});
+previewEl.addEventListener('pointermove',ev=>{
+  if(!gDrag) return;
+  const g=findGraphicById(gDrag.id); if(!g){ gDrag=null; return; }
+  const p=slidePoint(ev); if(!p) return;
+  if(gDrag.mode==='move'){
+    g.x=Math.max(0, Math.min(0.999, (p.x-gDrag.offX)/W));
+    g.y=Math.max(0, Math.min(0.999, (p.y-gDrag.offY)/H));
+  } else {
+    const {x}=graphicRect(g);
+    g.w=Math.max(0.04, Math.min(0.55, (p.x-x)/W));
+  }
+  renderPreview();
+});
+function endGraphicDrag(){ if(gDrag){ gDrag=null; renderRailThumb(cur); saveDraftSoon(); commitHistorySoon(); } }
+previewEl.addEventListener('pointerup',endGraphicDrag);
+previewEl.addEventListener('pointercancel',endGraphicDrag);
 window.addEventListener('scroll',e=>{ if(e.target===editBox) return; closeEditor(true); },true);
 window.addEventListener('resize',()=>closeEditor(true));
 
