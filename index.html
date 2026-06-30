@@ -230,6 +230,27 @@
   .paletteItem .hint{margin-left:auto;font-size:11px;font-weight:900;color:var(--charcoal);
     border:1.5px solid var(--line);border-radius:6px;padding:2px 7px}
   .paletteEmpty{padding:18px;text-align:center;color:var(--charcoal);font-size:13px}
+  .layoutTrigger{display:flex;align-items:center;justify-content:space-between;width:100%;
+    border:1.5px solid var(--line);border-radius:10px;background:var(--soft);color:var(--navy);
+    font:inherit;font-weight:900;font-size:13px;padding:11px 13px;cursor:pointer;transition:.12s}
+  .layoutTrigger:hover{border-color:#cfc9e0}
+  .layoutTrigger .chg{color:var(--charcoal);font-size:12px}
+  .layoutChooser{position:fixed;z-index:91;top:9vh;left:50%;transform:translateX(-50%);width:min(760px,94vw);
+    max-height:82vh;background:#fff;border:1.5px solid var(--line);border-radius:16px;
+    box-shadow:0 24px 70px rgba(32,23,71,.28);overflow:hidden;display:none;flex-direction:column}
+  .layoutChooser.on{display:flex}
+  .lcHead{display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1.5px solid var(--line)}
+  .lcHead b{font-size:15px;color:var(--navy)}
+  .lcHead input{flex:1;border:1.5px solid var(--line);border-radius:9px;padding:8px 11px;font:inherit;font-size:13px;color:var(--navy);outline:none}
+  .lcBody{overflow-y:auto;padding:14px 16px}
+  .lcGroup{font-size:11px;font-weight:900;letter-spacing:.09em;text-transform:uppercase;color:var(--charcoal);margin:12px 2px 8px}
+  .lcGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .lcCard{border:1.5px solid var(--line);border-radius:11px;overflow:hidden;cursor:pointer;background:#fff;transition:.12s}
+  .lcCard:hover{border-color:#cfc9e0;transform:translateY(-2px)}
+  .lcCard.on{border-color:var(--navy);box-shadow:0 0 0 2px var(--navy)}
+  .lcCard .thumb{aspect-ratio:16/9;background:var(--soft);display:block}
+  .lcCard .thumb svg{width:100%;height:100%;display:block}
+  .lcCard .nm{padding:7px 10px;font-size:12px;font-weight:900;color:var(--navy)}
 </style>
 </head>
 <body>
@@ -272,6 +293,12 @@
 <div id="palette" class="palette" role="dialog" aria-label="Command palette">
   <input id="paletteInput" placeholder="Type a command…" autocomplete="off" spellcheck="false">
   <div id="paletteList" class="paletteList"></div>
+</div>
+
+<div id="chooserScrim" class="paletteScrim"></div>
+<div id="layoutChooser" class="layoutChooser" role="dialog" aria-label="Choose a layout">
+  <div class="lcHead"><b>Choose a layout</b><input id="lcSearch" placeholder="Search by name…" autocomplete="off"></div>
+  <div id="lcBody" class="lcBody"></div>
 </div>
 
 <script src="vendor/pptxgen.bundle.js"></script>
@@ -760,6 +787,12 @@ const LAYOUTS = [
 }
 ];
 const LAYOUT_BY = Object.fromEntries(LAYOUTS.map(l=>[l.id,l]));
+const LAYOUT_GROUPS = [
+  {name:'Open',          ids:['cover','section','agenda']},
+  {name:'Make the case', ids:['bullets','statement','stat','chart','comparison','columns','quote','table']},
+  {name:'Show',          ids:['image','imagetext','screenshot','twoup']},
+  {name:'Close',         ids:['closing']},
+];
 
 /* ===== state: a starter deck ===== */
 let UID=0;
@@ -1007,6 +1040,11 @@ function buildSVG(slide, interactive=false){
   inner+=graphicsSVG(slide, interactive);
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}"><style>text{font-family:'Effra Trial','Effra',system-ui,'Segoe UI',sans-serif;}</style>${inner}</svg>`;
 }
+function layoutPreviewSVG(layoutId){
+  const clone=JSON.parse(JSON.stringify(deck[cur]));
+  clone.layout=layoutId;
+  return buildSVG(clone); // returns a full <svg ...> string at native size; CSS scales it down
+}
 
 function slideGraphics(slide){ return Array.isArray(slide.graphics) ? slide.graphics : []; }
 function graphicsSVG(slide,interactive=false){
@@ -1142,9 +1180,11 @@ function renderPreview(){
 }
 function renderEditor(){
   const e=document.getElementById('editor'); const sl=deck[cur]; const L=LAYOUT_BY[sl.layout];
-  let h=`<h2>Layout</h2><div class="layoutGrid">`;
-  LAYOUTS.forEach(l=>{ h+=`<button class="${l.id===sl.layout?'on':''}" data-l="${l.id}">${l.name}</button>`; });
-  h+=`</div><h2>Content</h2>`;
+  let h=`<h2>Layout</h2>
+    <button id="layoutTrigger" class="layoutTrigger">
+      <span class="cur">${L.name}</span><span class="chg">Change ›</span>
+    </button>
+    <h2>Content</h2>`;
   L.fields.forEach((f)=>{
     const [key,label,ph]=f;
     if(f[3]==='image'){ h+=imageFieldHTML(key,label,sl); return; }
@@ -1164,7 +1204,7 @@ function renderEditor(){
     `<textarea rows="4" data-notes placeholder="Talking points, sources, or handover notes. These export into PowerPoint notes.">${esc(sl.notes||'')}</textarea></div>`;
   h+=`<h2>Deck colour</h2><div class="sectors" id="secs"></div>`;
   e.innerHTML=h;
-  e.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>{ sl.layout=b.dataset.l; renderAll(); });
+  e.querySelector('#layoutTrigger')?.addEventListener('click',openLayoutChooser);
   e.querySelectorAll('[data-logo]').forEach(b=>b.onclick=()=>{ sl.logo=b.dataset.logo; renderAll(); });
   e.querySelectorAll('[data-imgact]').forEach(b=>b.onclick=()=>{
     const key=b.closest('[data-imgk]').dataset.imgk;
@@ -1543,6 +1583,44 @@ document.getElementById('paletteInput').addEventListener('keydown',e=>{
   else if(e.key==='Enter'){ e.preventDefault(); runPalette(palSel); }
   else if(e.key==='Escape'){ e.preventDefault(); closePalette(); }
 });
+
+/* ===== layout chooser ===== */
+function openLayoutChooser(){
+  document.getElementById('chooserScrim').classList.add('on');
+  const box=document.getElementById('layoutChooser'); box.classList.add('on');
+  document.getElementById('lcSearch').value=''; renderChooser('');
+  setTimeout(()=>document.getElementById('lcSearch').focus(),0);
+}
+function closeLayoutChooser(){
+  document.getElementById('chooserScrim').classList.remove('on');
+  document.getElementById('layoutChooser').classList.remove('on');
+}
+function renderChooser(q){
+  q=(q||'').toLowerCase().trim();
+  const cur_l=deck[cur].layout; let h='';
+  LAYOUT_GROUPS.forEach(g=>{
+    const items=g.ids
+      .map(id=>LAYOUT_BY[id]).filter(Boolean)
+      .filter(l=>!q || l.name.toLowerCase().includes(q));
+    if(!items.length) return;
+    h+=`<div class="lcGroup">${g.name}</div><div class="lcGrid">`;
+    items.forEach(l=>{
+      h+=`<div class="lcCard${l.id===cur_l?' on':''}" data-pick="${l.id}">
+            <div class="thumb">${layoutPreviewSVG(l.id)}</div>
+            <div class="nm">${l.name}</div>
+          </div>`;
+    });
+    h+=`</div>`;
+  });
+  const body=document.getElementById('lcBody');
+  body.innerHTML = h || '<div class="paletteEmpty">No layout matches that.</div>';
+  body.querySelectorAll('[data-pick]').forEach(el=>el.onclick=()=>{
+    deck[cur].layout=el.dataset.pick; closeLayoutChooser(); renderAll(); saveDraftSoon(); commitHistorySoon();
+  });
+}
+document.getElementById('chooserScrim').onclick=closeLayoutChooser;
+document.getElementById('lcSearch').addEventListener('input',e=>renderChooser(e.target.value));
+document.getElementById('lcSearch').addEventListener('keydown',e=>{ if(e.key==='Escape'){ e.preventDefault(); closeLayoutChooser(); } });
 
 /* ===== inline editor overlay ===== */
 let hlEl=null, editBox=null, editTextEl=null, editKeyCur=null;
