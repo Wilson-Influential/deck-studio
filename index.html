@@ -909,7 +909,8 @@ function renderHome(){
     h+=`<div class="deckGrid">`;
     list.forEach(d=>{
       let payload=null; try{ payload=JSON.parse(localStorage.getItem(DECK_STORE_PREFIX+d.id)||'{}').payload; }catch(e){}
-      const prev=payload&&payload.slides&&payload.slides[0]?buildSVG(payload.slides[0]):'';
+      const prevSector=(payload&&SECTORS.find(s=>s.id===payload.sector))||null;
+      const prev=payload&&payload.slides&&payload.slides[0]?buildSVG(payload.slides[0],false,prevSector):'';
       h+=`<article class="deckCard" data-open="${esc(d.id)}"><div class="mini">${prev}</div><div class="body"><div class="nm">${esc(d.name)}</div><div class="meta">${d.slides||0} slides · ${new Date(d.updatedAt||Date.now()).toLocaleDateString()}</div><div class="actions"><button data-open="${esc(d.id)}">Open</button><button class="danger" data-del="${esc(d.id)}">Delete</button></div></div></article>`;
     });
     h+=`</div>`;
@@ -980,10 +981,10 @@ async function decodeShareFragment(frag){
   throw new Error('unrecognised link');
 }
 
-function buildSVG(slide, interactive=false){
+function buildSVG(slide, interactive=false, sectorOverride=null){
   const L=LAYOUT_BY[slide.layout]; const uid=++UID;
   const idx=deck.indexOf(slide), pageNo=idx>=0?idx+1:cur+1;
-  let inner=L.render(slide, S(), uid, interactive);
+  let inner=L.render(slide, sectorOverride||S(), uid, interactive);
   // page footer for content layouts
   if(['agenda','bullets','columns','comparison','table'].includes(slide.layout)) inner+=footer(pageNo, deck.length, false);
   if(['chart','stat','section','statement','quote'].includes(slide.layout)) inner+=footer(pageNo, deck.length, slide.layout!=='section'? true : (inkOn(S().accent)==='#ffffff'));
