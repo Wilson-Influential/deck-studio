@@ -620,10 +620,10 @@ const LAYOUTS = [
 {
   id:'image', name:'Image',
   fields:[['image','Image','','image'],['kicker','Eyebrow','optional'],['title','Caption','optional caption over the image']],
-  render(c,S,uid){
+  render(c,S,uid,interactive){
     const acc=S.accent, has=!!c.image;
     let s='';
-    if(has){ s+=`<image href="${c.image}" x="0" y="0" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice"/>`; }
+    if(has){ s+=`<rect x="0" y="0" width="${W}" height="${H}" fill="${BRAND.navy}"/><image href="${c.image}" x="0" y="0" width="${W}" height="${H}" preserveAspectRatio="${parMode(c)}"/>`; }
     else { s+=imgPlaceholder(0,0,W,H,acc,'Add an image'); }
     s+=imgSlotHit('image',0,0,W,H);   // click/drop layer, below the caption
     if(has){
@@ -648,6 +648,7 @@ const LAYOUTS = [
       const y=H*0.72;
       s+=skelBar(m, y, u*0.16, u*0.02)+skelBar(m, y+u*0.05, W*0.46, u*0.05)+skelBar(m, y+u*0.12, W*0.3, u*0.05);
     }
+    if(interactive && has && selectedPhoto==='image') s+=photoControlSVG('image',0,0,W,H,c);
     return s;
   }
 },
@@ -657,7 +658,7 @@ const LAYOUTS = [
   render(c,S,uid,interactive){
     const acc=S.accent, split=Math.min(2/3,Math.max(1/3, +c.split||0.5)), imgW=Math.round(W*split);
     let s=`<rect width="${W}" height="${H}" fill="#ffffff"/>`;
-    if(c.image){ s+=`<image href="${c.image}" x="0" y="0" width="${imgW}" height="${H}" preserveAspectRatio="xMidYMid slice"/>`; }
+    if(c.image){ s+=`<rect x="0" y="0" width="${imgW}" height="${H}" fill="${BRAND.navy}"/><image href="${c.image}" x="0" y="0" width="${imgW}" height="${H}" preserveAspectRatio="${parMode(c)}"/>`; }
     else { s+=imgPlaceholder(0,0,imgW,H,acc,'Add an image'); }
     s+=imgSlotHit('image',0,0,imgW,H);   // click/drop the image side
     const tx=imgW+m*0.85, tw=W-tx-m, headW=tw-u*0.2;   // keep the heading clear of the top-right logo
@@ -671,6 +672,7 @@ const LAYOUTS = [
     const lines=(c.body||'').split(/\n/).map(t=>t.trim()).filter(Boolean).slice(0,6);
     let by=y;
     lines.forEach((ln,i)=>{ const bl=bodyLines(ln, tw, u*0.028, u*0.11, 1.3); s+=tblock(bl, tx, by, u*0.028, 1.35, mix(BRAND.navy,'#ffffff',0.08), 500,'start',0,'body#'+i); by+=bl.length*u*0.028*1.35+u*0.02; });
+    if(interactive && c.image && selectedPhoto==='image') s+=photoControlSVG('image',0,0,imgW,H,c);
     // draggable split handle — preview only, never exported. Snaps to designed ratios.
     if(interactive){
       const hx=imgW, dragging=(typeof splitDrag!=='undefined' && splitDrag);
@@ -993,6 +995,14 @@ function buildSVG(slide, interactive=false, sectorOverride=null){
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}"><style>text{font-family:'Effra Trial','Effra',system-ui,'Segoe UI',sans-serif;}</style>${inner}</svg>`;
 }
 
+// photo crop: maps fit + focal point to an SVG preserveAspectRatio string
+function parMode(c){
+  if((c.fit||'cover')==='contain') return 'xMidYMid meet';
+  const fx=c.focusX==null?0.5:+c.focusX, fy=c.focusY==null?0.5:+c.focusY;
+  const ax=fx<0.34?'xMin':fx>0.66?'xMax':'xMid';
+  const ay=fy<0.34?'YMin':fy>0.66?'YMax':'YMid';
+  return ax+ay+' slice';
+}
 function slideGraphics(slide){ return Array.isArray(slide.graphics) ? slide.graphics : []; }
 let selectedGraphicId=null;
 function graphicRect(g){
@@ -1004,6 +1014,33 @@ function graphicRect(g){
   return {x,y,gw,gh};
 }
 function findGraphicById(id){ return slideGraphics(deck[cur]).find(g=>g.id===id); }
+// the selected photo's image-slot key on the current slide (image / imagetext only). Preview-only.
+let selectedPhoto=null;
+// inline fit/focal control drawn over a selected photo. interactive-only; never exported.
+function photoControlSVG(key,x,y,w,h,c){
+  const fit=(c.fit||'cover'), cover=fit!=='contain';
+  const fx=c.focusX==null?0.5:+c.focusX, fy=c.focusY==null?0.5:+c.focusY;
+  const pad=Math.round(u*0.03), bh=Math.round(u*0.05), bw=Math.round(u*0.115);
+  const bx=x+pad, by=y+pad;
+  const seg=(label,val,active,ox)=>`<g data-fit="${val}" style="cursor:pointer">`+
+    `<rect x="${ox}" y="${by}" width="${bw}" height="${bh}" rx="${(bh/2).toFixed(0)}" fill="${active?BRAND.navy:'#ffffff'}" stroke="${BRAND.navy}" stroke-width="1.5" ${active?'':'fill-opacity="0.92"'}/>`+
+    `<text x="${ox+bw/2}" y="${by+bh*0.66}" font-size="${(u*0.024).toFixed(1)}" font-weight="800" text-anchor="middle" fill="${active?'#ffffff':BRAND.navy}">${label}</text></g>`;
+  let s=`<rect x="${(x+1).toFixed(1)}" y="${(y+1).toFixed(1)}" width="${(w-2).toFixed(1)}" height="${(h-2).toFixed(1)}" fill="none" stroke="${BRAND.navy}" stroke-width="2.5" opacity="0.85"/>`;
+  s+=seg('Cover','cover',cover,bx)+seg('Fit','contain',!cover,bx+bw+Math.round(u*0.012));
+  if(cover){
+    const dx=x+fx*w, dy=y+fy*h, r=Math.round(u*0.026);
+    s+=`<g data-focal="${esc(key)}" style="cursor:grab">`+
+      `<circle cx="${dx.toFixed(1)}" cy="${dy.toFixed(1)}" r="${(r+5).toFixed(1)}" fill="${BRAND.navy}" fill-opacity="0.18"/>`+
+      `<circle cx="${dx.toFixed(1)}" cy="${dy.toFixed(1)}" r="${r}" fill="#ffffff" stroke="${BRAND.navy}" stroke-width="2.5"/>`+
+      `<circle cx="${dx.toFixed(1)}" cy="${dy.toFixed(1)}" r="2.5" fill="${BRAND.navy}"/></g>`;
+  }
+  return s;
+}
+function photoRect(){
+  const c=deck[cur];
+  if(c.layout==='imagetext'){ const split=Math.min(2/3,Math.max(1/3,+c.split||0.5)); return {x:0,y:0,w:Math.round(W*split),h:H}; }
+  return {x:0,y:0,w:W,h:H};
+}
 function graphicsSVG(slide,interactive=false){
   const items=slideGraphics(slide);
   if(!items.length) return '';
@@ -1633,11 +1670,21 @@ function cycleLogo(){
 const previewEl=document.getElementById('preview');
 previewEl.addEventListener('click',e=>{
   if(e.target.closest('[data-edit-logo]')){ closeEditor(true); hideHL(); hideLogoTip(); cycleLogo(); return; }
+  // fit toggle on a selected photo (Cover / Fit)
+  const ft=e.target.closest('[data-fit]');
+  if(ft){ deck[cur].fit=ft.dataset.fit; renderPreview(); renderRailThumb(cur); saveDraftSoon(); commitHistorySoon(); return; }
+  if(e.target.closest('[data-focal]')) return;   // focal dot is dragged, not clicked
   const t=e.target.closest('[data-edit]');
   if(t){ hideHL(); openEditor(t); return; }
-  // click an empty (or filled) image slot to upload/replace
   const slot=e.target.closest('[data-imgslot]');
-  if(slot){ hideHL(); closeEditor(true); pickImageFile(slot.dataset.imgslot); }
+  if(slot){
+    const key=slot.dataset.imgslot;
+    // a filled main photo on the single-photo layouts: select it to show the fit/focal control
+    if(deck[cur][key] && key==='image' && (deck[cur].layout==='image'||deck[cur].layout==='imagetext')){
+      selectedGraphicId=null; selectedPhoto='image'; hideHL(); closeEditor(true); renderPreview(); return;
+    }
+    hideHL(); closeEditor(true); pickImageFile(key);   // empty slot (or other layouts): upload/replace
+  }
 });
 // While an editor is open, clicking another editable target must not let the
 // textarea blur first (blur->closeEditor->renderPreview detaches the target
@@ -1670,9 +1717,11 @@ window.addEventListener('pointermove',e=>{
 });
 window.addEventListener('pointerup',()=>{ if(splitDrag){ splitDrag=false; previewEl.classList.remove('splitting'); document.body.style.cursor=''; renderRailThumb(cur); } });
 // drop an image file straight onto the preview (when the layout has an image slot)
-previewEl.addEventListener('dragover',e=>{ if(!dtHasFiles(e)||!currentImageKey()) return; e.preventDefault(); e.dataTransfer.dropEffect='copy'; previewEl.classList.add('drop'); });
+previewEl.addEventListener('dragover',e=>{ if(!dtHasFiles(e)) return; e.preventDefault(); e.dataTransfer.dropEffect='copy'; previewEl.classList.add('drop'); });
 previewEl.addEventListener('dragleave',e=>{ if(e.target===previewEl||!previewEl.contains(e.relatedTarget)) previewEl.classList.remove('drop'); });
-previewEl.addEventListener('drop',e=>{ if(!dtHasFiles(e)) return; const slot=e.target.closest('[data-imgslot]'); const key=(slot&&slot.dataset.imgslot)||currentImageKey(); if(!key) return; e.preventDefault(); previewEl.classList.remove('drop'); dropImageFile(e,key); });
+previewEl.addEventListener('drop',e=>{ if(!dtHasFiles(e)) return; const slot=e.target.closest('[data-imgslot]'); let key=(slot&&slot.dataset.imgslot)||currentImageKey();
+  if(!key){ deck[cur].layout='imagetext'; key='image'; }   // dropped on a text slide: become Image + text, keep title/body
+  e.preventDefault(); previewEl.classList.remove('drop'); dropImageFile(e,key); });
 // ----- graphics direct manipulation (select / move / corner-resize). Preview only; never exported. -----
 let gDrag=null;
 function slidePoint(ev){
@@ -1681,16 +1730,22 @@ function slidePoint(ev){
   return { x:(ev.clientX-r.left)/r.width*W, y:(ev.clientY-r.top)/r.height*H };
 }
 previewEl.addEventListener('pointerdown',ev=>{
+  const focal=ev.target.closest('[data-focal]');
   const handle=ev.target.closest('[data-graphic-handle]');
   const img=ev.target.closest('[data-graphic-img]');
+  if(focal){
+    gDrag={mode:'focal'};
+    try{ previewEl.setPointerCapture(ev.pointerId); }catch(e){}
+    ev.preventDefault(); return;
+  }
   if(handle){
-    selectedGraphicId=handle.dataset.graphicHandle||null;
+    selectedGraphicId=handle.dataset.graphicHandle||null; selectedPhoto=null;
     gDrag={mode:'resize',id:selectedGraphicId};
     try{ previewEl.setPointerCapture(ev.pointerId); }catch(e){}
     ev.preventDefault(); return;
   }
   if(img){
-    selectedGraphicId=img.dataset.graphicImg||null;
+    selectedGraphicId=img.dataset.graphicImg||null; selectedPhoto=null;
     const g=findGraphicById(selectedGraphicId); if(!g) return;
     const {x,y}=graphicRect(g), p=slidePoint(ev); if(!p) return;
     gDrag={mode:'move',id:selectedGraphicId,offX:p.x-x,offY:p.y-y};
@@ -1699,13 +1754,19 @@ previewEl.addEventListener('pointerdown',ev=>{
     ev.preventDefault(); return;
   }
   // clicked empty area: deselect, but let text/image/split handlers run untouched
-  if(ev.target.closest('[data-edit],[data-imgslot],[data-split],[data-add-graphic]')) return;
-  if(selectedGraphicId!==null){ selectedGraphicId=null; renderPreview(); renderEditor(); }
+  if(ev.target.closest('[data-edit],[data-imgslot],[data-split],[data-add-graphic],[data-fit]')) return;
+  if(selectedGraphicId!==null||selectedPhoto!==null){ selectedGraphicId=null; selectedPhoto=null; renderPreview(); renderEditor(); }
 });
 previewEl.addEventListener('pointermove',ev=>{
   if(!gDrag) return;
-  const g=findGraphicById(gDrag.id); if(!g){ gDrag=null; return; }
   const p=slidePoint(ev); if(!p) return;
+  if(gDrag.mode==='focal'){
+    const r=photoRect(), c=deck[cur];
+    c.focusX=Math.max(0, Math.min(1, (p.x-r.x)/r.w));
+    c.focusY=Math.max(0, Math.min(1, (p.y-r.y)/r.h));
+    renderPreview(); return;
+  }
+  const g=findGraphicById(gDrag.id); if(!g){ gDrag=null; return; }
   if(gDrag.mode==='move'){
     g.x=Math.max(0, Math.min(0.999, (p.x-gDrag.offX)/W));
     g.y=Math.max(0, Math.min(0.999, (p.y-gDrag.offY)/H));
