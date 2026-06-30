@@ -1748,7 +1748,7 @@ function renderLibrary(){
   h+=`</div><div class="libGrid">`;
   const assets=LIB.assets.filter(a=>a.category===libCat);
   if(!assets.length){ h+=`<div class="libEmpty">Nothing in this category yet.<br>Drop approved assets here in <b>library.json</b>.</div>`; }
-  assets.forEach(a=>{ h+=`<div class="libItem" data-asset="${esc(a.id)}"><div class="libThumb"${a.bg?` style="background:${esc(a.bg)}"`:''}><img src="${esc(a.src)}" alt="${esc(a.name)}" loading="lazy"></div><div class="nm">${esc(a.name)}</div></div>`; });
+  assets.forEach(a=>{ h+=`<div class="libItem" data-asset="${esc(a.id)}"><div class="libThumb"${a.bg?` style="background:${esc(a.bg)}"`:''}><img src="${esc(a.thumb||a.src)}" alt="${esc(a.name)}" loading="lazy"></div><div class="nm">${esc(a.name)}</div></div>`; });
   h+=`</div><div class="libUpload">⬆ Upload your own image instead</div>`;
   p.innerHTML=h;
   p.querySelector('.libX').onclick=closeLibrary;

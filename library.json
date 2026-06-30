@@ -68,126 +68,144 @@
       "name": "Exclamation mark",
       "category": "graphics",
       "src": "library-assets/studio-2026-06/exclamation-mark.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/exclamation-mark.png"
     },
     {
       "id": "studio-100-percent",
       "name": "100%",
       "category": "graphics",
       "src": "library-assets/studio-2026-06/100-percent.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/100-percent.png"
     },
     {
       "id": "studio-boom-mark",
       "name": "Boom mark",
       "category": "graphics",
       "src": "library-assets/studio-2026-06/boom-mark.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/boom-mark.png"
     },
     {
       "id": "studio-bracket",
       "name": "Bracket",
       "category": "graphics",
       "src": "library-assets/studio-2026-06/bracket.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/bracket.png"
     },
     {
       "id": "studio-circle",
       "name": "Circle",
       "category": "graphics",
       "src": "library-assets/studio-2026-06/circle.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/circle.png"
     },
     {
       "id": "studio-dotted-line",
       "name": "Dotted line",
       "category": "graphics",
       "src": "library-assets/studio-2026-06/dotted-line.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/dotted-line.png"
     },
     {
       "id": "studio-like-quote",
       "name": "Like quote",
       "category": "graphics",
       "src": "library-assets/studio-2026-06/like-quote.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/like-quote.png"
     },
     {
       "id": "studio-love-tattoo",
       "name": "Love tattoo",
       "category": "graphics",
       "src": "library-assets/studio-2026-06/love-tattoo.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/love-tattoo.png"
     },
     {
       "id": "studio-number-one",
       "name": "Number 1",
       "category": "graphics",
       "src": "library-assets/studio-2026-06/number-one.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/number-one.png"
     },
     {
       "id": "studio-online-word",
       "name": "Online word",
       "category": "graphics",
       "src": "library-assets/studio-2026-06/online-word.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/online-word.png"
     },
     {
       "id": "studio-opening-quote",
       "name": "Opening quote",
       "category": "graphics",
       "src": "library-assets/studio-2026-06/opening-quote.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/opening-quote.png"
     },
     {
       "id": "studio-red-arrow",
       "name": "Red arrow",
       "category": "graphics",
       "src": "library-assets/studio-2026-06/red-arrow.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/red-arrow.png"
     },
     {
       "id": "studio-red-line-small",
       "name": "Red line small",
       "category": "graphics",
       "src": "library-assets/studio-2026-06/red-line-small.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/red-line-small.png"
     },
     {
       "id": "studio-red-line",
       "name": "Red line",
       "category": "graphics",
       "src": "library-assets/studio-2026-06/red-line.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/red-line.png"
     },
     {
       "id": "studio-sales-arrow",
       "name": "Sales arrow",
       "category": "graphics",
       "src": "library-assets/studio-2026-06/sales-arrow.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/sales-arrow.png"
     },
     {
       "id": "studio-star-explosion",
       "name": "Star explosion",
       "category": "graphics",
       "src": "library-assets/studio-2026-06/star-explosion.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/star-explosion.png"
     },
     {
       "id": "studio-star",
       "name": "Star",
       "category": "graphics",
       "src": "library-assets/studio-2026-06/star.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/star.png"
     },
     {
       "id": "studio-wow",
       "name": "Wow",
       "category": "graphics",
       "src": "library-assets/studio-2026-06/wow.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/wow.png"
     },
     {
       "id": "icon-target",
@@ -218,243 +236,278 @@
       "name": "Coffee mug",
       "category": "illustrations",
       "src": "library-assets/studio-2026-06/coffee-mug.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/coffee-mug.png"
     },
     {
       "id": "studio-cogs",
       "name": "Cogs",
       "category": "illustrations",
       "src": "library-assets/studio-2026-06/cogs.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/cogs.png"
     },
     {
       "id": "studio-film",
       "name": "Film",
       "category": "illustrations",
       "src": "library-assets/studio-2026-06/film.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/film.png"
     },
     {
       "id": "studio-finger-pointing",
       "name": "Finger pointing",
       "category": "illustrations",
       "src": "library-assets/studio-2026-06/finger-pointing.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/finger-pointing.png"
     },
     {
       "id": "studio-hand-heart",
       "name": "Hand heart",
       "category": "illustrations",
       "src": "library-assets/studio-2026-06/hand-heart.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/hand-heart.png"
     },
     {
       "id": "studio-handshake",
       "name": "Handshake",
       "category": "illustrations",
       "src": "library-assets/studio-2026-06/handshake.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/handshake.png"
     },
     {
       "id": "studio-head-brain",
       "name": "Head and brain",
       "category": "illustrations",
       "src": "library-assets/studio-2026-06/head-brain.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/head-brain.png"
     },
     {
       "id": "studio-headphones",
       "name": "Headphones",
       "category": "illustrations",
       "src": "library-assets/studio-2026-06/headphones.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/headphones.png"
     },
     {
       "id": "studio-idea-work",
       "name": "Idea work",
       "category": "illustrations",
       "src": "library-assets/studio-2026-06/idea-work.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/idea-work.png"
     },
     {
       "id": "studio-ipad-hands",
       "name": "iPad hands",
       "category": "illustrations",
       "src": "library-assets/studio-2026-06/ipad-hands.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/ipad-hands.png"
     },
     {
       "id": "studio-istock-1319057404-removebg",
       "name": "Cut-out stock illustration",
       "category": "illustrations",
       "src": "library-assets/studio-2026-06/istock-1319057404-removebg.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/istock-1319057404-removebg.png"
     },
     {
       "id": "studio-jigsaw",
       "name": "Jigsaw",
       "category": "illustrations",
       "src": "library-assets/studio-2026-06/jigsaw.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/jigsaw.png"
     },
     {
       "id": "studio-laptop",
       "name": "Laptop",
       "category": "illustrations",
       "src": "library-assets/studio-2026-06/laptop.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/laptop.png"
     },
     {
       "id": "studio-lightbulb-hand",
       "name": "Lightbulb hand",
       "category": "illustrations",
       "src": "library-assets/studio-2026-06/lightbulb-hand.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/lightbulb-hand.png"
     },
     {
       "id": "studio-lightbulb",
       "name": "Lightbulb",
       "category": "illustrations",
       "src": "library-assets/studio-2026-06/lightbulb.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/lightbulb.png"
     },
     {
       "id": "studio-love-icon-hands",
       "name": "Love icon hands",
       "category": "illustrations",
       "src": "library-assets/studio-2026-06/love-icon-hands.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/love-icon-hands.png"
     },
     {
       "id": "studio-magnifying-glass",
       "name": "Magnifying glass",
       "category": "illustrations",
       "src": "library-assets/studio-2026-06/magnifying-glass.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/magnifying-glass.png"
     },
     {
       "id": "studio-megaphone-hand",
       "name": "Megaphone hand",
       "category": "illustrations",
       "src": "library-assets/studio-2026-06/megaphone-hand.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/megaphone-hand.png"
     },
     {
       "id": "studio-megaphone",
       "name": "Megaphone",
       "category": "illustrations",
       "src": "library-assets/studio-2026-06/megaphone.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/megaphone.png"
     },
     {
       "id": "studio-mobile-messages",
       "name": "Mobile messages",
       "category": "illustrations",
       "src": "library-assets/studio-2026-06/mobile-messages.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/mobile-messages.png"
     },
     {
       "id": "studio-money-grater",
       "name": "Money grater",
       "category": "illustrations",
       "src": "library-assets/studio-2026-06/money-grater.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/money-grater.png"
     },
     {
       "id": "studio-pencil",
       "name": "Pencil",
       "category": "illustrations",
       "src": "library-assets/studio-2026-06/pencil.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/pencil.png"
     },
     {
       "id": "studio-pointing-hand",
       "name": "Pointing hand",
       "category": "illustrations",
       "src": "library-assets/studio-2026-06/pointing-hand.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/pointing-hand.png"
     },
     {
       "id": "studio-rocket-hand",
       "name": "Rocket hand",
       "category": "illustrations",
       "src": "library-assets/studio-2026-06/rocket-hand.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/rocket-hand.png"
     },
     {
       "id": "studio-rocket",
       "name": "Rocket",
       "category": "illustrations",
       "src": "library-assets/studio-2026-06/rocket.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/rocket.png"
     },
     {
       "id": "studio-sales-chart",
       "name": "Sales chart",
       "category": "illustrations",
       "src": "library-assets/studio-2026-06/sales-chart.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/sales-chart.png"
     },
     {
       "id": "studio-strategy-work",
       "name": "Strategy work",
       "category": "illustrations",
       "src": "library-assets/studio-2026-06/strategy-work.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/strategy-work.png"
     },
     {
       "id": "studio-target",
       "name": "Target",
       "category": "illustrations",
       "src": "library-assets/studio-2026-06/target.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/target.png"
     },
     {
       "id": "studio-think",
       "name": "Think",
       "category": "illustrations",
       "src": "library-assets/studio-2026-06/think.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/think.png"
     },
     {
       "id": "studio-thinking",
       "name": "Thinking",
       "category": "illustrations",
       "src": "library-assets/studio-2026-06/thinking.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/thinking.png"
     },
     {
       "id": "studio-to-do-list",
       "name": "To-do list",
       "category": "illustrations",
       "src": "library-assets/studio-2026-06/to-do-list.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/to-do-list.png"
     },
     {
       "id": "studio-writing",
       "name": "Writing",
       "category": "illustrations",
       "src": "library-assets/studio-2026-06/writing.png",
-      "bg": "#ffffff"
+      "bg": "#ffffff",
+      "thumb": "library-assets/thumbs/studio-2026-06/writing.png"
     },
     {
       "id": "logo-navy",
       "name": "Logo · Navy",
       "category": "logos",
-      "src": "library-assets/logo-navy.png"
+      "src": "library-assets/logo-navy.png",
+      "thumb": "library-assets/thumbs/logo-navy.png"
     },
     {
       "id": "logo-red",
       "name": "Logo · Red",
       "category": "logos",
-      "src": "library-assets/logo-red.png"
+      "src": "library-assets/logo-red.png",
+      "thumb": "library-assets/thumbs/logo-red.png"
     },
     {
       "id": "logo-white",
       "name": "Logo · White",
       "category": "logos",
       "src": "library-assets/logo-white.png",
-      "bg": "#201747"
+      "bg": "#201747",
+      "thumb": "library-assets/thumbs/logo-white.png"
     }
   ]
 }

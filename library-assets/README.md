@@ -34,3 +34,15 @@ Assets from `OneDrive_1_29-06-2026.zip` live in `studio-2026-06/` and are listed
 
 Only PNG files are added to Deck Studio because the picker places browser-renderable images
 onto slides.
+
+## Adding assets
+
+1. Drop the approved PNG/JPG into `library-assets/` (or a subfolder).
+2. Add an entry in `../library.json` (`id`, `name`, `category`, `src`).
+3. From the Deck Studio repo root, regenerate thumbnails and sizes:
+   ```
+   ./tools/build-library-thumbs.sh
+   node tools/add-thumbs-to-library.mjs
+   ```
+   This caps originals at 1600px, writes 240px grid thumbnails to `library-assets/thumbs/`,
+   and sets the `thumb` field in `library.json`. Commit the asset, its thumbnail, and `library.json`.
