@@ -28,6 +28,8 @@
   .btn{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line);background:#fff;color:var(--navy);
     border-radius:999px;padding:9px 15px;font:inherit;font-size:13px;font-weight:900;cursor:pointer;transition:.14s;white-space:nowrap}
   .btn:hover{background:var(--soft)}
+  .btn:disabled{opacity:.42;cursor:not-allowed}
+  .btn:disabled:hover{background:#fff}
   .btn svg{width:15px;height:15px}
   .btn.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
   .btn.primary:hover{background:#150f30}
@@ -107,6 +109,7 @@
   .field input,.field textarea{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:9px 11px;font:inherit;font-size:13.5px;color:var(--navy);background:var(--soft);resize:vertical;transition:.14s}
   .field input:focus,.field textarea:focus{outline:none;border-color:var(--navy);background:#fff;box-shadow:0 0 0 4px rgba(32,23,71,.07)}
   .field .hint{font-size:11px;color:#a7a2b8;margin-top:4px;font-weight:600;line-height:1.4}
+  .notesField textarea{min-height:96px;background:#fff}
   .sectors{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
   .sw{aspect-ratio:1;border-radius:11px;border:3px solid transparent;cursor:pointer;transition:.12s;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
   .sw:hover{transform:translateY(-2px)}
@@ -123,6 +126,7 @@
   .imgBtn.ghost:hover{background:var(--red);border-color:var(--red);color:#fff}
   .imgField.drop{border-color:var(--navy);background:#fff;box-shadow:0 0 0 4px rgba(32,23,71,.10)}
   .imgField.drop *{pointer-events:none}
+
   .graphicList{display:grid;gap:8px;margin-bottom:12px}
   .graphicRow{border:1.5px solid var(--line);border-radius:10px;background:var(--soft);padding:8px}
   .graphicTop{display:flex;align-items:center;gap:8px;margin-bottom:8px}
@@ -159,6 +163,44 @@
   .libUpload{margin:0 16px 16px;border:1.5px dashed #cfc9e0;border-radius:10px;padding:12px;text-align:center;color:var(--charcoal);font-size:12px;font-weight:800;cursor:pointer}
   .libUpload:hover{border-color:var(--navy);color:var(--navy)}
 
+  /* local deck library + history drawer */
+  .homeView{position:fixed;inset:60px 0 0;background:#f4f2f8;z-index:45;display:none;overflow:auto}
+  .homeView.on{display:block}
+  .homeInner{max-width:1180px;margin:0 auto;padding:34px 24px 46px}
+  .homeHead{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:24px}
+  .homeHead h2{margin:0;font-size:32px;line-height:1;font-weight:900;letter-spacing:-.6px}
+  .homeHead p{margin:8px 0 0;color:var(--charcoal);font-size:14px;font-weight:700}
+  .deckGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+  .deckCard{border:1.5px solid var(--line);border-radius:12px;background:#fff;overflow:hidden;cursor:pointer;box-shadow:0 12px 26px -22px rgba(32,23,71,.9);transition:.14s}
+  .deckCard:hover{transform:translateY(-2px);border-color:var(--navy);box-shadow:0 20px 34px -24px rgba(32,23,71,.9)}
+  .deckCard .mini{aspect-ratio:16/9;background:var(--navy);display:block}
+  .deckCard .mini svg{display:block;width:100%;height:100%}
+  .deckCard .body{padding:11px 12px 12px}
+  .deckCard .nm{font-size:14px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .deckCard .meta{margin-top:5px;color:var(--charcoal);font-size:11px;font-weight:800}
+  .deckCard .actions{display:flex;gap:6px;margin-top:10px}
+  .deckCard .actions button{flex:1;border:1px solid var(--line);border-radius:8px;background:var(--soft);font:inherit;font-size:11px;font-weight:900;color:var(--navy);padding:6px;cursor:pointer}
+  .deckCard .actions button:hover{background:var(--navy);border-color:var(--navy);color:#fff}
+  .deckCard .actions button.danger:hover{background:var(--red);border-color:var(--red)}
+  .homeEmpty{border:1.5px dashed #cfc9e0;border-radius:12px;background:#fff;padding:34px;text-align:center;color:var(--charcoal);font-weight:800}
+  .sidePanel{position:fixed;top:60px;right:0;width:420px;max-width:94vw;height:calc(100vh - 60px);background:#fff;border-left:1px solid var(--line);
+    box-shadow:-26px 0 64px -42px rgba(32,23,71,.85);transform:translateX(102%);transition:transform .22s cubic-bezier(.4,0,.2,1);z-index:55;display:flex;flex-direction:column}
+  .sidePanel.on{transform:none}
+  .panelHead{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line)}
+  .panelHead h3{margin:0;font-size:15px;font-weight:900}
+  .panelHead .sub{display:block;font-size:11px;font-weight:700;color:var(--charcoal);margin-top:2px}
+  .panelBody{padding:16px;overflow-y:auto;display:grid;gap:12px;align-content:start}
+  .panelX{width:30px;height:30px;border:0;border-radius:8px;background:var(--soft);color:var(--navy);font-size:16px;cursor:pointer}
+  .panelX:hover{background:var(--red);color:#fff}
+  .versionRow,.commentRow{border:1.5px solid var(--line);border-radius:10px;padding:10px;background:#fff}
+  .versionRow b,.commentRow b{display:block;font-size:12px}
+  .versionRow span,.commentRow span{display:block;margin-top:3px;color:var(--charcoal);font-size:11px;font-weight:700}
+  .versionRow button,.commentRow button{margin-top:8px;border:1.5px solid var(--line);border-radius:8px;background:var(--soft);color:var(--navy);font:inherit;font-size:11px;font-weight:900;padding:6px 9px;cursor:pointer}
+  .versionRow button:hover,.commentRow button:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .commentComposer{display:flex;gap:6px}
+  .commentComposer input{flex:1;border:1.5px solid var(--line);border-radius:9px;background:var(--soft);font:inherit;font-size:12px;color:var(--navy);padding:8px 10px}
+  .commentComposer button{border:1.5px solid var(--navy);border-radius:9px;background:var(--navy);color:#fff;font:inherit;font-size:12px;font-weight:900;padding:8px 10px;cursor:pointer}
+
   /* drag-to-reorder slides */
   .slideItem{cursor:grab}
   .slideItem:active{cursor:grabbing}
@@ -183,8 +225,12 @@
 <div class="topbar">
   <h1>Deck Studio</h1>
   <span class="sep"></span>
+  <button class="btn" id="btnHome" title="Open deck library"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg>Home</button>
   <input id="deckName" class="deckName" type="text" placeholder="Untitled deck" maxlength="80" spellcheck="false" aria-label="Deck name" title="Name this deck — used in downloads and share links">
   <span class="spacer"></span>
+  <button class="btn" id="btnVersion" title="Version history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v6h6"/><path d="M12 7v5l3 2"/></svg>Versions</button>
+  <button class="btn" id="btnUndo" title="Undo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-1"/></svg>Undo</button>
+  <button class="btn" id="btnRedo" title="Redo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h1"/></svg>Redo</button>
   <div class="exportWrap" id="exportWrap">
     <button class="btn primary" id="btnExport" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 11l5 5 5-5M5 21h14"/></svg>Export</button>
     <div class="exportMenu" id="exportMenu" role="menu">
@@ -207,6 +253,8 @@
 </div>
 
 <div class="printRoot" id="printRoot"></div>
+<section class="homeView" id="homeView" aria-label="Deck library"></section>
+<aside class="sidePanel" id="versionPanel" aria-label="Version history"></aside>
 
 <script src="vendor/pptxgen.bundle.js"></script>
 <script>
@@ -286,6 +334,21 @@ function imgPlaceholder(x,y,w,h,accent,prompt){
     `<text x="${cx}" y="${(cy+h*0.17+u*0.04).toFixed(0)}" font-size="${u*0.02}" fill="${PH_INK}" fill-opacity="0.75" font-weight="700" text-anchor="middle">Click to add, or drag a file in</text>`;
 }
 
+/* ===== structured content helpers ===== */
+function splitCells(line){ return (line||'').split(/\s*\|\s*|\s*,\s*/).map(v=>v.trim()).filter(Boolean); }
+function parseRows(text,maxRows=6,maxCols=5){
+  const rows=(text||'').split(/\n/).map(splitCells).filter(r=>r.length).slice(0,maxRows);
+  const cols=Math.min(maxCols, Math.max(1, ...rows.map(r=>r.length)));
+  return rows.map(r=>Array.from({length:cols},(_,i)=>r[i]||''));
+}
+function parseChart(text,max=5){
+  return (text||'').split(/\n/).map(line=>{
+    const p=splitCells(line), label=p[0]||'', raw=p[1]||'0', value=parseFloat(String(raw).replace(/[^0-9.-]/g,''));
+    return {label,value:isFinite(value)?Math.max(0,value):0};
+  }).filter(d=>d.label).slice(0,max);
+}
+function unresolvedComments(slide){ return (slide.comments||[]).filter(c=>!c.done&&c.text&&c.text.trim()); }
+
 /* ===== slide layouts ===== */
 const u=Math.min(W,H), m=Math.round(W*0.06);
 const LAYOUTS = [
@@ -320,6 +383,109 @@ const LAYOUTS = [
     s+=tblock(head.lines, m, y, head.fs, head.lh, ink, 900, 'start', -0.02, 'title', W*0.8);
     y+=head.lines.length*head.fs*head.lh+u*0.03;
     if(c.subtitle){ s+=tblock(bodyLines(c.subtitle, W*0.7, u*0.03, u*0.1), m, y, u*0.03, 1.3, ink===BRAND.navy?mix(BRAND.navy,'#ffffff',0.2):mix('#ffffff',acc,0.1), 500,'start',0, 'subtitle'); }
+    return s;
+  }
+},
+{
+  id:'agenda', name:'Agenda',
+  fields:[['kicker','Eyebrow','optional'],['title','Title','What we will cover'],['body','Items (one per line)','Context and objective\nAudience insight\nStrategic direction\nRecommended next steps']],
+  render(c,S,uid){
+    const acc=S.accent;
+    let s=`<rect width="${W}" height="${H}" fill="#ffffff"/>`;
+    s+=brandMark(c.logo, W-m-u*0.16, m, u*0.16, 'nvy', lum(acc)>0.6?BRAND.navy:acc, 'end');
+    let y=m+u*0.02;
+    if(c.kicker){ s+=kicker(c.kicker, m, y+u*0.018, u*0.024, acc, 'start', 'kicker'); y+=u*0.046; }
+    const head=fitHead(c.title, W*0.66, H*0.16, u*0.06, u*0.034, 0.52, 1.0);
+    s+=tblock(head.lines, m, y, head.fs, head.lh, BRAND.navy, 900, 'start', -0.02, 'title', W*0.66);
+    y+=head.lines.length*head.fs*head.lh+u*0.05;
+    const items=(c.body||'').split(/\n/).map(t=>t.trim()).filter(Boolean).slice(0,6);
+    const rowH=Math.min(u*0.1, (H-y-m-u*0.04)/(items.length||1));
+    const lineX=m+u*0.029, startY=y+rowH*0.3, endY=y+rowH*(items.length-0.55);
+    if(items.length>1) s+=`<line x1="${lineX.toFixed(1)}" y1="${startY.toFixed(1)}" x2="${lineX.toFixed(1)}" y2="${endY.toFixed(1)}" stroke="${mix(acc,'#ffffff',0.2)}" stroke-width="${(u*0.008).toFixed(1)}" stroke-linecap="round"/>`;
+    items.forEach((item,i)=>{
+      const cy=y+i*rowH+rowH*0.3, num=String(i+1).padStart(2,'0'), tx=m+u*0.085;
+      s+=`<circle cx="${lineX.toFixed(1)}" cy="${cy.toFixed(1)}" r="${(u*0.028).toFixed(1)}" fill="${i===0?acc:'#ffffff'}" stroke="${acc}" stroke-width="${(u*0.007).toFixed(1)}"/>`;
+      s+=`<text x="${lineX.toFixed(1)}" y="${(cy+u*0.009).toFixed(1)}" font-size="${u*0.021}" fill="${i===0?inkOn(acc):acc}" font-weight="900" text-anchor="middle">${num}</text>`;
+      const lines=bodyLines(item, W-tx-m, u*0.032, rowH*0.75, 1.25);
+      s+=tblock(lines, tx, cy-u*0.033, u*0.032, 1.25, BRAND.navy, 800, 'start', -0.006, 'body#'+i);
+    });
+    return s;
+  }
+},
+{
+  id:'table', name:'Table',
+  fields:[['kicker','Eyebrow','optional'],['title','Title','Table title'],['body','Rows (use | or commas)','Metric | Current | Target\nAwareness | 42% | 55%\nEngagement | 3.1% | 4.5%\nLeads | 120 | 180']],
+  render(c,S,uid){
+    const acc=S.accent, rows=parseRows(c.body,6,5), cols=rows[0]?.length||3;
+    let s=`<rect width="${W}" height="${H}" fill="#ffffff"/>`;
+    s+=brandMark(c.logo, W-m-u*0.16, m, u*0.16, 'nvy', lum(acc)>0.6?BRAND.navy:acc, 'end');
+    let y=m+u*0.02;
+    if(c.kicker){ s+=kicker(c.kicker, m, y+u*0.018, u*0.024, acc, 'start', 'kicker'); y+=u*0.046; }
+    const head=fitHead(c.title, W*0.68, H*0.14, u*0.056, u*0.032, 0.52, 1);
+    s+=tblock(head.lines, m, y, head.fs, head.lh, BRAND.navy, 900, 'start', -0.02, 'title', W*0.68);
+    y+=head.lines.length*head.fs*head.lh+u*0.035;
+    const tx=m, tw=W-2*m, th=H-y-m-u*0.04, rowH=th/Math.max(2,rows.length||4), colW=tw/cols;
+    s+=`<rect x="${tx}" y="${y}" width="${tw}" height="${th}" rx="${u*0.014}" fill="#ffffff" stroke="${PH_LINE}" stroke-width="2"/>`;
+    (rows.length?rows:[[ 'Metric','Current','Target' ],['Awareness','42%','55%'],['Engagement','3.1%','4.5%']]).forEach((row,ri)=>{
+      const ry=y+ri*rowH, dark=ri===0;
+      s+=`<rect x="${tx}" y="${ry}" width="${tw}" height="${rowH}" fill="${dark?BRAND.navy:(ri%2?mix(PH_FILL,'#ffffff',0.45):'#ffffff')}"${ri===0?` rx="${u*0.014}"`:''}/>`;
+      row.slice(0,cols).forEach((cell,ci)=>{
+        const cx=tx+ci*colW+u*0.022, cw=colW-u*0.044, fs=ri===0?u*0.024:u*0.026;
+        s+=tblock(bodyLines(cell,cw,fs,rowH*0.7,1.15), cx, ry+rowH*0.22, fs, 1.15, dark?'#ffffff':BRAND.navy, dark?900:600, 'start', 0, `body#${ri}#${ci}`);
+        if(ci>0) s+=`<line x1="${(tx+ci*colW).toFixed(1)}" y1="${(y+rowH).toFixed(1)}" x2="${(tx+ci*colW).toFixed(1)}" y2="${(y+th).toFixed(1)}" stroke="${PH_LINE}" stroke-width="1.5"/>`;
+      });
+    });
+    return s;
+  }
+},
+{
+  id:'comparison', name:'Comparison',
+  fields:[['kicker','Eyebrow','optional'],['title','Title','Which option fits best?'],['colA','Left option','Current workflow\nFast to start\nHard to keep consistent\nDesigner needed for polish'],['colB','Right option','Deck Studio\nBrand-safe by default\nReusable layouts\nPowerPoint fallback']],
+  render(c,S,uid){
+    const acc=S.accent;
+    let s=`<rect width="${W}" height="${H}" fill="#ffffff"/>`;
+    s+=brandMark(c.logo, W-m-u*0.16, m, u*0.16, 'nvy', lum(acc)>0.6?BRAND.navy:acc, 'end');
+    let y=m+u*0.02;
+    if(c.kicker){ s+=kicker(c.kicker, m, y+u*0.018, u*0.024, acc, 'start', 'kicker'); y+=u*0.046; }
+    const head=fitHead(c.title, W*0.68, H*0.14, u*0.056, u*0.032, 0.52, 1);
+    s+=tblock(head.lines, m, y, head.fs, head.lh, BRAND.navy, 900, 'start', -0.02, 'title', W*0.68);
+    y+=head.lines.length*head.fs*head.lh+u*0.045;
+    const gap=u*0.035, colW=(W-2*m-gap)/2, cardH=H-y-m-u*0.04;
+    [[c.colA,m,'#ffffff',BRAND.navy,'colA'],[c.colB,m+colW+gap,acc,inkOn(acc),'colB']].forEach(([txt,x,bg,ink,key],ci)=>{
+      const lines=(txt||'').split(/\n/).map(t=>t.trim()).filter(Boolean);
+      s+=`<rect x="${x}" y="${y}" width="${colW}" height="${cardH}" rx="${u*0.018}" fill="${bg}" stroke="${ci?acc:PH_LINE}" stroke-width="2.5"/>`;
+      s+=`<rect x="${x}" y="${y}" width="${colW}" height="${u*0.11}" rx="${u*0.018}" fill="${ci?mix(acc,BRAND.navy,0.08):BRAND.navy}"/>`;
+      s+=tblock(bodyLines(lines[0]||'Option',colW-u*0.06,u*0.038,u*0.08,1.1), x+u*0.03, y+u*0.025, u*0.038, 1.1, '#ffffff', 900, 'start', -0.01, key);
+      lines.slice(1,6).forEach((line,i)=>{
+        const ry=y+u*0.15+i*u*0.075;
+        s+=`<circle cx="${x+u*0.035}" cy="${(ry+u*0.014).toFixed(1)}" r="${u*0.011}" fill="${ci?ink:acc}"/>`;
+        s+=tblock(bodyLines(line,colW-u*0.09,u*0.026,u*0.05,1.18), x+u*0.065, ry, u*0.026, 1.18, ci?ink:BRAND.navy, 600, 'start', 0, key+'#'+i);
+      });
+    });
+    return s;
+  }
+},
+{
+  id:'chart', name:'Chart',
+  fields:[['kicker','Eyebrow','optional'],['title','Title','Simple performance view'],['body','Bars: label | value','Awareness | 42\nEngagement | 31\nLeads | 18\nConversion | 9']],
+  render(c,S,uid){
+    const acc=S.accent, data=parseChart(c.body,5), max=Math.max(1,...data.map(d=>d.value));
+    let s=`<rect width="${W}" height="${H}" fill="${BRAND.navy}"/>`;
+    s+=ring(W*0.98, H*0.95, u*0.28, acc, 0.42);
+    s+=brandMark(c.logo, W-m-u*0.16, m, u*0.16, 'wht', acc, 'end');
+    let y=m+u*0.03;
+    if(c.kicker){ s+=kicker(c.kicker, m, y+u*0.018, u*0.024, acc, 'start', 'kicker'); y+=u*0.046; }
+    const head=fitHead(c.title, W*0.7, H*0.14, u*0.058, u*0.034, 0.52, 1);
+    s+=tblock(head.lines, m, y, head.fs, head.lh, '#ffffff', 900, 'start', -0.02, 'title', W*0.7);
+    y+=head.lines.length*head.fs*head.lh+u*0.06;
+    const chartX=m, chartY=y, chartW=W-2*m, barH=u*0.052, gap=u*0.035, labelW=u*0.24;
+    (data.length?data:[{label:'Awareness',value:42},{label:'Engagement',value:31},{label:'Leads',value:18}]).forEach((d,i)=>{
+      const by=chartY+i*(barH+gap), bw=(chartW-labelW-u*0.12)*(d.value/max);
+      s+=tblock(bodyLines(d.label,labelW,u*0.025,barH,1.1), chartX, by+u*0.004, u*0.025, 1.1, '#ffffff', 700, 'start', 0, 'body#'+i+'#label');
+      s+=`<rect x="${chartX+labelW}" y="${by}" width="${chartW-labelW-u*0.08}" height="${barH}" rx="${barH/2}" fill="${mix(BRAND.navy,'#ffffff',0.14)}"/>`;
+      s+=`<rect x="${chartX+labelW}" y="${by}" width="${Math.max(u*0.03,bw).toFixed(1)}" height="${barH}" rx="${barH/2}" fill="${acc}"/>`;
+      s+=`<text data-edit="body#${i}#value" x="${W-m}" y="${(by+barH*0.68).toFixed(1)}" font-size="${u*0.028}" fill="#ffffff" font-weight="900" text-anchor="end">${d.value}</text>`;
+    });
     return s;
   }
 },
@@ -581,21 +747,79 @@ const LAYOUT_BY = Object.fromEntries(LAYOUTS.map(l=>[l.id,l]));
 /* ===== state: a starter deck ===== */
 let UID=0;
 let deckName='';
-let deck = [
+function makeId(){ return 'd'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function starterDeck(){ return [
   {layout:'cover', kicker:'STRATEGY PROPOSAL · 2026', title:'A sharper story for the year ahead', subtitle:'How we grow reach, trust and results across every channel.'},
   {layout:'section', kicker:'01', title:'Where we are today', subtitle:'The honest starting point.'},
   {layout:'bullets', kicker:'THE PICTURE', title:'Three things the data tells us', body:'Audiences decide before they ever speak to us.\nThe brand shows up inconsistently across channels.\nThe best content never gets a second life.'},
   {layout:'stat', title:'The opportunity, in numbers', body:'82%, of buyers research before they get in touch\n3x, more reach when posts are on-brand\n#1, goal: own the category conversation'},
   {layout:'quote', title:'They actually listened, then built something we could not have imagined ourselves.', subtitle:'A client we would love to be'},
   {layout:'closing', kicker:'LET’S BUILD IT', title:'Thank you', body:'hello@thisisinfluential.com\nthisisinfluential.com'},
-];
+]; }
+let deckId=makeId();
+let deck = starterDeck();
 let cur = 0;
 let sectorId = 'insights';
 const S = ()=>SECTORS.find(x=>x.id===sectorId);
 
 /* ===== share links ===== */
 function currentPayload(){
-  return { v:2, tool:'deck-studio', name:deckName, sector:sectorId, active:cur, slides:deck };
+  return { v:3, tool:'deck-studio', id:deckId, name:deckName, sector:sectorId, active:cur, slides:deck };
+}
+function clonePayload(){ return JSON.parse(JSON.stringify(currentPayload())); }
+function historySignature(payload=currentPayload()){
+  return JSON.stringify({ name:payload.name, sector:payload.sector, slides:payload.slides });
+}
+let undoStack=[], redoStack=[], historyReady=false, historyTimer=null, restoringHistory=false;
+function updateHistoryButtons(){
+  const ubtn=document.getElementById('btnUndo'), rbtn=document.getElementById('btnRedo');
+  if(ubtn) ubtn.disabled=undoStack.length<2;
+  if(rbtn) rbtn.disabled=!redoStack.length;
+}
+function commitHistory(){
+  if(!historyReady || restoringHistory) return;
+  const payload=clonePayload(), sig=historySignature(payload);
+  const last=undoStack[undoStack.length-1];
+  if(last && last.sig===sig){ last.payload=payload; updateHistoryButtons(); return; }
+  undoStack.push({payload,sig});
+  if(undoStack.length>60) undoStack.shift();
+  redoStack=[];
+  updateHistoryButtons();
+}
+function commitHistorySoon(){
+  if(!historyReady || restoringHistory) return;
+  clearTimeout(historyTimer);
+  historyTimer=setTimeout(commitHistory, 320);
+}
+function initHistory(){
+  undoStack=[{payload:clonePayload(), sig:historySignature()}];
+  redoStack=[];
+  historyReady=true;
+  updateHistoryButtons();
+}
+function restoreHistory(payload){
+  restoringHistory=true;
+  loadState(payload);
+  syncDeckName();
+  renderAll();
+  restoringHistory=false;
+  updateHistoryButtons();
+}
+function undoDeck(){
+  closeEditor(true);
+  commitHistory();
+  if(undoStack.length<2) return;
+  const current=undoStack.pop();
+  redoStack.push(current);
+  restoreHistory(undoStack[undoStack.length-1].payload);
+}
+function redoDeck(){
+  closeEditor(true);
+  commitHistory();
+  if(!redoStack.length) return;
+  const next=redoStack.pop();
+  undoStack.push(next);
+  restoreHistory(next.payload);
 }
 // deck name -> filename-safe slug; readable title; browser tab + share-link helpers
 function deckSlug(){ return (deckName.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,60))||'influential-deck'; }
@@ -604,6 +828,7 @@ function updateDocTitle(){ document.title=(deckName.trim()?deckName.trim()+' · 
 function syncDeckName(){ const el=document.getElementById('deckName'); if(el) el.value=deckName; updateDocTitle(); }
 function loadState(payload){
   if(!payload || payload.tool!=='deck-studio' || !Array.isArray(payload.slides)) return false;
+  deckId=typeof payload.id==='string' ? payload.id : makeId();
   if(typeof payload.name==='string') deckName=payload.name.slice(0,80);
   const slides = payload.slides
     .filter(sl => sl && LAYOUT_BY[sl.layout])
@@ -615,10 +840,17 @@ function loadState(payload){
   return true;
 }
 const AUTOSAVE_KEY='deck-studio:auto-save:v2';
+const DECK_LIST_KEY='deck-studio:deck-list:v1';
+const DECK_STORE_PREFIX='deck-studio:deck:v1:';
+const VERSION_PREFIX='deck-studio:versions:v1:';
 let autosaveReady=false, autosaveTimer=null, autosaveWarned=false;
 function saveDraftNow(){
   if(!autosaveReady) return;
-  try{ localStorage.setItem(AUTOSAVE_KEY, JSON.stringify({ savedAt:Date.now(), payload:currentPayload() })); }
+  try{
+    const payload=currentPayload();
+    localStorage.setItem(AUTOSAVE_KEY, JSON.stringify({ savedAt:Date.now(), payload }));
+    saveDeckRecord(payload);
+  }
   catch(e){
     if(!autosaveWarned){ autosaveWarned=true; toast('Draft autosave is full. Export or copy a share link.'); }
   }
@@ -635,6 +867,89 @@ function loadDraft(){
     const draft=JSON.parse(raw);
     return !!(draft && loadState(draft.payload));
   }catch(e){ return false; }
+}
+function readDeckList(){
+  try{ return JSON.parse(localStorage.getItem(DECK_LIST_KEY)||'[]').filter(d=>d&&d.id); }
+  catch(e){ return []; }
+}
+function writeDeckList(list){ localStorage.setItem(DECK_LIST_KEY, JSON.stringify(list.slice(0,40))); }
+function saveDeckRecord(payload=currentPayload()){
+  const now=Date.now(), list=readDeckList().filter(d=>d.id!==payload.id);
+  const first=payload.slides&&payload.slides[0];
+  list.unshift({id:payload.id,name:payload.name||first?.title||'Untitled deck',updatedAt:now,slides:payload.slides.length,sector:payload.sector});
+  writeDeckList(list);
+  localStorage.setItem(DECK_STORE_PREFIX+payload.id, JSON.stringify({savedAt:now,payload}));
+}
+function openStoredDeck(id){
+  const raw=localStorage.getItem(DECK_STORE_PREFIX+id);
+  if(!raw){ toast('That deck could not be found'); renderHome(); return; }
+  try{
+    const saved=JSON.parse(raw);
+    if(loadState(saved.payload)){ closeHome(); syncDeckName(); renderAll(); initHistory(); toast('Opened deck'); }
+  }catch(e){ toast('That deck could not be opened'); }
+}
+function deleteStoredDeck(id){
+  if(id===deckId){ toast('Open another deck before deleting this one'); return; }
+  writeDeckList(readDeckList().filter(d=>d.id!==id));
+  localStorage.removeItem(DECK_STORE_PREFIX+id);
+  localStorage.removeItem(VERSION_PREFIX+id);
+  renderHome();
+}
+function newDeck(){
+  deckId=makeId(); deckName=''; sectorId='insights'; cur=0; deck=starterDeck();
+  syncDeckName(); renderAll(); initHistory(); saveDraftNow(); closeHome(); toast('New deck ready');
+}
+function showHome(){ saveDraftNow(); renderHome(); document.getElementById('homeView').classList.add('on'); }
+function closeHome(){ document.getElementById('homeView').classList.remove('on'); }
+function renderHome(){
+  const hv=document.getElementById('homeView'), list=readDeckList();
+  let h=`<div class="homeInner"><div class="homeHead"><div><h2>Deck library</h2><p>Local drafts saved in this browser. Export PPTX when the team needs a fallback file.</p></div><button class="btn primary" id="homeNew">+ New deck</button></div>`;
+  if(!list.length) h+=`<div class="homeEmpty">No saved decks yet. Create a deck, name it, and Deck Studio will keep it here.</div>`;
+  else{
+    h+=`<div class="deckGrid">`;
+    list.forEach(d=>{
+      let payload=null; try{ payload=JSON.parse(localStorage.getItem(DECK_STORE_PREFIX+d.id)||'{}').payload; }catch(e){}
+      const prev=payload&&payload.slides&&payload.slides[0]?buildSVG(payload.slides[0]):'';
+      h+=`<article class="deckCard" data-open="${esc(d.id)}"><div class="mini">${prev}</div><div class="body"><div class="nm">${esc(d.name)}</div><div class="meta">${d.slides||0} slides · ${new Date(d.updatedAt||Date.now()).toLocaleDateString()}</div><div class="actions"><button data-open="${esc(d.id)}">Open</button><button class="danger" data-del="${esc(d.id)}">Delete</button></div></div></article>`;
+    });
+    h+=`</div>`;
+  }
+  hv.innerHTML=h+`</div>`;
+  hv.querySelector('#homeNew').onclick=newDeck;
+  hv.querySelectorAll('[data-open]').forEach(el=>el.onclick=e=>{ e.stopPropagation(); openStoredDeck(el.dataset.open); });
+  hv.querySelectorAll('[data-del]').forEach(el=>el.onclick=e=>{ e.stopPropagation(); deleteStoredDeck(el.dataset.del); });
+}
+function readVersions(){
+  try{ return JSON.parse(localStorage.getItem(VERSION_PREFIX+deckId)||'[]'); }
+  catch(e){ return []; }
+}
+function writeVersions(list){ localStorage.setItem(VERSION_PREFIX+deckId, JSON.stringify(list.slice(0,15))); }
+function saveVersion(label='Manual save'){
+  saveDraftNow();
+  const list=readVersions();
+  list.unshift({id:makeId(),label,createdAt:Date.now(),payload:clonePayload()});
+  writeVersions(list);
+  renderVersions();
+  toast('Version saved');
+}
+function restoreVersion(id){
+  const v=readVersions().find(x=>x.id===id);
+  if(!v) return;
+  restoreHistory(v.payload);
+  saveDraftNow();
+  toast('Version restored');
+}
+function showVersions(){ renderVersions(); document.getElementById('versionPanel').classList.add('on'); }
+function closeVersions(){ document.getElementById('versionPanel').classList.remove('on'); }
+function renderVersions(){
+  const p=document.getElementById('versionPanel'), list=readVersions();
+  let h=`<div class="panelHead"><div><h3>Versions</h3><span class="sub">Local restore points for this deck</span></div><button class="panelX" id="versionClose">✕</button></div><div class="panelBody"><button class="btn primary" id="saveVersion">Save current version</button>`;
+  if(!list.length) h+=`<div class="versionRow"><b>No saved versions yet</b><span>Use Save current version before bigger edits or before sending a deck for review.</span></div>`;
+  list.forEach(v=>{ h+=`<div class="versionRow"><b>${esc(v.label||'Saved version')}</b><span>${new Date(v.createdAt).toLocaleString()} · ${(v.payload.slides||[]).length} slides</span><button data-restore="${esc(v.id)}">Restore</button></div>`; });
+  p.innerHTML=h+`</div>`;
+  p.querySelector('#versionClose').onclick=closeVersions;
+  p.querySelector('#saveVersion').onclick=()=>saveVersion();
+  p.querySelectorAll('[data-restore]').forEach(b=>b.onclick=()=>restoreVersion(b.dataset.restore));
 }
 function b64urlEncode(obj){ return btoa(unescape(encodeURIComponent(JSON.stringify(obj)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
 function b64urlDecode(s){ s=s.replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4) s+='='; return JSON.parse(decodeURIComponent(escape(atob(s)))); }
@@ -667,16 +982,16 @@ async function decodeShareFragment(frag){
 
 function buildSVG(slide, interactive=false){
   const L=LAYOUT_BY[slide.layout]; const uid=++UID;
-  const idx=deck.indexOf(slide), pageOk = slide.layout!=='cover';
+  const idx=deck.indexOf(slide), pageNo=idx>=0?idx+1:cur+1;
   let inner=L.render(slide, S(), uid, interactive);
   // page footer for content layouts
-  if(['bullets','columns'].includes(slide.layout)) inner+=footer(idx+1, deck.length, false);
-  if(['stat','section','statement','quote'].includes(slide.layout)) inner+=footer(idx+1, deck.length, slide.layout!=='section'? true : (inkOn(S().accent)==='#ffffff'));
+  if(['agenda','bullets','columns','comparison','table'].includes(slide.layout)) inner+=footer(pageNo, deck.length, false);
+  if(['chart','stat','section','statement','quote'].includes(slide.layout)) inner+=footer(pageNo, deck.length, slide.layout!=='section'? true : (inkOn(S().accent)==='#ffffff'));
   inner+=graphicsSVG(slide, interactive);
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}"><style>text{font-family:'Effra Trial','Effra',system-ui,'Segoe UI',sans-serif;}</style>${inner}</svg>`;
 }
+
 function slideGraphics(slide){ return Array.isArray(slide.graphics) ? slide.graphics : []; }
-function makeId(){ return 'g'+Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
 function graphicsSVG(slide,interactive=false){
   const items=slideGraphics(slide);
   if(!items.length) return '';
@@ -700,6 +1015,7 @@ function currentFieldValue(slide,key){
   const p=key.split('#');
   if(p.length===1) return {value:slide[p[0]]||'', multiline:MULTILINE_FIELDS.includes(p[0])};
   const lines=(slide[p[0]]||'').split('\n'); const line=lines[+p[1]]||'';
+  if(p.length===3 && /^\d+$/.test(p[2])) return {value:(splitCells(line)[+p[2]]||'').trim(), multiline:false};
   if(p.length===2) return {value:line.trim(), multiline:false};
   const ci=line.indexOf(','); const val=ci<0?line.trim():line.slice(0,ci).trim(); const lab=ci<0?'':line.slice(ci+1).trim();
   return {value: p[2]==='label'?lab:val, multiline:false};
@@ -711,6 +1027,14 @@ function applyEdit(slide,key,text){
   while(lines.length<=idx) lines.push('');
   if(p.length===2){ lines[idx]=text; }
   else {
+    if(/^\d+$/.test(p[2])){
+      const cells=splitCells(lines[idx]||'');
+      while(cells.length<=+p[2]) cells.push('');
+      cells[+p[2]]=text.replace(/[\n|]/g,' ').trim();
+      lines[idx]=cells.join(' | ');
+      slide[field]=lines.join('\n');
+      return;
+    }
     const cur=lines[idx]||''; const ci=cur.indexOf(',');
     let val=ci<0?cur.trim():cur.slice(0,ci).trim();
     let lab=ci<0?'':cur.slice(ci+1).trim();
@@ -777,6 +1101,7 @@ function act(a,i){
 function renderPreview(){
   const sl=deck[cur], L=LAYOUT_BY[sl.layout];
   saveDraftSoon();
+  commitHistorySoon();
   // show faint example text in empty fields so they stay visible + clickable (cleared on type; never exported)
   const ghost=Object.assign({}, sl), phKeys=[];
   L.fields.forEach(([key,label,ph])=>{ if(ph && !(sl[key]||'').trim()){ ghost[key]=ph; phKeys.push(key); } });
@@ -806,6 +1131,9 @@ function renderEditor(){
   h+=`<h2>Logo on this slide</h2><div class="layoutGrid" id="logoOpts">`;
   [['main','Main logo'],['ring','Ring mark'],['off','Off']].forEach(([v,lab])=>{ h+=`<button class="${(sl.logo||'main')===v?'on':''}" data-logo="${v}">${lab}</button>`; });
   h+=`</div>`;
+  h+=`<h2>Speaker notes</h2><div class="field notesField"><label>Notes for this slide</label>`+
+    `<textarea rows="4" data-notes placeholder="Talking points, sources, or handover notes. These export into PowerPoint notes.">${esc(sl.notes||'')}</textarea></div>`;
+  h+=commentSectionHTML(sl);
   h+=`<h2>Deck colour</h2><div class="sectors" id="secs"></div>`;
   e.innerHTML=h;
   e.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>{ sl.layout=b.dataset.l; renderAll(); });
@@ -816,23 +1144,26 @@ function renderEditor(){
     else if(b.dataset.imgact==='library') openLibrary(key);
     else { delete sl[key]; renderAll(); }
   });
+  e.querySelector('[data-add-graphic]')?.addEventListener('click',()=>openLibrary('__graphic'));
+  e.querySelectorAll('[data-graphic-range]').forEach(inp=>inp.addEventListener('input',()=>{
+    const g=slideGraphics(sl)[+inp.dataset.graphicIndex]; if(!g) return;
+    g[inp.dataset.graphicRange]=+inp.value;
+    renderPreview(); renderRailThumb(cur); saveDraftSoon(); commitHistorySoon();
+  }));
+  e.querySelectorAll('[data-graphic-remove]').forEach(btn=>btn.onclick=()=>{
+    sl.graphics=slideGraphics(sl).filter((_,i)=>i!==+btn.dataset.graphicRemove);
+    renderAll();
+  });
   e.querySelectorAll('.imgField').forEach(box=>{
     const key=box.dataset.imgk;
     box.addEventListener('dragover',ev=>{ if(!dtHasFiles(ev)) return; ev.preventDefault(); box.classList.add('drop'); });
     box.addEventListener('dragleave',ev=>{ if(ev.target===box) box.classList.remove('drop'); });
     box.addEventListener('drop',ev=>{ if(!dtHasFiles(ev)) return; ev.preventDefault(); box.classList.remove('drop'); dropImageFile(ev,key); });
   });
-  e.querySelector('[data-add-graphic]')?.addEventListener('click',()=>openLibrary('__graphic'));
-  e.querySelectorAll('[data-graphic-range]').forEach(inp=>inp.addEventListener('input',()=>{
-    const g=slideGraphics(sl)[+inp.dataset.graphicIndex]; if(!g) return;
-    g[inp.dataset.graphicRange]=+inp.value;
-    renderPreview(); renderRailThumb(cur); saveDraftSoon();
-  }));
-  e.querySelectorAll('[data-graphic-remove]').forEach(btn=>btn.onclick=()=>{
-    sl.graphics=slideGraphics(sl).filter((_,i)=>i!==+btn.dataset.graphicRemove);
-    renderAll();
-  });
   e.querySelectorAll('[data-k]').forEach(inp=>inp.addEventListener('input',()=>{ sl[inp.dataset.k]=inp.value; renderPreview(); renderRailThumb(cur); }));
+  e.querySelectorAll('[data-notes]').forEach(inp=>inp.addEventListener('input',()=>{ sl.notes=inp.value; saveDraftSoon(); commitHistorySoon(); }));
+  e.querySelector('#addComment')?.addEventListener('click',()=>addComment());
+  e.querySelectorAll('[data-resolve-comment]').forEach(b=>b.onclick=()=>resolveComment(b.dataset.resolveComment));
   const secs=e.querySelector('#secs');
   SECTORS.forEach(sec=>{ const d=document.createElement('div'); d.className='sw'+(sec.id===sectorId?' on':''); d.style.background=sec.accent; d.title=sec.name; d.onclick=()=>{ sectorId=sec.id; renderAll(); }; secs.appendChild(d); });
 }
@@ -857,6 +1188,24 @@ function graphicsEditorHTML(sl){
   }
   h+=`<button class="addGraphicBtn" data-add-graphic>Add from Library</button>`;
   return h;
+}
+function commentSectionHTML(sl){
+  const comments=sl.comments||[];
+  let h=`<h2>Review comments</h2><div class="commentComposer"><input id="commentInput" placeholder="Add a comment for this slide"><button id="addComment">Add</button></div>`;
+  if(!comments.length) return h+`<div class="hint" style="margin-top:8px">Comments are saved locally with the deck and added to PPTX notes.</div>`;
+  comments.forEach(c=>{ h+=`<div class="commentRow"><b>${c.done?'Resolved':'Open'} comment</b><span>${esc(c.text)} · ${new Date(c.createdAt||Date.now()).toLocaleDateString()}</span>${c.done?'':`<button data-resolve-comment="${esc(c.id)}">Resolve</button>`}</div>`; });
+  return h;
+}
+function addComment(){
+  const input=document.getElementById('commentInput'), text=(input&&input.value||'').trim();
+  if(!text) return;
+  const sl=deck[cur]; sl.comments=sl.comments||[];
+  sl.comments.unshift({id:makeId(),text,createdAt:Date.now(),done:false});
+  renderEditor(); renderPreview(); renderRailThumb(cur); saveDraftSoon(); commitHistorySoon();
+}
+function resolveComment(id){
+  const c=(deck[cur].comments||[]).find(x=>x.id===id);
+  if(c){ c.done=true; renderEditor(); saveDraftSoon(); commitHistorySoon(); }
 }
 function renderRailThumb(i){ const item=document.querySelectorAll('.slideItem')[i]; if(item) item.querySelector('.thumb').innerHTML=buildSVG(deck[i]); }
 function renderAll(){ renderRail(); renderPreview(); renderEditor(); }
@@ -885,6 +1234,13 @@ async function svgToPNG(svgString,filename,cb){
   }catch(e){ alert('Export hit a snag, try again.'); cb&&cb(); }
 }
 function exportSlidePNG(i){ svgToPNG(buildSVG(deck[i]), `${deckSlug()}-slide-${String(i+1).padStart(2,'0')}.png`); }
+function pptNotesFor(sl){
+  const parts=[];
+  if((sl.notes||'').trim()) parts.push(sl.notes.trim());
+  const open=unresolvedComments(sl);
+  if(open.length) parts.push('Open Deck Studio comments:\n'+open.map(c=>'- '+c.text.trim()).join('\n'));
+  return parts.join('\n\n');
+}
 
 const PPT_W=13.333, PPT_H=7.5, PXP=PPT_W/W;
 const PPT_FONT='Effra';
@@ -947,6 +1303,34 @@ function addNativeSlide(slide,sl,i){
     let y=H*0.46; if(sl.kicker){ addKickerPpt(slide,'Section '+sl.kicker,m,y,W*0.5,u*0.03,ink); y+=u*0.055; }
     const h=fitHead(sl.title,W*0.8,H*0.3,u*0.11,u*0.05,0.52,1); addTBlockPpt(slide,h.lines,m,y,W*0.8,h.fs,h.lh,ink,900); y+=h.lines.length*h.fs*h.lh+u*0.03;
     addTBlockPpt(slide,bodyLines(sl.subtitle,W*0.7,u*0.03,u*0.1),m,y,W*0.7,u*0.03,1.3,ink===BRAND.navy?mix(BRAND.navy,'#ffffff',0.2):mix('#ffffff',acc,0.1),500); addFooterPpt(slide,i+1,deck.length,ink==='#ffffff');
+  } else if(sl.layout==='agenda'){
+    addRect(slide,0,0,W,H,'#ffffff'); addBrandPpt(slide,sl.logo,W-m-u*0.16,m,u*0.16,'nvy',lum(acc)>0.6?BRAND.navy:acc,'end'); let y=m+u*0.02;
+    if(sl.kicker){ addKickerPpt(slide,sl.kicker,m,y+u*0.018,W*0.65,u*0.024,acc); y+=u*0.046; }
+    const h=fitHead(sl.title,W*0.66,H*0.16,u*0.06,u*0.034,0.52,1); addTBlockPpt(slide,h.lines,m,y,W*0.66,h.fs,h.lh,BRAND.navy,900); y+=h.lines.length*h.fs*h.lh+u*0.05;
+    const items=(sl.body||'').split(/\n/).map(t=>t.trim()).filter(Boolean).slice(0,6), rowH=Math.min(u*0.1,(H-y-m-u*0.04)/(items.length||1)), lineX=m+u*0.029;
+    if(items.length>1) addRect(slide,lineX-u*0.004,y+rowH*0.3,u*0.008,rowH*(items.length-0.85),mix(acc,'#ffffff',0.2));
+    items.forEach((item,j)=>{ const cy=y+j*rowH+rowH*0.3, tx=m+u*0.085; addCircle(slide,lineX,cy,u*0.028,j===0?acc:'#ffffff'); slide.addShape('ellipse',{x:px(lineX-u*0.028),y:px(cy-u*0.028),w:px(u*0.056),h:px(u*0.056),fill:{color:j===0?pptColor(acc):'FFFFFF'},line:{color:pptColor(acc),width:pt(u*0.007)}}); addTextBox(slide,String(j+1).padStart(2,'0'),lineX-u*0.028,cy-u*0.017,u*0.056,u*0.034,u*0.021,j===0?inkOn(acc):acc,900,'center'); addTBlockPpt(slide,bodyLines(item,W-tx-m,u*0.032,rowH*0.75,1.25),tx,cy-u*0.033,W-tx-m,u*0.032,1.25,BRAND.navy,800); });
+    addFooterPpt(slide,i+1,deck.length,false);
+  } else if(sl.layout==='table'){
+    addRect(slide,0,0,W,H,'#ffffff'); addBrandPpt(slide,sl.logo,W-m-u*0.16,m,u*0.16,'nvy',lum(acc)>0.6?BRAND.navy:acc,'end'); let y=m+u*0.02;
+    if(sl.kicker){ addKickerPpt(slide,sl.kicker,m,y+u*0.018,W*0.65,u*0.024,acc); y+=u*0.046; }
+    const h=fitHead(sl.title,W*0.68,H*0.14,u*0.056,u*0.032,0.52,1); addTBlockPpt(slide,h.lines,m,y,W*0.68,h.fs,h.lh,BRAND.navy,900); y+=h.lines.length*h.fs*h.lh+u*0.035;
+    const rows=parseRows(sl.body,6,5), data=rows.length?rows:[[ 'Metric','Current','Target' ],['Awareness','42%','55%'],['Engagement','3.1%','4.5%']], cols=data[0].length, tx=m, tw=W-2*m, th=H-y-m-u*0.04, rowH=th/Math.max(2,data.length), colW=tw/cols;
+    data.forEach((row,r)=>{ addRect(slide,tx,y+r*rowH,tw,rowH,r===0?BRAND.navy:(r%2?mix(PH_FILL,'#ffffff',0.45):'#ffffff')); row.slice(0,cols).forEach((cell,c)=>addTextBox(slide,cell,tx+c*colW+u*0.02,y+r*rowH+u*0.016,colW-u*0.04,rowH-u*0.03,r===0?u*0.024:u*0.026,r===0?'#ffffff':BRAND.navy,r===0?900:600)); });
+    addFooterPpt(slide,i+1,deck.length,false);
+  } else if(sl.layout==='comparison'){
+    addRect(slide,0,0,W,H,'#ffffff'); addBrandPpt(slide,sl.logo,W-m-u*0.16,m,u*0.16,'nvy',lum(acc)>0.6?BRAND.navy:acc,'end'); let y=m+u*0.02;
+    if(sl.kicker){ addKickerPpt(slide,sl.kicker,m,y+u*0.018,W*0.65,u*0.024,acc); y+=u*0.046; }
+    const h=fitHead(sl.title,W*0.68,H*0.14,u*0.056,u*0.032,0.52,1); addTBlockPpt(slide,h.lines,m,y,W*0.68,h.fs,h.lh,BRAND.navy,900); y+=h.lines.length*h.fs*h.lh+u*0.045;
+    const gap=u*0.035,colW=(W-2*m-gap)/2,cardH=H-y-m-u*0.04; [[sl.colA,m,'#ffffff',BRAND.navy],[sl.colB,m+colW+gap,acc,inkOn(acc)]].forEach(([txt,x,bg,ink2],j)=>{ addRect(slide,x,y,colW,cardH,bg); addRect(slide,x,y,colW,u*0.11,j?mix(acc,BRAND.navy,0.08):BRAND.navy); const lines=(txt||'').split(/\n/).map(t=>t.trim()).filter(Boolean); addTextBox(slide,lines[0]||'Option',x+u*0.03,y+u*0.02,colW-u*0.06,u*0.07,u*0.038,'#ffffff',900); lines.slice(1,6).forEach((line,k)=>{ const ry=y+u*0.15+k*u*0.075; addCircle(slide,x+u*0.035,ry+u*0.014,u*0.011,j?ink2:acc); addTextBox(slide,line,x+u*0.065,ry,colW-u*0.09,u*0.05,u*0.026,j?ink2:BRAND.navy,600); }); });
+    addFooterPpt(slide,i+1,deck.length,false);
+  } else if(sl.layout==='chart'){
+    addRect(slide,0,0,W,H,BRAND.navy); addRingPpt(slide,W*0.98,H*0.95,u*0.28,acc,58); addBrandPpt(slide,sl.logo,W-m-u*0.16,m,u*0.16,'wht',acc,'end'); let y=m+u*0.03;
+    if(sl.kicker){ addKickerPpt(slide,sl.kicker,m,y+u*0.018,W*0.65,u*0.024,acc); y+=u*0.046; }
+    const h=fitHead(sl.title,W*0.7,H*0.14,u*0.058,u*0.034,0.52,1); addTBlockPpt(slide,h.lines,m,y,W*0.7,h.fs,h.lh,'#ffffff',900); y+=h.lines.length*h.fs*h.lh+u*0.06;
+    const data=parseChart(sl.body,5), vals=data.length?data:[{label:'Awareness',value:42},{label:'Engagement',value:31},{label:'Leads',value:18}], max=Math.max(1,...vals.map(d=>d.value)), chartX=m, chartW=W-2*m, barH=u*0.052, gap=u*0.035, labelW=u*0.24;
+    vals.forEach((d,j)=>{ const by=y+j*(barH+gap), bw=(chartW-labelW-u*0.12)*(d.value/max); addTextBox(slide,d.label,chartX,by,labelW,barH,u*0.025,'#ffffff',700); addRect(slide,chartX+labelW,by,chartW-labelW-u*0.08,barH,mix(BRAND.navy,'#ffffff',0.14)); addRect(slide,chartX+labelW,by,Math.max(u*0.03,bw),barH,acc); addTextBox(slide,String(d.value),W-m-u*0.08,by,u*0.08,barH,u*0.028,'#ffffff',900,'right'); });
+    addFooterPpt(slide,i+1,deck.length,true);
   } else if(sl.layout==='statement'){
     addRect(slide,0,0,W,H,BRAND.navy); addRingPpt(slide,W*0.92,H*0.88,u*0.26,acc,50); addBrandPpt(slide,sl.logo,m,m,u*0.18,'wht',acc); addRect(slide,W/2-u*0.05,H*0.24,u*0.1,Math.max(4,u*0.008),acc);
     const h=fitHead(sl.title,W*0.82,H*0.4,u*0.085,u*0.045,0.52,1.08), y=H*0.5-h.lines.length*h.fs*h.lh/2; addTBlockPpt(slide,h.lines,W*0.09,y,W*0.82,h.fs,h.lh,'#ffffff',800,'center');
@@ -1005,7 +1389,7 @@ function addNativeSlide(slide,sl,i){
   }
 }
 async function addPptSlide(slide,sl,i){
-  const nativeLayouts=['cover','section','statement','bullets','stat','columns','quote','closing','image','imagetext','screenshot','twoup'];
+  const nativeLayouts=['cover','section','agenda','table','comparison','chart','statement','bullets','stat','columns','quote','closing','image','imagetext','screenshot','twoup'];
   if(nativeLayouts.includes(sl.layout)){ addNativeSlide(slide,sl,i); addGraphicsPpt(slide,sl); return; }
   const data=await svgToPngDataUri(buildSVG(sl),EXPORT_SCALE);
   slide.addImage({data,x:0,y:0,w:PPT_W,h:PPT_H});
@@ -1033,6 +1417,8 @@ async function exportPPTX(){
       const slide=pptx.addSlide();
       slide.background={color:'FFFFFF'};
       await addPptSlide(slide,sl,i);
+      const notes=pptNotesFor(sl);
+      if(notes) slide.addNotes(notes);
     }
     await pptx.writeFile({ fileName:`${deckSlug()}.pptx` });
   }catch(e){
@@ -1079,9 +1465,15 @@ document.getElementById('menuPNG').onclick=()=>runExport(()=>exportSlidePNG(cur)
 document.getElementById('menuPPTX').onclick=()=>runExport(exportPPTX);
 document.getElementById('menuPDF').onclick=()=>runExport(printPDF);
 document.getElementById('menuLink').onclick=()=>runExport(copyShareLink);
+document.getElementById('btnHome').onclick=showHome;
+document.getElementById('btnVersion').onclick=showVersions;
+document.getElementById('btnUndo').onclick=undoDeck;
+document.getElementById('btnRedo').onclick=redoDeck;
 document.addEventListener('click',()=>setExportMenu(false));
 document.addEventListener('keydown',e=>{ if(e.target.matches('input,textarea'))return;
-  if(e.key==='Escape'){ setExportMenu(false); closeLibrary(); }
+  if((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==='z'){ e.preventDefault(); e.shiftKey?redoDeck():undoDeck(); return; }
+  if((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==='y'){ e.preventDefault(); redoDeck(); return; }
+  if(e.key==='Escape'){ setExportMenu(false); closeLibrary(); closeVersions(); closeHome(); }
   if(e.key==='ArrowDown'||e.key==='ArrowRight'){ cur=Math.min(deck.length-1,cur+1); renderAll(); }
   if(e.key==='ArrowUp'||e.key==='ArrowLeft'){ cur=Math.max(0,cur-1); renderAll(); } });
 
@@ -1273,7 +1665,7 @@ window.addEventListener('scroll',e=>{ if(e.target===editBox) return; closeEditor
 window.addEventListener('resize',()=>closeEditor(true));
 
 const deckNameEl=document.getElementById('deckName');
-deckNameEl.addEventListener('input',()=>{ deckName=deckNameEl.value; updateDocTitle(); saveDraftSoon(); });
+deckNameEl.addEventListener('input',()=>{ deckName=deckNameEl.value; updateDocTitle(); saveDraftSoon(); commitHistorySoon(); });
 window.addEventListener('beforeunload',()=>{ closeEditor(true); saveDraftNow(); });
 
 /* ===== images: editor field, upload + downscale ===== */
@@ -1380,14 +1772,14 @@ async function insertLibraryAsset(id){
 }
 async function assetToDataURLWithMeta(src){
   const data=await assetToDataURL(src);
-  const ar=await imageAspect(data);
+  const ar=await imageAspect(data).catch(()=>1);
   return {data,ar};
 }
 function imageAspect(data){
-  return new Promise(res=>{
+  return new Promise((res,rej)=>{
     const img=new Image();
     img.onload=()=>res((img.naturalWidth||img.width||1)/(img.naturalHeight||img.height||1));
-    img.onerror=()=>res(1);
+    img.onerror=rej;
     img.src=data;
   });
 }
@@ -1401,7 +1793,8 @@ async function assetToDataURL(src){
 (async function init(){
   await loadLibrary();
   const hash=location.hash || '';
-  if(hash.startsWith('#z=') || hash.startsWith('#d=')){
+  const fromShare=hash.startsWith('#z=') || hash.startsWith('#d=');
+  if(fromShare){
     try{ loadState(await decodeShareFragment(hash.slice(1))); }
     catch(e){ console.warn('Deck Studio link could not be read:', e.message); }
   } else if(loadDraft()){
@@ -1410,6 +1803,9 @@ async function assetToDataURL(src){
   autosaveReady=true;
   syncDeckName();
   renderAll();
+  initHistory();
+  saveDraftNow();
+  if(!fromShare) showHome();
 })();
 </script>
 </body>
