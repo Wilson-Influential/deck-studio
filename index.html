@@ -358,7 +358,7 @@ function imageTextSide(c,S,uid,interactive,side){
   const acc=S.accent, split=Math.min(2/3,Math.max(1/3, +c.split||0.5)), imgW=Math.round(W*split);
   const right=side==='right', imgX=right?W-imgW:0;
   let s=`<rect width="${W}" height="${H}" fill="#ffffff"/>`;
-  if(c.image){ s+=`<rect x="${imgX}" y="0" width="${imgW}" height="${H}" fill="${BRAND.navy}"/><image href="${c.image}" x="${imgX}" y="0" width="${imgW}" height="${H}" preserveAspectRatio="${parMode(c)}"/>`; }
+  if(c.image){ s+=`<rect x="${imgX}" y="0" width="${imgW}" height="${H}" fill="#ffffff"/><image href="${c.image}" x="${imgX}" y="0" width="${imgW}" height="${H}" preserveAspectRatio="${parMode(c)}"/>`; }
   else { s+=imgPlaceholder(imgX,0,imgW,H,acc,'Add an image'); }
   s+=imgSlotHit('image',imgX,0,imgW,H);
   const tx=right?m:imgW+m*0.85, tw=right?(imgX-m-tx):(W-tx-m), headW=tw-u*0.2;
@@ -399,7 +399,7 @@ function imageTextSide(c,S,uid,interactive,side){
 function imageCaptionRender(c,S,uid,interactive){
   const acc=S.accent, bandH=Math.round(H*CAPTION_BAND), has=!!c.image;
   let s=`<rect width="${W}" height="${H}" fill="#ffffff"/>`;
-  if(has){ s+=`<rect x="0" y="0" width="${W}" height="${bandH}" fill="${BRAND.navy}"/><image href="${c.image}" x="0" y="0" width="${W}" height="${bandH}" preserveAspectRatio="${parMode(c)}"/>`; }
+  if(has){ s+=`<rect x="0" y="0" width="${W}" height="${bandH}" fill="#ffffff"/><image href="${c.image}" x="0" y="0" width="${W}" height="${bandH}" preserveAspectRatio="${parMode(c)}"/>`; }
   else { s+=imgPlaceholder(0,0,W,bandH,acc,'Add an image'); }
   s+=imgSlotHit('image',0,0,W,bandH);
   if(has && (c.logo||'main')!=='off'){
@@ -689,7 +689,7 @@ const LAYOUTS = [
   render(c,S,uid,interactive){
     const acc=S.accent, has=!!c.image;
     let s='';
-    if(has){ s+=`<rect x="0" y="0" width="${W}" height="${H}" fill="${BRAND.navy}"/><image href="${c.image}" x="0" y="0" width="${W}" height="${H}" preserveAspectRatio="${parMode(c)}"/>`; }
+    if(has){ s+=`<rect x="0" y="0" width="${W}" height="${H}" fill="#ffffff"/><image href="${c.image}" x="0" y="0" width="${W}" height="${H}" preserveAspectRatio="${parMode(c)}"/>`; }
     else { s+=imgPlaceholder(0,0,W,H,acc,'Add an image'); }
     s+=imgSlotHit('image',0,0,W,H);   // click/drop layer, below the caption
     if(has){
