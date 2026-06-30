@@ -192,14 +192,11 @@
   .panelBody{padding:16px;overflow-y:auto;display:grid;gap:12px;align-content:start}
   .panelX{width:30px;height:30px;border:0;border-radius:8px;background:var(--soft);color:var(--navy);font-size:16px;cursor:pointer}
   .panelX:hover{background:var(--red);color:#fff}
-  .versionRow,.commentRow{border:1.5px solid var(--line);border-radius:10px;padding:10px;background:#fff}
-  .versionRow b,.commentRow b{display:block;font-size:12px}
-  .versionRow span,.commentRow span{display:block;margin-top:3px;color:var(--charcoal);font-size:11px;font-weight:700}
-  .versionRow button,.commentRow button{margin-top:8px;border:1.5px solid var(--line);border-radius:8px;background:var(--soft);color:var(--navy);font:inherit;font-size:11px;font-weight:900;padding:6px 9px;cursor:pointer}
-  .versionRow button:hover,.commentRow button:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
-  .commentComposer{display:flex;gap:6px}
-  .commentComposer input{flex:1;border:1.5px solid var(--line);border-radius:9px;background:var(--soft);font:inherit;font-size:12px;color:var(--navy);padding:8px 10px}
-  .commentComposer button{border:1.5px solid var(--navy);border-radius:9px;background:var(--navy);color:#fff;font:inherit;font-size:12px;font-weight:900;padding:8px 10px;cursor:pointer}
+  .versionRow{border:1.5px solid var(--line);border-radius:10px;padding:10px;background:#fff}
+  .versionRow b{display:block;font-size:12px}
+  .versionRow span{display:block;margin-top:3px;color:var(--charcoal);font-size:11px;font-weight:700}
+  .versionRow button{margin-top:8px;border:1.5px solid var(--line);border-radius:8px;background:var(--soft);color:var(--navy);font:inherit;font-size:11px;font-weight:900;padding:6px 9px;cursor:pointer}
+  .versionRow button:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
 
   /* drag-to-reorder slides */
   .slideItem{cursor:grab}
@@ -347,7 +344,6 @@ function parseChart(text,max=5){
     return {label,value:isFinite(value)?Math.max(0,value):0};
   }).filter(d=>d.label).slice(0,max);
 }
-function unresolvedComments(slide){ return (slide.comments||[]).filter(c=>!c.done&&c.text&&c.text.trim()); }
 
 /* ===== slide layouts ===== */
 const u=Math.min(W,H), m=Math.round(W*0.06);
@@ -1133,7 +1129,6 @@ function renderEditor(){
   h+=`</div>`;
   h+=`<h2>Speaker notes</h2><div class="field notesField"><label>Notes for this slide</label>`+
     `<textarea rows="4" data-notes placeholder="Talking points, sources, or handover notes. These export into PowerPoint notes.">${esc(sl.notes||'')}</textarea></div>`;
-  h+=commentSectionHTML(sl);
   h+=`<h2>Deck colour</h2><div class="sectors" id="secs"></div>`;
   e.innerHTML=h;
   e.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>{ sl.layout=b.dataset.l; renderAll(); });
@@ -1162,8 +1157,6 @@ function renderEditor(){
   });
   e.querySelectorAll('[data-k]').forEach(inp=>inp.addEventListener('input',()=>{ sl[inp.dataset.k]=inp.value; renderPreview(); renderRailThumb(cur); }));
   e.querySelectorAll('[data-notes]').forEach(inp=>inp.addEventListener('input',()=>{ sl.notes=inp.value; saveDraftSoon(); commitHistorySoon(); }));
-  e.querySelector('#addComment')?.addEventListener('click',()=>addComment());
-  e.querySelectorAll('[data-resolve-comment]').forEach(b=>b.onclick=()=>resolveComment(b.dataset.resolveComment));
   const secs=e.querySelector('#secs');
   SECTORS.forEach(sec=>{ const d=document.createElement('div'); d.className='sw'+(sec.id===sectorId?' on':''); d.style.background=sec.accent; d.title=sec.name; d.onclick=()=>{ sectorId=sec.id; renderAll(); }; secs.appendChild(d); });
 }
@@ -1188,24 +1181,6 @@ function graphicsEditorHTML(sl){
   }
   h+=`<button class="addGraphicBtn" data-add-graphic>Add from Library</button>`;
   return h;
-}
-function commentSectionHTML(sl){
-  const comments=sl.comments||[];
-  let h=`<h2>Review comments</h2><div class="commentComposer"><input id="commentInput" placeholder="Add a comment for this slide"><button id="addComment">Add</button></div>`;
-  if(!comments.length) return h+`<div class="hint" style="margin-top:8px">Comments are saved locally with the deck and added to PPTX notes.</div>`;
-  comments.forEach(c=>{ h+=`<div class="commentRow"><b>${c.done?'Resolved':'Open'} comment</b><span>${esc(c.text)} · ${new Date(c.createdAt||Date.now()).toLocaleDateString()}</span>${c.done?'':`<button data-resolve-comment="${esc(c.id)}">Resolve</button>`}</div>`; });
-  return h;
-}
-function addComment(){
-  const input=document.getElementById('commentInput'), text=(input&&input.value||'').trim();
-  if(!text) return;
-  const sl=deck[cur]; sl.comments=sl.comments||[];
-  sl.comments.unshift({id:makeId(),text,createdAt:Date.now(),done:false});
-  renderEditor(); renderPreview(); renderRailThumb(cur); saveDraftSoon(); commitHistorySoon();
-}
-function resolveComment(id){
-  const c=(deck[cur].comments||[]).find(x=>x.id===id);
-  if(c){ c.done=true; renderEditor(); saveDraftSoon(); commitHistorySoon(); }
 }
 function renderRailThumb(i){ const item=document.querySelectorAll('.slideItem')[i]; if(item) item.querySelector('.thumb').innerHTML=buildSVG(deck[i]); }
 function renderAll(){ renderRail(); renderPreview(); renderEditor(); }
@@ -1235,11 +1210,7 @@ async function svgToPNG(svgString,filename,cb){
 }
 function exportSlidePNG(i){ svgToPNG(buildSVG(deck[i]), `${deckSlug()}-slide-${String(i+1).padStart(2,'0')}.png`); }
 function pptNotesFor(sl){
-  const parts=[];
-  if((sl.notes||'').trim()) parts.push(sl.notes.trim());
-  const open=unresolvedComments(sl);
-  if(open.length) parts.push('Open Deck Studio comments:\n'+open.map(c=>'- '+c.text.trim()).join('\n'));
-  return parts.join('\n\n');
+  return (sl.notes||'').trim();
 }
 
 const PPT_W=13.333, PPT_H=7.5, PXP=PPT_W/W;
