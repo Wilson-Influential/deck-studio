@@ -486,19 +486,7 @@ function imageGridRender(c,S,uid,cells,interactive){
   cells.forEach(([key,x,y,w,h,capKey])=>{ s+=imageCell(uid,key,c[key],x,y,w,h,acc,capKey,c[capKey],interactive); });
   return s;
 }
-// always-on Side by side / Stacked toggle pill for the 2-image layouts (no click-to-select needed)
-function pairArrangeToolbarSVG(c){
-  const arr=[['Side by side','twoup'],['Stacked','imagestack']];
-  const segW=Math.round(u*0.135), segH=Math.round(u*0.05);
-  const totalW=arr.length*segW, bx=Math.round(W/2-totalW/2), by=Math.round(u*0.035);
-  const seg=(label,val,active,ox)=>`<g data-arrange="${val}" style="cursor:pointer">`+
-    `<rect x="${ox}" y="${by}" width="${segW}" height="${segH}" rx="${(segH/2)}" fill="${active?BRAND.navy:'transparent'}"/>`+
-    `<text x="${ox+segW/2}" y="${by+segH*0.66}" font-size="${(u*0.022).toFixed(1)}" font-weight="800" text-anchor="middle" fill="${active?'#ffffff':BRAND.navy}">${label}</text></g>`;
-  let s=`<rect x="${bx-9}" y="${by-7}" width="${totalW+18}" height="${segH+14}" rx="${(segH/2+7)}" fill="#ffffff" fill-opacity="0.95" stroke="${BRAND.navy}" stroke-opacity="0.14" stroke-width="1.5"/>`;
-  let ox=bx;
-  arr.forEach(([lb,id])=>{ s+=seg(lb,id, c.layout===id, ox); ox+=segW; });
-  return s;
-}
+
 function imagestackRender(c,S,uid,interactive){
   const top=m+(c.title?u*0.09:0);
   const capH=u*0.055, gap=u*0.028, colH=(H-m-top-2*capH-gap)/2;
@@ -506,7 +494,6 @@ function imagestackRender(c,S,uid,interactive){
     ['image', m, top, W-2*m, colH, 'capA'],
     ['image2', m, top+colH+capH+gap, W-2*m, colH, 'capB'],
   ],interactive);
-  if(interactive) s+=pairArrangeToolbarSVG(c);
   return s;
 }
 function imagegrid3Render(c,S,uid,interactive){
@@ -890,7 +877,6 @@ const LAYOUTS = [
       if(interactive && img) s+=cellOutlineSVG(key,cx,gy,colW,gh);
       s+=tblock([cap||''], cx, gy+gh+u*0.016, u*0.024, 1.2, mix(BRAND.navy,'#ffffff',0.1), 700,'start',0,capKey);
     });
-    if(interactive) s+=pairArrangeToolbarSVG(c);
     return s;
   }
 },
@@ -1348,9 +1334,13 @@ function renderPreview(){
 function photoSelected(){ return typeof selectedPhoto!=='undefined' && selectedPhoto!==null && !!deck[cur][selectedPhoto]; }
 function imageInspectorHTML(sl,key){
   const single=['imagetext','imageright','imagecaption','image'].includes(sl.layout);
+  const pair=['twoup','imagestack'].includes(sl.layout);
   const fit=(sl.fit||'cover');
   const arrange = single ? `<h2>Arrangement</h2><div class="layoutGrid" data-arrange-grid>`+
     [['imagetext','Left'],['imageright','Right'],['imagecaption','Caption'],['image','Full']].map(([id,lb])=>
+      `<button class="${sl.layout===id?'on':''}" data-arrange="${id}">${lb}</button>`).join('')+`</div>` :
+    pair ? `<h2>Arrangement</h2><div class="layoutGrid" data-arrange-grid>`+
+    [['twoup','Side by side'],['imagestack','Stacked']].map(([id,lb])=>
       `<button class="${sl.layout===id?'on':''}" data-arrange="${id}">${lb}</button>`).join('')+`</div>` : '';
   const fitRow = `<h2>Crop</h2><div class="layoutGrid" data-fit-grid>`+
     [['cover','Cover'],['contain','Fit']].map(([v,lb])=>`<button class="${fit===v?'on':''}" data-fit="${v}">${lb}</button>`).join('')+`</div>`;
@@ -2013,7 +2003,7 @@ previewEl.addEventListener('dragover',e=>{ if(!dtHasFiles(e)) return; e.preventD
 previewEl.addEventListener('dragleave',e=>{ if(e.target===previewEl||!previewEl.contains(e.relatedTarget)) previewEl.classList.remove('drop'); });
 previewEl.addEventListener('drop',e=>{ if(!dtHasFiles(e)) return; const slot=e.target.closest('[data-imgslot]'); let key=(slot&&slot.dataset.imgslot)||currentImageKey();
   if(!key){ const hasText=!!(deck[cur].title||deck[cur].body); deck[cur].layout=hasText?'imagetext':'image'; key='image'; }   // dropped on a slide with no photo: text -> Image+text (Left), else full-bleed
-  if(key==='image' && ['imagetext','imageright','imagecaption','image'].includes(deck[cur].layout)) selectedPhoto='image';   // show the arrangement/fit bar right away
+  if(key==='image' && ['imagetext','imageright','imagecaption','image'].includes(deck[cur].layout)) selectedPhoto='image';   // select the dropped photo so its inspector opens
   e.preventDefault(); previewEl.classList.remove('drop'); dropImageFile(e,key); });
 // ----- graphics direct manipulation (select / move / corner-resize). Preview only; never exported. -----
 let gDrag=null;

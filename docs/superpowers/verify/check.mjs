@@ -86,6 +86,45 @@ const URL = 'http://localhost:4250/';
   const toolbarUndef = await page.evaluate(() => typeof imageToolbarSVG);
   console.log(`── typeof imageToolbarSVG: ${toolbarUndef} ──`);
 
+  // ── Test: pairArrangeToolbarSVG is deleted ──
+  const pairToolbarUndef = await page.evaluate(() => typeof pairArrangeToolbarSVG);
+  console.log(`── typeof pairArrangeToolbarSVG: ${pairToolbarUndef} ──`);
+
+  // ── Test: twoup slide inspector shows arrangement buttons ──
+  const pairInspectorResult = await page.evaluate((img) => {
+    deck[cur] = { layout: 'twoup', image: img, image2: img, title: 'Test' };
+    renderAll();
+    const slot = document.querySelector('#preview [data-imgslot="image"]');
+    slot && slot.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const inspector = document.querySelector('#editor [data-img-inspector]');
+    const arrangeGrid = inspector ? inspector.querySelector('[data-arrange-grid]') : null;
+    const twoUpBtn = arrangeGrid ? arrangeGrid.querySelector('[data-arrange="twoup"]') : null;
+    const stackBtn = arrangeGrid ? arrangeGrid.querySelector('[data-arrange="imagestack"]') : null;
+    const arrangeOnCanvas = document.querySelectorAll('#preview [data-arrange]').length;
+    return {
+      inspectorPresent: !!inspector,
+      hasTwoUpBtn: !!twoUpBtn,
+      hasStackBtn: !!stackBtn,
+      arrangeOnCanvas,
+    };
+  }, IMG);
+  console.log('── Pair inspector structure ──');
+  console.log(JSON.stringify(pairInspectorResult, null, 2));
+
+  // ── Test: clicking [data-arrange="imagestack"] on twoup sets layout ──
+  const pairArrangeResult = await page.evaluate((img) => {
+    deck[cur] = { layout: 'twoup', image: img, image2: img, title: 'Test' };
+    renderAll();
+    const slot = document.querySelector('#preview [data-imgslot="image"]');
+    slot && slot.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const stackBtn = document.querySelector('#editor [data-arrange="imagestack"]');
+    stackBtn && stackBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const arrangeOnCanvasAfter = document.querySelectorAll('#preview [data-arrange]').length;
+    return { layout: deck[cur].layout, arrangeOnCanvas: arrangeOnCanvasAfter };
+  }, IMG);
+  console.log('── After pair arrange click ──');
+  console.log(JSON.stringify(pairArrangeResult, null, 2));
+
   // ── Test: no [data-focal] on canvas when photo selected ──
   const noFocalOnCanvas = await page.evaluate((img) => {
     deck[cur] = { layout: 'imagetext', image: img, title: 'Test' };
@@ -133,6 +172,13 @@ const URL = 'http://localhost:4250/';
   if (focusResult.focusX !== 0.17) assertions.push(`FAIL: focusX should be 0.17, got ${focusResult.focusX}`);
   if (focusResult.focusY !== 0.17) assertions.push(`FAIL: focusY should be 0.17, got ${focusResult.focusY}`);
   if (toolbarUndef !== 'undefined') assertions.push(`FAIL: imageToolbarSVG should be undefined, got typeof=${toolbarUndef}`);
+  if (pairToolbarUndef !== 'undefined') assertions.push(`FAIL: pairArrangeToolbarSVG should be undefined, got typeof=${pairToolbarUndef}`);
+  if (!pairInspectorResult.inspectorPresent) assertions.push('FAIL: inspector not present for twoup slide');
+  if (!pairInspectorResult.hasTwoUpBtn) assertions.push('FAIL: [data-arrange="twoup"] not in inspector for twoup slide');
+  if (!pairInspectorResult.hasStackBtn) assertions.push('FAIL: [data-arrange="imagestack"] not in inspector for twoup slide');
+  if (pairInspectorResult.arrangeOnCanvas !== 0) assertions.push(`FAIL: ${pairInspectorResult.arrangeOnCanvas} [data-arrange] elements on canvas for twoup slide`);
+  if (pairArrangeResult.layout !== 'imagestack') assertions.push(`FAIL: after imagestack click, layout should be "imagestack", got "${pairArrangeResult.layout}"`);
+  if (pairArrangeResult.arrangeOnCanvas !== 0) assertions.push(`FAIL: ${pairArrangeResult.arrangeOnCanvas} [data-arrange] elements on canvas after imagestack click`);
   if (noFocalOnCanvas.focalElements !== 0) assertions.push(`FAIL: ${noFocalOnCanvas.focalElements} [data-focal] elements on canvas`);
   if (gotoResult.selectedPhotoAfterNav !== null) assertions.push(`FAIL: selectedPhoto should be null after gotoSlide, got "${gotoResult.selectedPhotoAfterNav}"`);
   if (errors.length) assertions.push(`FAIL: ${errors.length} console error(s): ${errors.join('; ')}`);
