@@ -2027,9 +2027,23 @@ window.addEventListener('pointermove',e=>{
 });
 window.addEventListener('pointerup',()=>{ if(splitDrag){ splitDrag=false; previewEl.classList.remove('splitting'); document.body.style.cursor=''; renderRailThumb(cur); } });
 // drop an image file straight onto the preview (when the layout has an image slot)
-previewEl.addEventListener('dragover',e=>{ if(!dtHasFiles(e)) return; e.preventDefault(); e.dataTransfer.dropEffect='copy'; previewEl.classList.add('drop'); });
+previewEl.addEventListener('dragover',e=>{ const hasAsset=e.dataTransfer&&e.dataTransfer.types&&e.dataTransfer.types.includes('application/x-deck-asset'); if(!dtHasFiles(e)&&!hasAsset) return; e.preventDefault(); e.dataTransfer.dropEffect='copy'; previewEl.classList.add('drop'); });
 previewEl.addEventListener('dragleave',e=>{ if(e.target===previewEl||!previewEl.contains(e.relatedTarget)) previewEl.classList.remove('drop'); });
-previewEl.addEventListener('drop',e=>{ if(!dtHasFiles(e)) return; const slot=e.target.closest('[data-imgslot]'); let key=(slot&&slot.dataset.imgslot)||currentImageKey();
+previewEl.addEventListener('drop',e=>{
+  const hasAsset=e.dataTransfer&&e.dataTransfer.types&&e.dataTransfer.types.includes('application/x-deck-asset');
+  if(hasAsset){ e.preventDefault(); previewEl.classList.remove('drop');
+    let payload; try{ payload=JSON.parse(e.dataTransfer.getData('application/x-deck-asset')); }catch(_){ return; }
+    const slot=e.target.closest('[data-imgslot]'); let key=(slot&&slot.dataset.imgslot)||currentImageKey();
+    if(!key){ const hasText=!!(deck[cur].title||deck[cur].body); deck[cur].layout=hasText?'imagetext':'image'; key='image'; }
+    (async()=>{ try{
+      let dataUrl;
+      if(payload.kind==='lib'){ const la=((LIB&&LIB.assets)||[]).find(a=>a.id===payload.id); if(!la) return; dataUrl=await assetToDataURL(la.src); }
+      else{ const u=MY_UPLOADS.find(u=>u.id===payload.id); if(!u) return; dataUrl=u.data; }
+      await placeAssetIntoCell(dataUrl,key);
+    }catch(err){ console.warn(err); toast('Could not place asset'); } })();
+    return;
+  }
+  if(!dtHasFiles(e)) return; const slot=e.target.closest('[data-imgslot]'); let key=(slot&&slot.dataset.imgslot)||currentImageKey();
   if(!key){ const hasText=!!(deck[cur].title||deck[cur].body); deck[cur].layout=hasText?'imagetext':'image'; key='image'; }   // dropped on a slide with no photo: text -> Image+text (Left), else full-bleed
   if(key==='image' && ['imagetext','imageright','imagecaption','image'].includes(deck[cur].layout)) selectedPhoto='image';   // select the dropped photo so its inspector opens
   e.preventDefault(); previewEl.classList.remove('drop'); dropImageFile(e,key); });
@@ -2170,7 +2184,8 @@ function renderLibrary(){
     h+=`<div class="libGrid"><div class="libEmpty">No library assets loaded yet.<br>Your team adds them in <b>library.json</b>.<br><br>You can still use <b>Upload</b> for your own images.</div></div><div class="libUpload">⬆ Upload your own image instead</div>`;
     p.innerHTML=h; p.querySelector('.libX').onclick=closeLibrary; p.querySelector('.libUpload').onclick=()=>{ closeLibrary(); pickImageFile(libTargetKey); };
     p.querySelectorAll('[data-updel]').forEach(b=>{ b.onclick=ev=>{ ev.stopPropagation(); idbDeleteUpload(b.dataset.updel).then(()=>renderLibrary()); }; });
-    p.querySelectorAll('[data-upload]').forEach(el=>el.onclick=()=>{ const u=MY_UPLOADS.find(x=>x.id===el.dataset.upload); if(!u) return; deck[cur][libTargetKey]=u.data; renderAll(); toast('Added '+u.name); });
+    p.querySelectorAll('[data-upload]').forEach(el=>{ el.onclick=()=>{ const u=MY_UPLOADS.find(x=>x.id===el.dataset.upload); if(!u) return; const dest=(typeof selectedPhoto!=='undefined'&&selectedPhoto)?selectedPhoto:libTargetKey; placeAssetIntoCell(u.data,dest); toast('Added '+u.name); };
+      el.setAttribute('draggable','true'); el.addEventListener('dragstart',ev=>{ ev.dataTransfer.setData('application/x-deck-asset',JSON.stringify({kind:'upload',id:el.dataset.upload})); ev.dataTransfer.effectAllowed='copy'; }); });
     return;
   }
   h+=`<div class="libSearch"><input type="search" placeholder="Search assets" value="${esc(libQuery)}" data-lib-search></div>`;
@@ -2194,11 +2209,17 @@ function renderLibrary(){
   p.querySelectorAll('.libTab').forEach(b=>b.onclick=()=>{ libCat=b.dataset.cat; libQuery=''; renderLibrary(); });
   p.querySelectorAll('[data-asset]').forEach(el=>el.onclick=()=>insertLibraryAsset(el.dataset.asset));
   p.querySelectorAll('[data-updel]').forEach(b=>{ b.onclick=ev=>{ ev.stopPropagation(); idbDeleteUpload(b.dataset.updel).then(()=>renderLibrary()); }; });
-  p.querySelectorAll('[data-upload]').forEach(el=>el.onclick=()=>{ const u=MY_UPLOADS.find(x=>x.id===el.dataset.upload); if(!u) return; deck[cur][libTargetKey]=u.data; renderAll(); toast('Added '+u.name); });
+  p.querySelectorAll('[data-upload]').forEach(el=>el.onclick=()=>{ const u=MY_UPLOADS.find(x=>x.id===el.dataset.upload); if(!u) return; const dest=(typeof selectedPhoto!=='undefined'&&selectedPhoto)?selectedPhoto:libTargetKey; placeAssetIntoCell(u.data,dest); toast('Added '+u.name); });
   p.querySelector('.libUpload').onclick=()=>{ closeLibrary(); pickImageFile(libTargetKey); };
+  p.querySelectorAll('[data-asset],[data-upload]').forEach(el=>{
+    el.setAttribute('draggable','true');
+    el.addEventListener('dragstart',ev=>{ const kind=el.dataset.upload?'upload':'lib'; const id=el.dataset.upload||el.dataset.asset;
+      ev.dataTransfer.setData('application/x-deck-asset',JSON.stringify({kind,id})); ev.dataTransfer.effectAllowed='copy'; });
+  });
   const si=p.querySelector('[data-lib-search]');
   if(si) si.oninput=()=>{ libQuery=si.value; const pos=si.selectionStart; renderLibrary(); const ni=libPanelEl.querySelector('[data-lib-search]'); if(ni){ ni.focus(); try{ni.setSelectionRange(pos,pos);}catch(_){} } };
 }
+async function placeAssetIntoCell(dataUrl,key){ deck[cur][key]=dataUrl; renderAll(); saveDraftSoon(); commitHistorySoon(); }
 async function insertLibraryAsset(id){
   const a=((LIB&&LIB.assets)||[]).find(x=>x.id===id); if(!a) return;
   try{
@@ -2210,7 +2231,8 @@ async function insertLibraryAsset(id){
       renderAll(); renderLibrary(); libPanelEl.classList.add('on'); toast('Added '+a.name+' as graphic');
       return;
     }
-    deck[cur][libTargetKey]=await assetToDataURL(a.src); renderAll(); renderLibrary(); libPanelEl.classList.add('on'); toast('Added '+a.name);
+    const dest=(typeof selectedPhoto!=='undefined'&&selectedPhoto)?selectedPhoto:libTargetKey;
+    await placeAssetIntoCell(await assetToDataURL(a.src),dest); renderLibrary(); libPanelEl.classList.add('on'); toast('Added '+a.name);
   }
   catch(e){ console.warn(e); toast('Could not load that asset'); }
 }

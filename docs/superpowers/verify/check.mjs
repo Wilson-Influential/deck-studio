@@ -477,6 +477,113 @@ const URL = 'http://localhost:4250/';
   if (!t6delete.uploadItemGone) assertions.push('FAIL: Task 6 [data-upload] item still rendered after idbDeleteUpload + renderLibrary');
   if (t6delete.idbCountAfterDelete !== 0) assertions.push(`FAIL: Task 6 idb still has ${t6delete.idbCountAfterDelete} records after delete`);
 
+  // ── Task 7 Tests ──
+
+  // (a) twoup: set selectedPhoto='image2', call insertLibraryAsset, assert data URL lands in image2 not image
+  const t7a = await page.evaluate(async (img) => {
+    // seed a photo-category asset into LIB
+    if (!LIB) LIB = { categories: [], assets: [] };
+    const testAsset = { id: 'test-photo-asset', name: 'Test Photo', category: 'photos', src: 'data:image/svg+xml;base64,' + btoa('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="#abc"/></svg>') };
+    if (!LIB.assets.find(a => a.id === 'test-photo-asset')) LIB.assets.push(testAsset);
+    if (!LIB.categories.find(c => c.id === 'photos')) LIB.categories.push({ id: 'photos', name: 'Photos' });
+
+    deck[cur] = { layout: 'twoup', image: img, image2: img, title: 'T7A' };
+    selectedPhoto = 'image2';
+    libTargetKey = 'image';
+
+    // stub assetToDataURL to return the src directly (no fetch needed)
+    const origFn = assetToDataURL;
+    window.assetToDataURL = async (src) => src;
+    await insertLibraryAsset('test-photo-asset');
+    window.assetToDataURL = origFn;
+
+    return {
+      image2Value: deck[cur].image2,
+      imageValue: deck[cur].image,
+      image2ChangedFromImg: deck[cur].image2 !== img,
+      imageUnchanged: deck[cur].image === img,
+      dest_was_image2: deck[cur].image2 === testAsset.src,
+    };
+  }, IMG);
+  console.log('── Task 7(a): insertLibraryAsset targets selectedPhoto (image2) ──');
+  console.log(JSON.stringify(t7a, null, 2));
+
+  // (b) selectedPhoto=null → insertLibraryAsset targets libTargetKey as before
+  const t7b = await page.evaluate(async (img) => {
+    const testSrc = 'data:image/svg+xml;base64,' + btoa('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="#def"/></svg>');
+    if (!LIB) LIB = { categories: [{ id: 'photos', name: 'Photos' }], assets: [] };
+    const testAsset2 = { id: 'test-photo-b', name: 'Test Photo B', category: 'photos', src: testSrc };
+    if (!LIB.assets.find(a => a.id === 'test-photo-b')) LIB.assets.push(testAsset2);
+    if (!LIB.categories.find(c => c.id === 'photos')) LIB.categories.push({ id: 'photos', name: 'Photos' });
+
+    deck[cur] = { layout: 'imagetext', image: img, title: 'T7B' };
+    selectedPhoto = null;
+    libTargetKey = 'image';
+
+    const origFn = assetToDataURL;
+    window.assetToDataURL = async (src) => src;
+    await insertLibraryAsset('test-photo-b');
+    window.assetToDataURL = origFn;
+
+    return {
+      imageValue: deck[cur].image,
+      imageUpdated: deck[cur].image === testSrc,
+    };
+  }, IMG);
+  console.log('── Task 7(b): insertLibraryAsset targets libTargetKey when selectedPhoto=null ──');
+  console.log(JSON.stringify(t7b, null, 2));
+
+  // (c) placeAssetIntoCell sets deck[cur][key] and re-renders without error
+  const t7c = await page.evaluate(async (img) => {
+    deck[cur] = { layout: 'imagetext', image: img, title: 'T7C' };
+    const testUrl = 'data:image/png;base64,AAAA';
+    let renderAllCalled = false;
+    const origRender = renderAll;
+    window.renderAll = () => { renderAllCalled = true; origRender(); };
+    await placeAssetIntoCell(testUrl, 'image');
+    window.renderAll = origRender;
+    return {
+      imageValue: deck[cur].image,
+      imageMatches: deck[cur].image === testUrl,
+      renderAllCalled,
+    };
+  }, IMG);
+  console.log('── Task 7(c): placeAssetIntoCell sets deck[cur].image and re-renders ──');
+  console.log(JSON.stringify(t7c, null, 2));
+
+  // (d) After openLibrary + renderLibrary, [data-asset] and [data-upload] have draggable="true"
+  const t7d = await page.evaluate(async (data) => {
+    // add an upload so [data-upload] items appear
+    const rec = await idbAddUpload({ data, name: 'drag-probe' });
+    libQuery = '';
+    openLibrary('image');
+    renderLibrary();
+    const assetItems = libPanelEl ? Array.from(libPanelEl.querySelectorAll('[data-asset]')) : [];
+    const uploadItems = libPanelEl ? Array.from(libPanelEl.querySelectorAll('[data-upload]')) : [];
+    const assetsDraggable = assetItems.every(el => el.getAttribute('draggable') === 'true');
+    const uploadsDraggable = uploadItems.every(el => el.getAttribute('draggable') === 'true');
+    // clean up
+    await idbDeleteUpload(rec.id);
+    renderLibrary();
+    return {
+      assetCount: assetItems.length,
+      uploadCount: uploadItems.length,
+      assetsDraggable,
+      uploadsDraggable,
+    };
+  }, PROBE_DATA);
+  console.log('── Task 7(d): library items have draggable="true" ──');
+  console.log(JSON.stringify(t7d, null, 2));
+
+  // Task 7 assertions
+  if (!t7a.dest_was_image2) assertions.push(`FAIL: Task 7(a) insertLibraryAsset should write to image2 (selectedPhoto), but image2=${t7a.image2Value}`);
+  if (!t7a.imageUnchanged) assertions.push(`FAIL: Task 7(a) deck[cur].image should be unchanged, got ${t7a.imageValue}`);
+  if (!t7b.imageUpdated) assertions.push(`FAIL: Task 7(b) insertLibraryAsset should update libTargetKey when selectedPhoto=null, got image=${t7b.imageValue}`);
+  if (!t7c.imageMatches) assertions.push(`FAIL: Task 7(c) placeAssetIntoCell did not set deck[cur].image, got ${t7c.imageValue}`);
+  if (!t7c.renderAllCalled) assertions.push('FAIL: Task 7(c) placeAssetIntoCell did not call renderAll');
+  if (t7d.assetCount > 0 && !t7d.assetsDraggable) assertions.push('FAIL: Task 7(d) [data-asset] items missing draggable="true"');
+  if (t7d.uploadCount > 0 && !t7d.uploadsDraggable) assertions.push('FAIL: Task 7(d) [data-upload] items missing draggable="true"');
+
   console.log('\n── Assertion results ──');
   if (assertions.length === 0) {
     console.log('ALL PASS ✓');
