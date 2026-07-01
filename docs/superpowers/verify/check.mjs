@@ -1,5 +1,5 @@
 /**
- * Task 2 verification harness: move arrangement/fit/focus into inspector, remove on-canvas toolbar + focal dot
+ * Task 2 + Task 3 verification harness
  * Run: node docs/superpowers/verify/check.mjs
  */
 import { chromium } from 'playwright';
@@ -20,6 +20,7 @@ const URL = 'http://localhost:4250/';
   await page.waitForSelector('#preview svg', { timeout: 5000 });
 
   const IMG = 'data:image/svg+xml;base64,' + Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="#123"/></svg>').toString('base64');
+  const IMG2 = 'data:image/svg+xml;base64,' + Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="#f00"/></svg>').toString('base64');
 
   // ── Test: imagetext slide with photo selected shows inspector with arrangement + fit + focusPad ──
   const inspectorResult = await page.evaluate((img) => {
@@ -154,6 +155,75 @@ const URL = 'http://localhost:4250/';
   console.log('── gotoSlide clears selectedPhoto ──');
   console.log(JSON.stringify(gotoResult, null, 2));
 
+  // ── Task 3 Test: MULTI_CELLS and swapCells exist ──
+  const swapExists = await page.evaluate(() => ({
+    MULTI_CELLS: typeof MULTI_CELLS,
+    swapCells: typeof swapCells,
+    multiCellsKeys: typeof MULTI_CELLS === 'object' ? Object.keys(MULTI_CELLS) : [],
+  }));
+  console.log('── MULTI_CELLS / swapCells existence ──');
+  console.log(JSON.stringify(swapExists, null, 2));
+
+  // ── Task 3 Test: twoup — select image, inspector shows [data-swap] button, click swap, values exchanged ──
+  const swapTwoUpResult = await page.evaluate((imgs) => {
+    const [img1, img2] = imgs;
+    deck[cur] = { layout: 'twoup', image: img1, image2: img2, capA: 'Caption A', capB: 'Caption B' };
+    renderAll();
+    // select image (cell 0)
+    selectedPhoto = 'image';
+    renderEditor();
+    const swapBtn = document.querySelector('#editor [data-swap]');
+    const swapBtnIndex = swapBtn ? swapBtn.dataset.swap : null;
+    swapBtn && swapBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    return {
+      swapBtnPresent: !!swapBtn,
+      swapBtnIndex,
+      imageAfter: deck[cur].image,
+      image2After: deck[cur].image2,
+      capAAfter: deck[cur].capA,
+      capBAfter: deck[cur].capB,
+      img1WasImg2: deck[cur].image === img2,
+      img2WasImg1: deck[cur].image2 === img1,
+      capAWasCapB: deck[cur].capA === 'Caption B',
+      capBWasCapA: deck[cur].capB === 'Caption A',
+    };
+  }, [IMG, IMG2]);
+
+  console.log('── Task 3: twoup swap (cell 0 → cell 1) ──');
+  console.log(JSON.stringify(swapTwoUpResult, null, 2));
+
+  // ── Task 3 Test: imagegrid4 — select image3 (index 2), swap with cell 0, assert image/image3 and capA/capC swapped ──
+  const IMG3 = 'data:image/svg+xml;base64,' + Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="#0f0"/></svg>').toString('base64');
+  const IMG4 = 'data:image/svg+xml;base64,' + Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="#00f"/></svg>').toString('base64');
+
+  const swapGrid4Result = await page.evaluate((imgs) => {
+    const [img1, img2, img3, img4] = imgs;
+    deck[cur] = { layout: 'imagegrid4', image: img1, image2: img2, image3: img3, image4: img4,
+      capA: 'Cap A', capB: 'Cap B', capC: 'Cap C', capD: 'Cap D' };
+    renderAll();
+    // select image3 (index 2)
+    selectedPhoto = 'image3';
+    renderEditor();
+    // swap with cell 0 (index 0)
+    const swapBtn0 = document.querySelector('#editor [data-swap="0"]');
+    swapBtn0 && swapBtn0.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    return {
+      swapBtn0Present: !!swapBtn0,
+      // image should be img3, image3 should be img1
+      imageAfter: deck[cur].image,
+      image3After: deck[cur].image3,
+      capAAfter: deck[cur].capA,
+      capCAfter: deck[cur].capC,
+      imageWasImg3: deck[cur].image === img3,
+      image3WasImg1: deck[cur].image3 === img1,
+      capAWasCapC: deck[cur].capA === 'Cap C',
+      capCWasCapA: deck[cur].capC === 'Cap A',
+    };
+  }, [IMG, IMG2, IMG3, IMG4]);
+
+  console.log('── Task 3: imagegrid4 swap (cell 2 → cell 0) ──');
+  console.log(JSON.stringify(swapGrid4Result, null, 2));
+
   console.log('── Console errors ──');
   console.log(JSON.stringify(errors));
 
@@ -181,6 +251,19 @@ const URL = 'http://localhost:4250/';
   if (pairArrangeResult.arrangeOnCanvas !== 0) assertions.push(`FAIL: ${pairArrangeResult.arrangeOnCanvas} [data-arrange] elements on canvas after imagestack click`);
   if (noFocalOnCanvas.focalElements !== 0) assertions.push(`FAIL: ${noFocalOnCanvas.focalElements} [data-focal] elements on canvas`);
   if (gotoResult.selectedPhotoAfterNav !== null) assertions.push(`FAIL: selectedPhoto should be null after gotoSlide, got "${gotoResult.selectedPhotoAfterNav}"`);
+  // Task 3 assertions
+  if (swapExists.MULTI_CELLS !== 'object') assertions.push('FAIL: MULTI_CELLS is not defined');
+  if (swapExists.swapCells !== 'function') assertions.push('FAIL: swapCells is not a function');
+  if (!swapTwoUpResult.swapBtnPresent) assertions.push('FAIL: no [data-swap] button in twoup inspector');
+  if (!swapTwoUpResult.img1WasImg2) assertions.push(`FAIL: twoup image should be img2 after swap, got ${swapTwoUpResult.imageAfter}`);
+  if (!swapTwoUpResult.img2WasImg1) assertions.push(`FAIL: twoup image2 should be img1 after swap, got ${swapTwoUpResult.image2After}`);
+  if (!swapTwoUpResult.capAWasCapB) assertions.push(`FAIL: twoup capA should be "Caption B" after swap, got "${swapTwoUpResult.capAAfter}"`);
+  if (!swapTwoUpResult.capBWasCapA) assertions.push(`FAIL: twoup capB should be "Caption A" after swap, got "${swapTwoUpResult.capBAfter}"`);
+  if (!swapGrid4Result.swapBtn0Present) assertions.push('FAIL: no [data-swap="0"] button in imagegrid4 inspector for image3');
+  if (!swapGrid4Result.imageWasImg3) assertions.push(`FAIL: imagegrid4 image should be img3 after swap, got ${swapGrid4Result.imageAfter}`);
+  if (!swapGrid4Result.image3WasImg1) assertions.push(`FAIL: imagegrid4 image3 should be img1 after swap, got ${swapGrid4Result.image3After}`);
+  if (!swapGrid4Result.capAWasCapC) assertions.push(`FAIL: imagegrid4 capA should be "Cap C" after swap, got "${swapGrid4Result.capAAfter}"`);
+  if (!swapGrid4Result.capCWasCapA) assertions.push(`FAIL: imagegrid4 capC should be "Cap A" after swap, got "${swapGrid4Result.capCAfter}"`);
   if (errors.length) assertions.push(`FAIL: ${errors.length} console error(s): ${errors.join('; ')}`);
 
   console.log('\n── Assertion results ──');

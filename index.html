@@ -1178,6 +1178,14 @@ function graphicRect(g){
 function findGraphicById(id){ return slideGraphics(deck[cur]).find(g=>g.id===id); }
 // the selected photo's image-slot key on the current slide (image / imagetext only). Preview-only.
 let selectedPhoto=null;
+// ordered image cells + their caption keys per multi-image layout
+const MULTI_CELLS={ twoup:[['image','capA'],['image2','capB']], imagestack:[['image','capA'],['image2','capB']],
+  imagegrid3:[['image','capA'],['image2','capB'],['image3','capC']], imagegrid4:[['image','capA'],['image2','capB'],['image3','capC'],['image4','capD']] };
+function swapCells(sl, ia, ib){
+  const cells=MULTI_CELLS[sl.layout]; if(!cells||!cells[ia]||!cells[ib]) return;
+  const [ka,ca]=cells[ia], [kb,cb]=cells[ib];
+  [sl[ka],sl[kb]]=[sl[kb],sl[ka]]; [sl[ca],sl[cb]]=[sl[cb],sl[ca]];
+}
 // inline fit/focal control drawn over a selected photo. interactive-only; never exported.
 function photoControlSVG(key,x,y,w,h,c){
   // selection outline on the photo only — all controls are in the inspector
@@ -1348,6 +1356,11 @@ function imageInspectorHTML(sl,key){
   const cell=(gx,gy)=>{ const on=Math.abs(fx-gx)<0.01 && Math.abs(fy-gy)<0.01; return `<button class="focusCell${on?' on':''}" data-fx="${gx}" data-fy="${gy}"></button>`; };
   const focusPad = fit==='cover' ? `<h2>Focus</h2><div class="focusPad">`+
     [0.17,0.5,0.83].map(gy=>[0.17,0.5,0.83].map(gx=>cell(gx,gy)).join('')).join('')+`</div>` : '';
+  const cells=MULTI_CELLS[sl.layout];
+  let swap='';
+  if(cells){ const i=cells.findIndex(c=>c[0]===key);
+    swap=`<h2>Swap with</h2><div class="layoutGrid" data-swap-grid>`+
+      cells.map((c,j)=> j===i?'' : `<button data-swap="${j}">Cell ${j+1}</button>`).join('')+`</div>`; }
   return `<div data-img-inspector data-imgk="${esc(key)}">
     <h2>Image</h2>
     <div class="imgThumb" style="background-image:url(&quot;${(sl[key]||'').replace(/"/g,'&quot;')}&quot;)"></div>
@@ -1355,7 +1368,7 @@ function imageInspectorHTML(sl,key){
       <button class="imgBtn" data-imgact="replace">Replace</button>
       <button class="imgBtn ghost" data-imgact="delimg">Delete image</button>
     </div>
-    ${arrange}${fitRow}${focusPad}
+    ${arrange}${fitRow}${focusPad}${swap}
     <button class="layoutTrigger" data-img-deselect><span class="cur">Back to slide</span><span class="chg">Esc</span></button>
   </div>`;
 }
@@ -1369,6 +1382,7 @@ function renderEditor(){
     e.querySelectorAll('[data-arrange]').forEach(b=>b.onclick=()=>{ deck[cur].layout=b.dataset.arrange; renderAll(); saveDraftSoon(); commitHistorySoon(); });
     e.querySelectorAll('[data-fit]').forEach(b=>b.onclick=()=>{ deck[cur].fit=b.dataset.fit; renderAll(); saveDraftSoon(); commitHistorySoon(); });
     e.querySelectorAll('[data-fx]').forEach(b=>b.onclick=()=>{ deck[cur].focusX=+b.dataset.fx; deck[cur].focusY=+b.dataset.fy; renderAll(); saveDraftSoon(); commitHistorySoon(); });
+    e.querySelectorAll('[data-swap]').forEach(b=>b.onclick=()=>{ const cells=MULTI_CELLS[deck[cur].layout]; const i=cells.findIndex(c=>c[0]===selectedPhoto); swapCells(deck[cur], i, +b.dataset.swap); renderAll(); saveDraftSoon(); commitHistorySoon(); });
     return;
   }
   let h=`<h2>Layout</h2>
