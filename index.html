@@ -154,9 +154,14 @@
   .libX{width:30px;height:30px;border:0;border-radius:8px;background:var(--soft);color:var(--navy);font-size:16px;cursor:pointer;line-height:1}
   .libX:hover{background:var(--red);color:#fff}
   .libTabs{display:flex;gap:6px;padding:12px 16px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+  .libTabs.muted{opacity:.4;pointer-events:none}
   .libTab{border:1.5px solid var(--line);background:var(--soft);border-radius:999px;padding:6px 12px;font:inherit;font-size:12px;font-weight:900;color:var(--charcoal);cursor:pointer;transition:.12s}
   .libTab:hover{border-color:#cfc9e0}
   .libTab.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .libSearch{padding:10px 16px 0}
+  .libSearch input[type=search]{display:block;width:100%;box-sizing:border-box;border:1.5px solid var(--line);border-radius:8px;padding:8px 12px;font:inherit;font-size:13px;font-weight:700;color:var(--navy);background:var(--soft);outline:none;transition:.12s}
+  .libSearch input[type=search]:focus{border-color:var(--navy);background:#fff}
+  .libSearch input[type=search]::placeholder{color:#aaa;font-weight:600}
   .libGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:16px;overflow-y:auto;align-content:start}
   .libItem{border:1.5px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;background:#fff;transition:.12s}
   .libItem:hover{border-color:var(--navy);transform:translateY(-2px);box-shadow:0 12px 24px -16px rgba(32,23,71,.7)}
@@ -2128,7 +2133,7 @@ function downscaleToDataURL(img,type){
 }
 
 /* ===== the shared Library (data-driven, non-modal side panel) ===== */
-let LIB=null, libTargetKey='image', libCat=null, libPanelEl=null;
+let LIB=null, libTargetKey='image', libCat=null, libPanelEl=null, libQuery='';
 async function loadLibrary(){
   try{ const r=await fetch('library.json',{cache:'no-cache'}); if(r.ok){ const j=await r.json(); if(j&&Array.isArray(j.assets)) LIB=j; } }
   catch(e){ /* library is optional — Upload still works without it */ }
@@ -2150,18 +2155,25 @@ function renderLibrary(){
     h+=`<div class="libGrid"><div class="libEmpty">No library assets loaded yet.<br>Your team adds them in <b>library.json</b>.<br><br>You can still use <b>Upload</b> for your own images.</div></div><div class="libUpload">⬆ Upload your own image instead</div>`;
     p.innerHTML=h; p.querySelector('.libX').onclick=closeLibrary; p.querySelector('.libUpload').onclick=()=>{ closeLibrary(); pickImageFile(libTargetKey); }; return;
   }
-  h+=`<div class="libTabs">`;
+  h+=`<div class="libSearch"><input type="search" placeholder="Search assets" value="${esc(libQuery)}" data-lib-search></div>`;
+  const q=libQuery.trim().toLowerCase();
+  const catName=id=>((LIB.categories||[]).find(c=>c.id===id)||{}).name||'';
+  h+=`<div class="libTabs${q?' muted':''}">`;
   (LIB.categories||[]).forEach(c=>{ h+=`<button class="libTab${c.id===libCat?' on':''}" data-cat="${esc(c.id)}">${esc(c.name)}</button>`; });
   h+=`</div><div class="libGrid">`;
-  const assets=LIB.assets.filter(a=>a.category===libCat);
-  if(!assets.length){ h+=`<div class="libEmpty">Nothing in this category yet.<br>Drop approved assets here in <b>library.json</b>.</div>`; }
+  const assets = q
+    ? LIB.assets.filter(a=>((a.name||'')+' '+catName(a.category)).toLowerCase().includes(q))
+    : LIB.assets.filter(a=>a.category===libCat);
+  if(!assets.length){ h+=`<div class="libEmpty">${q?'No assets match your search.':'Nothing in this category yet.<br>Drop approved assets here in <b>library.json</b>.'}</div>`; }
   assets.forEach(a=>{ h+=`<div class="libItem" data-asset="${esc(a.id)}"><div class="libThumb"${a.bg?` style="background:${esc(a.bg)}"`:''}><img src="${esc(a.thumb||a.src)}" alt="${esc(a.name)}" loading="lazy"></div><div class="nm">${esc(a.name)}</div></div>`; });
   h+=`</div><div class="libUpload">⬆ Upload your own image instead</div>`;
   p.innerHTML=h;
   p.querySelector('.libX').onclick=closeLibrary;
-  p.querySelectorAll('.libTab').forEach(b=>b.onclick=()=>{ libCat=b.dataset.cat; renderLibrary(); });
+  p.querySelectorAll('.libTab').forEach(b=>b.onclick=()=>{ libCat=b.dataset.cat; libQuery=''; renderLibrary(); });
   p.querySelectorAll('.libItem').forEach(el=>el.onclick=()=>insertLibraryAsset(el.dataset.asset));
   p.querySelector('.libUpload').onclick=()=>{ closeLibrary(); pickImageFile(libTargetKey); };
+  const si=p.querySelector('[data-lib-search]');
+  if(si) si.oninput=()=>{ libQuery=si.value; const pos=si.selectionStart; renderLibrary(); const ni=libPanelEl.querySelector('[data-lib-search]'); if(ni){ ni.focus(); try{ni.setSelectionRange(pos,pos);}catch(_){} } };
 }
 async function insertLibraryAsset(id){
   const a=((LIB&&LIB.assets)||[]).find(x=>x.id===id); if(!a) return;

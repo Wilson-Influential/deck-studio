@@ -283,6 +283,74 @@ const URL = 'http://localhost:4250/';
   console.log('── Task 4: ACTIONS entries ──');
   console.log(JSON.stringify(t4actions, null, 2));
 
+  // ── Task 5 Test: library search ──
+  const t5 = await page.evaluate(() => {
+    // Seed LIB if it didn't load (guard against fetch failure in headless)
+    if (!LIB || !LIB.assets || !LIB.assets.length) {
+      LIB = {
+        categories: [{ id: 'icons', name: 'Icons' }, { id: 'illustrations', name: 'Illustrations' }],
+        assets: [
+          { id: 'icon-target', name: 'Target', category: 'icons', src: 'x.svg' },
+          { id: 'icon-growth', name: 'Growth', category: 'icons', src: 'x.svg' },
+          { id: 'studio-target', name: 'Target', category: 'illustrations', src: 'x.png' },
+          { id: 'studio-rocket', name: 'Rocket', category: 'illustrations', src: 'x.png' },
+        ]
+      };
+    }
+    // Use "target" — exists in icons AND illustrations in both real and fake LIB
+    const q = 'target';
+    // Compute expected count from LIB directly
+    const catName = id => ((LIB.categories || []).find(c => c.id === id) || {}).name || '';
+    const expectedAssets = LIB.assets.filter(a => ((a.name || '') + ' ' + catName(a.category)).toLowerCase().includes(q));
+    const expectedCount = expectedAssets.length;
+    const expectedCategories = [...new Set(expectedAssets.map(a => a.category))];
+    const crossCategory = expectedCategories.length > 1;
+
+    // Open library, set query, re-render
+    libCat = LIB.categories[0].id;
+    libQuery = q;
+    openLibrary('image');
+    renderLibrary();
+    const itemsWithQuery = libPanelEl.querySelectorAll('.libItem').length;
+
+    // Now clear query — items should be only from active category
+    libQuery = '';
+    renderLibrary();
+    const itemsNoQuery = libPanelEl.querySelectorAll('.libItem').length;
+    const expectedNoCat = LIB.assets.filter(a => a.category === libCat).length;
+
+    // Focus preservation: simulate oninput
+    libQuery = 'tar';
+    renderLibrary();
+    // The input handler will have been wired; trigger it to test focus
+    const si = libPanelEl.querySelector('[data-lib-search]');
+    let focusPreserved = false;
+    if (si) {
+      si.focus();
+      si.value = 'targ';
+      si.dispatchEvent(new Event('input', { bubbles: true }));
+      const active = document.activeElement;
+      focusPreserved = active && active.hasAttribute('data-lib-search');
+    }
+
+    // Clean up
+    libQuery = '';
+    renderLibrary();
+
+    return {
+      expectedCount,
+      crossCategory,
+      itemsWithQuery,
+      itemsNoQuery,
+      expectedNoCat,
+      focusPreserved,
+      searchInputPresent: !!libPanelEl.querySelector('[data-lib-search]'),
+    };
+  });
+
+  console.log('── Task 5: library search ──');
+  console.log(JSON.stringify(t5, null, 2));
+
   console.log('── Console errors ──');
   console.log(JSON.stringify(errors));
 
@@ -332,6 +400,12 @@ const URL = 'http://localhost:4250/';
   if (t4c.selectedPhotoAfter !== null) assertions.push(`FAIL: Task 4(c) selectedPhoto should be null after Escape, got "${t4c.selectedPhotoAfter}"`);
   if (!t4actions.rmimg) assertions.push('FAIL: Task 4 ACTIONS missing entry id="rmimg"');
   if (!t4actions.deselect) assertions.push('FAIL: Task 4 ACTIONS missing entry id="deselect"');
+  // Task 5 assertions
+  if (!t5.searchInputPresent) assertions.push('FAIL: Task 5 search input [data-lib-search] not rendered');
+  if (!t5.crossCategory) assertions.push('FAIL: Task 5 test query "target" does not span >1 category in LIB');
+  if (t5.itemsWithQuery !== t5.expectedCount) assertions.push(`FAIL: Task 5 cross-category query returned ${t5.itemsWithQuery} items, expected ${t5.expectedCount}`);
+  if (t5.itemsNoQuery !== t5.expectedNoCat) assertions.push(`FAIL: Task 5 empty query returned ${t5.itemsNoQuery} items, expected ${t5.expectedNoCat} for active category`);
+  if (!t5.focusPreserved) assertions.push('FAIL: Task 5 focus not preserved in search input after oninput re-render');
 
   console.log('\n── Assertion results ──');
   if (assertions.length === 0) {
