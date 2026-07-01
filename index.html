@@ -462,6 +462,69 @@ function imageCaptionRender(c,S,uid,interactive){
   if(interactive && has && selectedPhoto==='image') s+=photoControlSVG('image',0,0,W,bandH,c);
   return s;
 }
+// one rounded, clipped photo cell + caption strip below — the shared cell used by twoup/imagestack/grid layouts
+function imageCell(uid,key,img,x,y,w,h,acc,capKey,cap){
+  let s='';
+  if(img){ s+=`<defs><clipPath id="cl${uid}${key}"><rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="${(u*0.014).toFixed(0)}"/></clipPath></defs>`+
+    `<image href="${img}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" preserveAspectRatio="xMidYMid slice" clip-path="url(#cl${uid}${key})"/>`; }
+  else { s+=imgPlaceholder(x,y,w,h,acc,'Add an image'); }
+  s+=imgSlotHit(key,x,y,w,h);
+  s+=tblock([cap||''], x, y+h+u*0.016, u*0.024, 1.2, mix(BRAND.navy,'#ffffff',0.1), 700,'start',0,capKey);
+  return s;
+}
+// shared renderer for the multi-image grids (2 stacked / 3 / 4 cells). `cells` = [[key,x,y,w,h,capKey],...]
+function imageGridRender(c,S,uid,cells){
+  const acc=S.accent;
+  let s=`<rect width="${W}" height="${H}" fill="#ffffff"/>`;
+  s+=brandMark(c.logo, W-m-u*0.15, m, u*0.15, 'nvy', lum(acc)>0.6?BRAND.navy:acc, 'end');
+  let top=m;
+  if(c.title){ const head=fitHead(c.title, W-2*m-u*0.2, H*0.16, u*0.05, u*0.03, 0.52,1.0); s+=tblock(head.lines, m, top+u*0.01, head.fs, head.lh, BRAND.navy, 900,'start',-0.02,'title', W-2*m-u*0.2); top+=head.lines.length*head.fs*head.lh+u*0.03; }
+  cells.forEach(([key,x,y,w,h,capKey])=>{ s+=imageCell(uid,key,c[key],x,y,w,h,acc,capKey,c[capKey]); });
+  return s;
+}
+// always-on Side by side / Stacked toggle pill for the 2-image layouts (no click-to-select needed)
+function pairArrangeToolbarSVG(c){
+  const arr=[['Side by side','twoup'],['Stacked','imagestack']];
+  const segW=Math.round(u*0.135), segH=Math.round(u*0.05);
+  const totalW=arr.length*segW, bx=Math.round(W/2-totalW/2), by=Math.round(u*0.035);
+  const seg=(label,val,active,ox)=>`<g data-arrange="${val}" style="cursor:pointer">`+
+    `<rect x="${ox}" y="${by}" width="${segW}" height="${segH}" rx="${(segH/2)}" fill="${active?BRAND.navy:'transparent'}"/>`+
+    `<text x="${ox+segW/2}" y="${by+segH*0.66}" font-size="${(u*0.022).toFixed(1)}" font-weight="800" text-anchor="middle" fill="${active?'#ffffff':BRAND.navy}">${label}</text></g>`;
+  let s=`<rect x="${bx-9}" y="${by-7}" width="${totalW+18}" height="${segH+14}" rx="${(segH/2+7)}" fill="#ffffff" fill-opacity="0.95" stroke="${BRAND.navy}" stroke-opacity="0.14" stroke-width="1.5"/>`;
+  let ox=bx;
+  arr.forEach(([lb,id])=>{ s+=seg(lb,id, c.layout===id, ox); ox+=segW; });
+  return s;
+}
+function imagestackRender(c,S,uid,interactive){
+  const top=m+(c.title?u*0.09:0);
+  const capH=u*0.055, gap=u*0.028, colH=(H-m-top-2*capH-gap)/2;
+  let s=imageGridRender(c,S,uid,[
+    ['image', m, top, W-2*m, colH, 'capA'],
+    ['image2', m, top+colH+capH+gap, W-2*m, colH, 'capB'],
+  ]);
+  if(interactive) s+=pairArrangeToolbarSVG(c);
+  return s;
+}
+function imagegrid3Render(c,S,uid){
+  const top=m+(c.title?u*0.09:0);
+  const capH=u*0.055, gap=u*0.028, gh=H-m-top-capH;
+  const bigW=(W-2*m-gap)*0.6, smW=(W-2*m-gap)*0.4, smH=(gh-gap)/2;
+  return imageGridRender(c,S,uid,[
+    ['image', m, top, bigW, gh, 'capA'],
+    ['image2', m+bigW+gap, top, smW, smH, 'capB'],
+    ['image3', m+bigW+gap, top+smH+gap, smW, smH, 'capC'],
+  ]);
+}
+function imagegrid4Render(c,S,uid){
+  const top=m+(c.title?u*0.09:0);
+  const capH=u*0.05, gap=u*0.024, colW=(W-2*m-gap)/2, rowH=(H-m-top-2*capH-gap)/2;
+  return imageGridRender(c,S,uid,[
+    ['image', m, top, colW, rowH, 'capA'],
+    ['image2', m+colW+gap, top, colW, rowH, 'capB'],
+    ['image3', m, top+rowH+capH+gap, colW, rowH, 'capC'],
+    ['image4', m+colW+gap, top+rowH+capH+gap, colW, rowH, 'capD'],
+  ]);
+}
 const LAYOUTS = [
 {
   id:'cover', name:'Cover',
@@ -806,7 +869,7 @@ const LAYOUTS = [
 {
   id:'twoup', name:'Two images',
   fields:[['image','Left image','','image'],['image2','Right image','','image'],['title','Title','optional title across the top'],['capA','Left caption','optional'],['capB','Right caption','optional']],
-  render(c,S,uid){
+  render(c,S,uid,interactive){
     const acc=S.accent;
     let s=`<rect width="${W}" height="${H}" fill="#ffffff"/>`;
     s+=brandMark(c.logo, W-m-u*0.15, m, u*0.15, 'nvy', lum(acc)>0.6?BRAND.navy:acc, 'end');
@@ -821,15 +884,31 @@ const LAYOUTS = [
       s+=imgSlotHit(key,cx,gy,colW,gh);
       s+=tblock([cap||''], cx, gy+gh+u*0.016, u*0.024, 1.2, mix(BRAND.navy,'#ffffff',0.1), 700,'start',0,capKey);
     });
+    if(interactive) s+=pairArrangeToolbarSVG(c);
     return s;
   }
+},
+{
+  id:'imagestack', name:'Two images (stacked)', hidden:true,
+  fields:[['image','Top image','','image'],['image2','Bottom image','','image'],['title','Title','optional title across the top'],['capA','Top caption','optional'],['capB','Bottom caption','optional']],
+  render(c,S,uid,interactive){ return imagestackRender(c,S,uid,interactive); }
+},
+{
+  id:'imagegrid3', name:'Three images',
+  fields:[['image','Main image','','image'],['image2','Top right','','image'],['image3','Bottom right','','image'],['title','Title','optional title across the top'],['capA','Main caption','optional'],['capB','Top right caption','optional'],['capC','Bottom right caption','optional']],
+  render(c,S,uid){ return imagegrid3Render(c,S,uid); }
+},
+{
+  id:'imagegrid4', name:'Four images',
+  fields:[['image','Top left','','image'],['image2','Top right','','image'],['image3','Bottom left','','image'],['image4','Bottom right','','image'],['title','Title','optional title across the top'],['capA','Top left caption','optional'],['capB','Top right caption','optional'],['capC','Bottom left caption','optional'],['capD','Bottom right caption','optional']],
+  render(c,S,uid){ return imagegrid4Render(c,S,uid); }
 }
 ];
 const LAYOUT_BY = Object.fromEntries(LAYOUTS.map(l=>[l.id,l]));
 const LAYOUT_GROUPS = [
   {name:'Open',          ids:['cover','section','agenda']},
   {name:'Make the case', ids:['bullets','statement','stat','chart','comparison','columns','quote','table']},
-  {name:'Show',          ids:['image','imagetext','screenshot','twoup']},
+  {name:'Show',          ids:['image','imagetext','screenshot','twoup','imagegrid3','imagegrid4']},
   {name:'Close',         ids:['closing']},
 ];
 
