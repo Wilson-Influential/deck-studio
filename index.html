@@ -463,23 +463,24 @@ function imageCaptionRender(c,S,uid,interactive){
   return s;
 }
 // one rounded, clipped photo cell + caption strip below — the shared cell used by twoup/imagestack/grid layouts
-function imageCell(uid,key,img,x,y,w,h,acc,capKey,cap){
+function imageCell(uid,key,img,x,y,w,h,acc,capKey,cap,interactive){
   let s='';
   if(img){ s+=`<defs><clipPath id="cl${uid}${key}"><rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="${(u*0.014).toFixed(0)}"/></clipPath></defs>`+
     `<image href="${img}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" preserveAspectRatio="xMidYMid slice" clip-path="url(#cl${uid}${key})"/>`; }
   else { s+=imgPlaceholder(x,y,w,h,acc,'Add an image'); }
   s+=imgSlotHit(key,x,y,w,h);
+  if(interactive && img) s+=cellOutlineSVG(key,x,y,w,h);
   s+=tblock([cap||''], x, y+h+u*0.016, u*0.024, 1.2, mix(BRAND.navy,'#ffffff',0.1), 700,'start',0,capKey);
   return s;
 }
 // shared renderer for the multi-image grids (2 stacked / 3 / 4 cells). `cells` = [[key,x,y,w,h,capKey],...]
-function imageGridRender(c,S,uid,cells){
+function imageGridRender(c,S,uid,cells,interactive){
   const acc=S.accent;
   let s=`<rect width="${W}" height="${H}" fill="#ffffff"/>`;
   s+=brandMark(c.logo, W-m-u*0.15, m, u*0.15, 'nvy', lum(acc)>0.6?BRAND.navy:acc, 'end');
   let top=m;
   if(c.title){ const head=fitHead(c.title, W-2*m-u*0.2, H*0.16, u*0.05, u*0.03, 0.52,1.0); s+=tblock(head.lines, m, top+u*0.01, head.fs, head.lh, BRAND.navy, 900,'start',-0.02,'title', W-2*m-u*0.2); top+=head.lines.length*head.fs*head.lh+u*0.03; }
-  cells.forEach(([key,x,y,w,h,capKey])=>{ s+=imageCell(uid,key,c[key],x,y,w,h,acc,capKey,c[capKey]); });
+  cells.forEach(([key,x,y,w,h,capKey])=>{ s+=imageCell(uid,key,c[key],x,y,w,h,acc,capKey,c[capKey],interactive); });
   return s;
 }
 // always-on Side by side / Stacked toggle pill for the 2-image layouts (no click-to-select needed)
@@ -501,11 +502,11 @@ function imagestackRender(c,S,uid,interactive){
   let s=imageGridRender(c,S,uid,[
     ['image', m, top, W-2*m, colH, 'capA'],
     ['image2', m, top+colH+capH+gap, W-2*m, colH, 'capB'],
-  ]);
+  ],interactive);
   if(interactive) s+=pairArrangeToolbarSVG(c);
   return s;
 }
-function imagegrid3Render(c,S,uid){
+function imagegrid3Render(c,S,uid,interactive){
   const top=m+(c.title?u*0.09:0);
   const capH=u*0.055, gap=u*0.028, gh=H-m-top-capH;
   const bigW=(W-2*m-gap)*0.6, smW=(W-2*m-gap)*0.4, smH=(gh-gap)/2;
@@ -513,9 +514,9 @@ function imagegrid3Render(c,S,uid){
     ['image', m, top, bigW, gh, 'capA'],
     ['image2', m+bigW+gap, top, smW, smH, 'capB'],
     ['image3', m+bigW+gap, top+smH+gap, smW, smH, 'capC'],
-  ]);
+  ],interactive);
 }
-function imagegrid4Render(c,S,uid){
+function imagegrid4Render(c,S,uid,interactive){
   const top=m+(c.title?u*0.09:0);
   const capH=u*0.05, gap=u*0.024, colW=(W-2*m-gap)/2, rowH=(H-m-top-2*capH-gap)/2;
   return imageGridRender(c,S,uid,[
@@ -523,7 +524,7 @@ function imagegrid4Render(c,S,uid){
     ['image2', m+colW+gap, top, colW, rowH, 'capB'],
     ['image3', m, top+rowH+capH+gap, colW, rowH, 'capC'],
     ['image4', m+colW+gap, top+rowH+capH+gap, colW, rowH, 'capD'],
-  ]);
+  ],interactive);
 }
 const LAYOUTS = [
 {
@@ -843,7 +844,7 @@ const LAYOUTS = [
 {
   id:'screenshot', name:'Screenshot',
   fields:[['image','Screenshot','','image'],['kicker','Eyebrow','optional'],['title','Title','What this shows']],
-  render(c,S,uid){
+  render(c,S,uid,interactive){
     const acc=S.accent;
     let s=`<rect width="${W}" height="${H}" fill="${BRAND.navy}"/>`;
     s+=ring(W*0.02, H*0.05, u*0.18, acc, 0.4);
@@ -863,6 +864,7 @@ const LAYOUTS = [
       s+=imgPlaceholder(fx,fy,fw,fh,acc,'Add a screenshot');
     }
     s+=imgSlotHit('image',fx,fy,fw,fh);   // click/drop onto the screenshot area
+    if(interactive && c.image) s+=cellOutlineSVG('image',fx,fy,fw,fh);
     return s;
   }
 },
@@ -882,6 +884,7 @@ const LAYOUTS = [
         `<image href="${img}" x="${cx.toFixed(1)}" y="${gy}" width="${colW.toFixed(1)}" height="${gh}" preserveAspectRatio="xMidYMid slice" clip-path="url(#cl${uid}${key})"/>`; }
       else { s+=imgPlaceholder(cx,gy,colW,gh,acc,'Add an image'); }
       s+=imgSlotHit(key,cx,gy,colW,gh);
+      if(interactive && img) s+=cellOutlineSVG(key,cx,gy,colW,gh);
       s+=tblock([cap||''], cx, gy+gh+u*0.016, u*0.024, 1.2, mix(BRAND.navy,'#ffffff',0.1), 700,'start',0,capKey);
     });
     if(interactive) s+=pairArrangeToolbarSVG(c);
@@ -896,12 +899,12 @@ const LAYOUTS = [
 {
   id:'imagegrid3', name:'Three images',
   fields:[['image','Main image','','image'],['image2','Top right','','image'],['image3','Bottom right','','image'],['title','Title','optional title across the top'],['capA','Main caption','optional'],['capB','Top right caption','optional'],['capC','Bottom right caption','optional']],
-  render(c,S,uid){ return imagegrid3Render(c,S,uid); }
+  render(c,S,uid,interactive){ return imagegrid3Render(c,S,uid,interactive); }
 },
 {
   id:'imagegrid4', name:'Four images',
   fields:[['image','Top left','','image'],['image2','Top right','','image'],['image3','Bottom left','','image'],['image4','Bottom right','','image'],['title','Title','optional title across the top'],['capA','Top left caption','optional'],['capB','Top right caption','optional'],['capC','Bottom left caption','optional'],['capD','Bottom right caption','optional']],
-  render(c,S,uid){ return imagegrid4Render(c,S,uid); }
+  render(c,S,uid,interactive){ return imagegrid4Render(c,S,uid,interactive); }
 }
 ];
 const LAYOUT_BY = Object.fromEntries(LAYOUTS.map(l=>[l.id,l]));
@@ -1231,6 +1234,11 @@ function photoRect(){
   if(c.layout==='imagecaption'){ return {x:0,y:0,w:W,h:Math.round(H*CAPTION_BAND)}; }
   return {x:0,y:0,w:W,h:H};
 }
+// selection outline for any photo cell on any layout (interactive only)
+function cellOutlineSVG(key,x,y,w,h){
+  if(typeof selectedPhoto==='undefined' || selectedPhoto!==key) return '';
+  return `<rect x="${(x+1).toFixed(1)}" y="${(y+1).toFixed(1)}" width="${(w-2).toFixed(1)}" height="${(h-2).toFixed(1)}" fill="none" stroke="${BRAND.navy}" stroke-width="2.5" opacity="0.85" pointer-events="none"/>`;
+}
 function graphicsSVG(slide,interactive=false){
   const items=slideGraphics(slide);
   if(!items.length) return '';
@@ -1367,8 +1375,27 @@ function renderPreview(){
   document.getElementById('cap').innerHTML=`<b>Slide ${cur+1}</b> of ${deck.length} · ${L.name} · 1280×720 preview · PNG exports at 2560x1440 <span class="dlSlide" id="capDl">download this slide as PNG</span>`;
   document.getElementById('capDl').onclick=()=>exportSlidePNG(cur);
 }
+function photoSelected(){ return typeof selectedPhoto!=='undefined' && selectedPhoto!==null && !!deck[cur][selectedPhoto]; }
+function imageInspectorHTML(sl,key){
+  return `<div data-img-inspector data-imgk="${esc(key)}">
+    <h2>Image</h2>
+    <div class="imgThumb" style="background-image:url(&quot;${(sl[key]||'').replace(/"/g,'&quot;')}&quot;)"></div>
+    <div class="imgBtns">
+      <button class="imgBtn" data-imgact="replace">Replace</button>
+      <button class="imgBtn ghost" data-imgact="delimg">Delete image</button>
+    </div>
+    <button class="layoutTrigger" data-img-deselect><span class="cur">Back to slide</span><span class="chg">Esc</span></button>
+  </div>`;
+}
 function renderEditor(){
   const e=document.getElementById('editor'); const sl=deck[cur]; const L=LAYOUT_BY[sl.layout];
+  if(photoSelected()){
+    e.innerHTML=imageInspectorHTML(sl, selectedPhoto);
+    e.querySelector('[data-imgact="replace"]').onclick=()=>pickImageFile(selectedPhoto);
+    e.querySelector('[data-imgact="delimg"]').onclick=()=>{ delete deck[cur][selectedPhoto]; selectedPhoto=null; renderAll(); saveDraftSoon(); commitHistorySoon(); };
+    e.querySelector('[data-img-deselect]').onclick=()=>{ selectedPhoto=null; renderPreview(); renderEditor(); };
+    return;
+  }
   let h=`<h2>Layout</h2>
     <button id="layoutTrigger" class="layoutTrigger">
       <span class="cur">${L.name}</span><span class="chg">Change ›</span>
@@ -1963,11 +1990,12 @@ previewEl.addEventListener('click',e=>{
   const slot=e.target.closest('[data-imgslot]');
   if(slot){
     const key=slot.dataset.imgslot;
-    // a filled main photo on the single-photo layouts: select it to show the fit/focal control
-    if(deck[cur][key] && key==='image' && (deck[cur].layout==='image'||deck[cur].layout==='imagetext')){
-      selectedGraphicId=null; selectedPhoto='image'; hideHL(); closeEditor(true); renderPreview(); return;
+    if(deck[cur][key]){                       // filled cell: SELECT it (never silently replace)
+      selectedGraphicId=null; selectedPhoto=key; hideHL(); closeEditor(true);
+      renderPreview(); renderEditor(); return;
     }
-    hideHL(); closeEditor(true); pickImageFile(key);   // empty slot (or other layouts): upload/replace
+    hideHL(); closeEditor(true); pickImageFile(key);   // empty cell: fill it
+    return;
   }
 });
 // While an editor is open, clicking another editable target must not let the
