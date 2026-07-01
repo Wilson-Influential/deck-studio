@@ -163,7 +163,7 @@
   .libSearch input[type=search]:focus{border-color:var(--navy);background:#fff}
   .libSearch input[type=search]::placeholder{color:#aaa;font-weight:600}
   .libGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:16px;overflow-y:auto;align-content:start}
-  .libItem{border:1.5px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;background:#fff;transition:.12s}
+  .libItem{position:relative;border:1.5px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;background:#fff;transition:.12s}
   .libItem:hover{border-color:var(--navy);transform:translateY(-2px);box-shadow:0 12px 24px -16px rgba(32,23,71,.7)}
   .libThumb{aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;background:#f4f2f8;padding:14px}
   .libThumb img{max-width:92%;max-height:92%;display:block;object-fit:contain}
@@ -171,6 +171,10 @@
   .libEmpty{grid-column:1/-1;padding:34px 20px;text-align:center;color:var(--charcoal);font-size:13px;font-weight:700;line-height:1.5}
   .libUpload{margin:0 16px 16px;border:1.5px dashed #cfc9e0;border-radius:10px;padding:12px;text-align:center;color:var(--charcoal);font-size:12px;font-weight:800;cursor:pointer}
   .libUpload:hover{border-color:var(--navy);color:var(--navy)}
+  .libSection{padding:10px 16px 4px;font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--charcoal);opacity:.6}
+  .libDel{position:absolute;top:5px;right:5px;width:18px;height:18px;border-radius:50%;border:none;background:rgba(32,23,71,.15);color:var(--charcoal);font-size:9px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:.12s;line-height:1;padding:0}
+  .libItem:hover .libDel{opacity:1}
+  .libDel:hover{background:var(--red);color:#fff}
 
   /* local deck library + history drawer */
   .homeView{position:fixed;inset:60px 0 0;background:#f4f2f8;z-index:45;display:none;overflow:auto}
@@ -2098,7 +2102,7 @@ function imageFieldHTML(key,label,sl){
 function pickImageFile(key){
   const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*';
   inp.onchange=async()=>{ const f=inp.files&&inp.files[0]; if(!f) return;
-    try{ deck[cur][key]=await fileToDataURL(f); renderAll(); }
+    try{ deck[cur][key]=await fileToDataURL(f); renderAll(); idbAddUpload({data:deck[cur][key],name:f.name}).catch(()=>{}); }
     catch(e){ console.warn(e); toast('Could not read that image'); } };
   inp.click();
 }
@@ -2109,7 +2113,7 @@ async function dropImageFile(ev,key){
   const f=ev.dataTransfer.files&&ev.dataTransfer.files[0];
   if(!f){ return; }
   if(!/^image\//.test(f.type)){ toast('Drop an image file (PNG, JPG, SVG…)'); return; }
-  try{ deck[cur][key]=await fileToDataURL(f); renderAll(); }
+  try{ deck[cur][key]=await fileToDataURL(f); renderAll(); idbAddUpload({data:deck[cur][key],name:f.name}).catch(()=>{}); }
   catch(e){ console.warn(e); toast('Could not read that image'); }
 }
 const IMG_MAX=1600;   // longest edge after downscale — keeps state + exports + share links sane
@@ -2132,6 +2136,16 @@ function downscaleToDataURL(img,type){
   catch(e){ return cv.toDataURL('image/png'); }
 }
 
+/* ===== IndexedDB: My uploads ===== */
+const IDB_NAME='deckstudio', IDB_STORE='uploads'; let _idb=null, MY_UPLOADS=[];
+function idbOpen(){ return _idb?Promise.resolve(_idb):new Promise((res,rej)=>{ const r=indexedDB.open(IDB_NAME,1);
+  r.onupgradeneeded=()=>{ const db=r.result; if(!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE,{keyPath:'id'}); };
+  r.onsuccess=()=>{ _idb=r.result; res(_idb); }; r.onerror=()=>rej(r.error); }); }
+function idbTx(mode){ return idbOpen().then(db=>db.transaction(IDB_STORE,mode).objectStore(IDB_STORE)); }
+async function idbAddUpload({data,name}){ const rec={id:makeId(),name:name||'Upload',data,ts:Date.now()}; const st=await idbTx('readwrite'); await new Promise((res,rej)=>{ const q=st.add(rec); q.onsuccess=res; q.onerror=()=>rej(q.error); }); MY_UPLOADS.unshift(rec); return rec; }
+async function idbAllUploads(){ const st=await idbTx('readonly'); return new Promise((res,rej)=>{ const q=st.getAll(); q.onsuccess=()=>res((q.result||[]).sort((a,b)=>b.ts-a.ts)); q.onerror=()=>rej(q.error); }); }
+async function idbDeleteUpload(id){ const st=await idbTx('readwrite'); await new Promise((res,rej)=>{ const q=st.delete(id); q.onsuccess=res; q.onerror=()=>rej(q.error); }); MY_UPLOADS=MY_UPLOADS.filter(u=>u.id!==id); }
+
 /* ===== the shared Library (data-driven, non-modal side panel) ===== */
 let LIB=null, libTargetKey='image', libCat=null, libPanelEl=null, libQuery='';
 async function loadLibrary(){
@@ -2152,25 +2166,35 @@ function renderLibrary(){
   const p=ensureLibPanel();
   let h=`<div class="libHead"><div><h3>Library</h3><span class="sub">Approved brand assets — click to add</span></div><button class="libX" title="Close">✕</button></div>`;
   if(!LIB||!LIB.assets||!LIB.assets.length){
+    if(MY_UPLOADS.length){ h+=`<div class="libSection">My uploads</div><div class="libGrid">`+MY_UPLOADS.map(u=>`<div class="libItem" data-upload="${esc(u.id)}"><div class="libThumb"><img src="${esc(u.data)}" alt="${esc(u.name)}" loading="lazy"></div><div class="nm">${esc(u.name)}</div><button class="libDel" data-updel="${esc(u.id)}" title="Remove">✕</button></div>`).join('')+`</div>`; }
     h+=`<div class="libGrid"><div class="libEmpty">No library assets loaded yet.<br>Your team adds them in <b>library.json</b>.<br><br>You can still use <b>Upload</b> for your own images.</div></div><div class="libUpload">⬆ Upload your own image instead</div>`;
-    p.innerHTML=h; p.querySelector('.libX').onclick=closeLibrary; p.querySelector('.libUpload').onclick=()=>{ closeLibrary(); pickImageFile(libTargetKey); }; return;
+    p.innerHTML=h; p.querySelector('.libX').onclick=closeLibrary; p.querySelector('.libUpload').onclick=()=>{ closeLibrary(); pickImageFile(libTargetKey); };
+    p.querySelectorAll('[data-updel]').forEach(b=>{ b.onclick=ev=>{ ev.stopPropagation(); idbDeleteUpload(b.dataset.updel).then(()=>renderLibrary()); }; });
+    p.querySelectorAll('[data-upload]').forEach(el=>el.onclick=()=>{ const u=MY_UPLOADS.find(x=>x.id===el.dataset.upload); if(!u) return; deck[cur][libTargetKey]=u.data; renderAll(); toast('Added '+u.name); });
+    return;
   }
   h+=`<div class="libSearch"><input type="search" placeholder="Search assets" value="${esc(libQuery)}" data-lib-search></div>`;
   const q=libQuery.trim().toLowerCase();
   const catName=id=>((LIB.categories||[]).find(c=>c.id===id)||{}).name||'';
   h+=`<div class="libTabs${q?' muted':''}">`;
   (LIB.categories||[]).forEach(c=>{ h+=`<button class="libTab${c.id===libCat?' on':''}" data-cat="${esc(c.id)}">${esc(c.name)}</button>`; });
-  h+=`</div><div class="libGrid">`;
+  h+=`</div>`;
+  if(MY_UPLOADS.length && !q){ h+=`<div class="libSection">My uploads</div><div class="libGrid">`+MY_UPLOADS.map(u=>`<div class="libItem" data-upload="${esc(u.id)}"><div class="libThumb"><img src="${esc(u.data)}" alt="${esc(u.name)}" loading="lazy"></div><div class="nm">${esc(u.name)}</div><button class="libDel" data-updel="${esc(u.id)}" title="Remove">✕</button></div>`).join('')+`</div><div class="libSection">Brand library</div>`; }
+  h+=`<div class="libGrid">`;
+  const matchedUploads=q?MY_UPLOADS.filter(u=>(u.name||'').toLowerCase().includes(q)):[];
+  if(q && matchedUploads.length){ matchedUploads.forEach(u=>{ h+=`<div class="libItem" data-upload="${esc(u.id)}"><div class="libThumb"><img src="${esc(u.data)}" alt="${esc(u.name)}" loading="lazy"></div><div class="nm">${esc(u.name)}</div><button class="libDel" data-updel="${esc(u.id)}" title="Remove">✕</button></div>`; }); }
   const assets = q
     ? LIB.assets.filter(a=>((a.name||'')+' '+catName(a.category)).toLowerCase().includes(q))
     : LIB.assets.filter(a=>a.category===libCat);
-  if(!assets.length){ h+=`<div class="libEmpty">${q?'No assets match your search.':'Nothing in this category yet.<br>Drop approved assets here in <b>library.json</b>.'}</div>`; }
+  if(!assets.length && !matchedUploads.length){ h+=`<div class="libEmpty">${q?'No assets match your search.':'Nothing in this category yet.<br>Drop approved assets here in <b>library.json</b>.'}</div>`; }
   assets.forEach(a=>{ h+=`<div class="libItem" data-asset="${esc(a.id)}"><div class="libThumb"${a.bg?` style="background:${esc(a.bg)}"`:''}><img src="${esc(a.thumb||a.src)}" alt="${esc(a.name)}" loading="lazy"></div><div class="nm">${esc(a.name)}</div></div>`; });
   h+=`</div><div class="libUpload">⬆ Upload your own image instead</div>`;
   p.innerHTML=h;
   p.querySelector('.libX').onclick=closeLibrary;
   p.querySelectorAll('.libTab').forEach(b=>b.onclick=()=>{ libCat=b.dataset.cat; libQuery=''; renderLibrary(); });
-  p.querySelectorAll('.libItem').forEach(el=>el.onclick=()=>insertLibraryAsset(el.dataset.asset));
+  p.querySelectorAll('[data-asset]').forEach(el=>el.onclick=()=>insertLibraryAsset(el.dataset.asset));
+  p.querySelectorAll('[data-updel]').forEach(b=>{ b.onclick=ev=>{ ev.stopPropagation(); idbDeleteUpload(b.dataset.updel).then(()=>renderLibrary()); }; });
+  p.querySelectorAll('[data-upload]').forEach(el=>el.onclick=()=>{ const u=MY_UPLOADS.find(x=>x.id===el.dataset.upload); if(!u) return; deck[cur][libTargetKey]=u.data; renderAll(); toast('Added '+u.name); });
   p.querySelector('.libUpload').onclick=()=>{ closeLibrary(); pickImageFile(libTargetKey); };
   const si=p.querySelector('[data-lib-search]');
   if(si) si.oninput=()=>{ libQuery=si.value; const pos=si.selectionStart; renderLibrary(); const ni=libPanelEl.querySelector('[data-lib-search]'); if(ni){ ni.focus(); try{ni.setSelectionRange(pos,pos);}catch(_){} } };
@@ -2212,6 +2236,7 @@ async function assetToDataURL(src){
 
 (async function init(){
   await loadLibrary();
+  try{ MY_UPLOADS=await idbAllUploads(); }catch(e){}
   const hash=location.hash || '';
   const fromShare=hash.startsWith('#z=') || hash.startsWith('#d=');
   if(fromShare){

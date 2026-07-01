@@ -407,6 +407,76 @@ const URL = 'http://localhost:4250/';
   if (t5.itemsNoQuery !== t5.expectedNoCat) assertions.push(`FAIL: Task 5 empty query returned ${t5.itemsNoQuery} items, expected ${t5.expectedNoCat} for active category`);
   if (!t5.focusPreserved) assertions.push('FAIL: Task 5 focus not preserved in search input after oninput re-render');
 
+  // ── Task 6: My uploads (IndexedDB) ──
+  const PROBE_DATA = 'data:image/svg+xml;base64,' + Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"/>').toString('base64');
+
+  // Add a probe upload, open library, assert [data-upload] renders
+  const t6add = await page.evaluate(async (data) => {
+    const rec = await idbAddUpload({ data, name: 'probe' });
+    libQuery = '';
+    openLibrary('image');
+    renderLibrary();
+    const item = libPanelEl ? libPanelEl.querySelector('[data-upload]') : null;
+    const nameEl = item ? item.querySelector('.nm') : null;
+    return {
+      recId: rec.id,
+      idbFunctions: typeof idbAddUpload === 'function' && typeof idbAllUploads === 'function' && typeof idbDeleteUpload === 'function',
+      myUploadsLength: MY_UPLOADS.length,
+      uploadItemPresent: !!item,
+      uploadItemName: nameEl ? nameEl.textContent : null,
+      hasDataUploadAttr: item ? item.hasAttribute('data-upload') : false,
+    };
+  }, PROBE_DATA);
+  console.log('── Task 6: add probe + render ──');
+  console.log(JSON.stringify(t6add, null, 2));
+
+  // Reload and check persistence (same context, same browser)
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.evaluate(() => { if (typeof closeHome === 'function') closeHome(); });
+  await page.waitForSelector('#preview svg', { timeout: 5000 });
+
+  const t6persist = await page.evaluate(async () => {
+    const all = await idbAllUploads();
+    const probe = all.find(u => u.name === 'probe');
+    return {
+      uploadsCount: all.length,
+      probeFound: !!probe,
+      probeId: probe ? probe.id : null,
+      myUploadsAfterInit: MY_UPLOADS.length,
+    };
+  });
+  console.log('── Task 6: persistence after reload ──');
+  console.log(JSON.stringify(t6persist, null, 2));
+
+  // Delete the probe and verify it's gone from the rendered library
+  const t6delete = await page.evaluate(async () => {
+    const probe = MY_UPLOADS.find(u => u.name === 'probe');
+    if (!probe) return { probeFound: false };
+    await idbDeleteUpload(probe.id);
+    libQuery = '';
+    openLibrary('image');
+    renderLibrary();
+    const item = libPanelEl ? libPanelEl.querySelector('[data-upload]') : null;
+    const allAfter = await idbAllUploads();
+    return {
+      probeFound: true,
+      uploadItemGone: !item,
+      myUploadsAfterDelete: MY_UPLOADS.length,
+      idbCountAfterDelete: allAfter.length,
+    };
+  });
+  console.log('── Task 6: delete probe ──');
+  console.log(JSON.stringify(t6delete, null, 2));
+
+  // Task 6 assertions
+  if (!t6add.idbFunctions) assertions.push('FAIL: Task 6 idb functions not defined');
+  if (!t6add.uploadItemPresent) assertions.push('FAIL: Task 6 [data-upload] item not rendered after idbAddUpload');
+  if (t6add.uploadItemName !== 'probe') assertions.push(`FAIL: Task 6 upload item name should be "probe", got "${t6add.uploadItemName}"`);
+  if (!t6persist.probeFound) assertions.push('FAIL: Task 6 probe not found in idbAllUploads() after reload');
+  if (!t6delete.probeFound) assertions.push('FAIL: Task 6 probe was not in MY_UPLOADS before delete');
+  if (!t6delete.uploadItemGone) assertions.push('FAIL: Task 6 [data-upload] item still rendered after idbDeleteUpload + renderLibrary');
+  if (t6delete.idbCountAfterDelete !== 0) assertions.push(`FAIL: Task 6 idb still has ${t6delete.idbCountAfterDelete} records after delete`);
+
   console.log('\n── Assertion results ──');
   if (assertions.length === 0) {
     console.log('ALL PASS ✓');
