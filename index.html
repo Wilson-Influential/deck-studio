@@ -124,6 +124,9 @@
   .imgBtn:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
   .imgBtn.ghost{flex:0 0 auto;color:var(--charcoal)}
   .imgBtn.ghost:hover{background:var(--red);border-color:var(--red);color:#fff}
+  .focusPad{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;width:120px;aspect-ratio:16/9;margin:2px 0 10px}
+  .focusPad .focusCell{border:1.5px solid rgba(11,30,45,.22);background:transparent;border-radius:4px;cursor:pointer;padding:0}
+  .focusPad .focusCell.on{background:var(--navy,#0b1e2d);border-color:var(--navy,#0b1e2d)}
   .imgField.drop{border-color:var(--navy);background:#fff;box-shadow:0 0 0 4px rgba(32,23,71,.10)}
   .imgField.drop *{pointer-events:none}
 
@@ -1191,41 +1194,8 @@ function findGraphicById(id){ return slideGraphics(deck[cur]).find(g=>g.id===id)
 let selectedPhoto=null;
 // inline fit/focal control drawn over a selected photo. interactive-only; never exported.
 function photoControlSVG(key,x,y,w,h,c){
-  const cover=(c.fit||'cover')!=='contain';
-  const fx=c.focusX==null?0.5:+c.focusX, fy=c.focusY==null?0.5:+c.focusY;
-  // selection outline on the photo
-  let s=`<rect x="${(x+1).toFixed(1)}" y="${(y+1).toFixed(1)}" width="${(w-2).toFixed(1)}" height="${(h-2).toFixed(1)}" fill="none" stroke="${BRAND.navy}" stroke-width="2.5" opacity="0.85"/>`;
-  // focal dot (cover only)
-  if(cover){
-    const dx=x+fx*w, dy=y+fy*h, r=Math.round(u*0.026);
-    s+=`<g data-focal="${esc(key)}" style="cursor:grab">`+
-      `<circle cx="${dx.toFixed(1)}" cy="${dy.toFixed(1)}" r="${(r+5).toFixed(1)}" fill="${BRAND.navy}" fill-opacity="0.18"/>`+
-      `<circle cx="${dx.toFixed(1)}" cy="${dy.toFixed(1)}" r="${r}" fill="#ffffff" stroke="${BRAND.navy}" stroke-width="2.5"/>`+
-      `<circle cx="${dx.toFixed(1)}" cy="${dy.toFixed(1)}" r="2.5" fill="${BRAND.navy}"/></g>`;
-  }
-  // unified top toolbar: arrangement + fit (the "Apple/Notion" bar)
-  s+=imageToolbarSVG(c);
-  return s;
-}
-// one cohesive control bar at the top of the slide: choose arrangement, then Cover/Fit
-function imageToolbarSVG(c){
-  const arr=[['Left','imagetext'],['Right','imageright'],['Caption','imagecaption'],['Full','image']];
-  const fits=[['Cover','cover'],['Fit','contain']];
-  const segW=Math.round(u*0.11), segH=Math.round(u*0.05), grpGap=Math.round(u*0.035);
-  const totalW=arr.length*segW+grpGap+fits.length*segW;
-  const bx=Math.round(W/2-totalW/2), by=Math.round(u*0.035);
-  const curFit=(c.fit||'cover');
-  const seg=(label,attr,val,active,ox)=>`<g ${attr}="${val}" style="cursor:pointer">`+
-    `<rect x="${ox}" y="${by}" width="${segW}" height="${segH}" rx="${(segH/2)}" fill="${active?BRAND.navy:'transparent'}"/>`+
-    `<text x="${ox+segW/2}" y="${by+segH*0.66}" font-size="${(u*0.022).toFixed(1)}" font-weight="800" text-anchor="middle" fill="${active?'#ffffff':BRAND.navy}">${label}</text></g>`;
-  let s=`<rect x="${bx-9}" y="${by-7}" width="${totalW+18}" height="${segH+14}" rx="${(segH/2+7)}" fill="#ffffff" fill-opacity="0.95" stroke="${BRAND.navy}" stroke-opacity="0.14" stroke-width="1.5"/>`;
-  // faint divider between the two groups
-  s+=`<line x1="${bx+arr.length*segW+grpGap/2}" y1="${by+segH*0.18}" x2="${bx+arr.length*segW+grpGap/2}" y2="${by+segH*0.82}" stroke="${BRAND.navy}" stroke-opacity="0.18" stroke-width="1.5"/>`;
-  let ox=bx;
-  arr.forEach(([lb,id])=>{ s+=seg(lb,'data-arrange',id, c.layout===id, ox); ox+=segW; });
-  ox+=grpGap;
-  fits.forEach(([lb,v])=>{ s+=seg(lb,'data-fit',v, (v==='contain'?curFit==='contain':curFit!=='contain'), ox); ox+=segW; });
-  return s;
+  // selection outline on the photo only — all controls are in the inspector
+  return `<rect x="${(x+1).toFixed(1)}" y="${(y+1).toFixed(1)}" width="${(w-2).toFixed(1)}" height="${(h-2).toFixed(1)}" fill="none" stroke="${BRAND.navy}" stroke-width="2.5" opacity="0.85"/>`;
 }
 function photoRect(){
   const c=deck[cur];
@@ -1344,7 +1314,7 @@ function deleteSlide(i){
   if(deck.length<2) return;
   deck.splice(i,1); cur=Math.max(0,Math.min(cur,deck.length-1)); renderAll(); saveDraftSoon(); commitHistorySoon();
 }
-function gotoSlide(i){ cur=Math.max(0,Math.min(deck.length-1,i)); renderAll(); }
+function gotoSlide(i){ cur=Math.max(0,Math.min(deck.length-1,i)); selectedPhoto=null; selectedGraphicId=null; renderAll(); }
 function moveSlide(from,to){
   if(from===null||from===to){ clearDropMarks(); return; }
   const item=deck.splice(from,1)[0];
@@ -1377,6 +1347,17 @@ function renderPreview(){
 }
 function photoSelected(){ return typeof selectedPhoto!=='undefined' && selectedPhoto!==null && !!deck[cur][selectedPhoto]; }
 function imageInspectorHTML(sl,key){
+  const single=['imagetext','imageright','imagecaption','image'].includes(sl.layout);
+  const fit=(sl.fit||'cover');
+  const arrange = single ? `<h2>Arrangement</h2><div class="layoutGrid" data-arrange-grid>`+
+    [['imagetext','Left'],['imageright','Right'],['imagecaption','Caption'],['image','Full']].map(([id,lb])=>
+      `<button class="${sl.layout===id?'on':''}" data-arrange="${id}">${lb}</button>`).join('')+`</div>` : '';
+  const fitRow = `<h2>Crop</h2><div class="layoutGrid" data-fit-grid>`+
+    [['cover','Cover'],['contain','Fit']].map(([v,lb])=>`<button class="${fit===v?'on':''}" data-fit="${v}">${lb}</button>`).join('')+`</div>`;
+  const fx=sl.focusX==null?0.5:+sl.focusX, fy=sl.focusY==null?0.5:+sl.focusY;
+  const cell=(gx,gy)=>{ const on=Math.abs(fx-gx)<0.01 && Math.abs(fy-gy)<0.01; return `<button class="focusCell${on?' on':''}" data-fx="${gx}" data-fy="${gy}"></button>`; };
+  const focusPad = fit==='cover' ? `<h2>Focus</h2><div class="focusPad">`+
+    [0.17,0.5,0.83].map(gy=>[0.17,0.5,0.83].map(gx=>cell(gx,gy)).join('')).join('')+`</div>` : '';
   return `<div data-img-inspector data-imgk="${esc(key)}">
     <h2>Image</h2>
     <div class="imgThumb" style="background-image:url(&quot;${(sl[key]||'').replace(/"/g,'&quot;')}&quot;)"></div>
@@ -1384,6 +1365,7 @@ function imageInspectorHTML(sl,key){
       <button class="imgBtn" data-imgact="replace">Replace</button>
       <button class="imgBtn ghost" data-imgact="delimg">Delete image</button>
     </div>
+    ${arrange}${fitRow}${focusPad}
     <button class="layoutTrigger" data-img-deselect><span class="cur">Back to slide</span><span class="chg">Esc</span></button>
   </div>`;
 }
@@ -1394,6 +1376,9 @@ function renderEditor(){
     e.querySelector('[data-imgact="replace"]').onclick=()=>pickImageFile(selectedPhoto);
     e.querySelector('[data-imgact="delimg"]').onclick=()=>{ delete deck[cur][selectedPhoto]; selectedPhoto=null; renderAll(); saveDraftSoon(); commitHistorySoon(); };
     e.querySelector('[data-img-deselect]').onclick=()=>{ selectedPhoto=null; renderPreview(); renderEditor(); };
+    e.querySelectorAll('[data-arrange]').forEach(b=>b.onclick=()=>{ deck[cur].layout=b.dataset.arrange; renderAll(); saveDraftSoon(); commitHistorySoon(); });
+    e.querySelectorAll('[data-fit]').forEach(b=>b.onclick=()=>{ deck[cur].fit=b.dataset.fit; renderAll(); saveDraftSoon(); commitHistorySoon(); });
+    e.querySelectorAll('[data-fx]').forEach(b=>b.onclick=()=>{ deck[cur].focusX=+b.dataset.fx; deck[cur].focusY=+b.dataset.fy; renderAll(); saveDraftSoon(); commitHistorySoon(); });
     return;
   }
   let h=`<h2>Layout</h2>
@@ -1978,13 +1963,6 @@ function cycleLogo(){
 const previewEl=document.getElementById('preview');
 previewEl.addEventListener('click',e=>{
   if(e.target.closest('[data-edit-logo]')){ closeEditor(true); hideHL(); hideLogoTip(); cycleLogo(); return; }
-  // arrangement toolbar on a selected photo (Left / Right / Caption / Full) — swap layout, keep content
-  const ar=e.target.closest('[data-arrange]');
-  if(ar){ deck[cur].layout=ar.dataset.arrange; selectedPhoto='image'; renderPreview(); renderRailThumb(cur); renderEditor(); saveDraftSoon(); commitHistorySoon(); return; }
-  // fit toggle on a selected photo (Cover / Fit)
-  const ft=e.target.closest('[data-fit]');
-  if(ft){ deck[cur].fit=ft.dataset.fit; renderPreview(); renderRailThumb(cur); saveDraftSoon(); commitHistorySoon(); return; }
-  if(e.target.closest('[data-focal]')) return;   // focal dot is dragged, not clicked
   const t=e.target.closest('[data-edit]');
   if(t){ hideHL(); openEditor(t); return; }
   const slot=e.target.closest('[data-imgslot]');
@@ -2045,14 +2023,8 @@ function slidePoint(ev){
   return { x:(ev.clientX-r.left)/r.width*W, y:(ev.clientY-r.top)/r.height*H };
 }
 previewEl.addEventListener('pointerdown',ev=>{
-  const focal=ev.target.closest('[data-focal]');
   const handle=ev.target.closest('[data-graphic-handle]');
   const img=ev.target.closest('[data-graphic-img]');
-  if(focal){
-    gDrag={mode:'focal'};
-    try{ previewEl.setPointerCapture(ev.pointerId); }catch(e){}
-    ev.preventDefault(); return;
-  }
   if(handle){
     selectedGraphicId=handle.dataset.graphicHandle||null; selectedPhoto=null;
     gDrag={mode:'resize',id:selectedGraphicId};
@@ -2069,18 +2041,12 @@ previewEl.addEventListener('pointerdown',ev=>{
     ev.preventDefault(); return;
   }
   // clicked empty area: deselect, but let text/image/split handlers run untouched
-  if(ev.target.closest('[data-edit],[data-imgslot],[data-split],[data-add-graphic],[data-fit],[data-arrange]')) return;
+  if(ev.target.closest('[data-edit],[data-imgslot],[data-split],[data-add-graphic]')) return;
   if(selectedGraphicId!==null||selectedPhoto!==null){ selectedGraphicId=null; selectedPhoto=null; renderPreview(); renderEditor(); }
 });
 previewEl.addEventListener('pointermove',ev=>{
   if(!gDrag) return;
   const p=slidePoint(ev); if(!p) return;
-  if(gDrag.mode==='focal'){
-    const r=photoRect(), c=deck[cur];
-    c.focusX=Math.max(0, Math.min(1, (p.x-r.x)/r.w));
-    c.focusY=Math.max(0, Math.min(1, (p.y-r.y)/r.h));
-    renderPreview(); return;
-  }
   const g=findGraphicById(gDrag.id); if(!g){ gDrag=null; return; }
   if(gDrag.mode==='move'){
     g.x=Math.max(0, Math.min(0.999, (p.x-gDrag.offX)/W));

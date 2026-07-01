@@ -1,5 +1,5 @@
 /**
- * Task 1 verification harness: universal photo selection + image inspector
+ * Task 2 verification harness: move arrangement/fit/focus into inspector, remove on-canvas toolbar + focal dot
  * Run: node docs/superpowers/verify/check.mjs
  */
 import { chromium } from 'playwright';
@@ -19,80 +19,123 @@ const URL = 'http://localhost:4250/';
   await page.evaluate(() => { if (typeof closeHome === 'function') closeHome(); });
   await page.waitForSelector('#preview svg', { timeout: 5000 });
 
-  // ── Test: clicking cell2 on a twoup slide selects image2 ──
-  const result = await page.evaluate(async () => {
-    // build a twoup slide with two images
-    deck[cur] = {
-      layout: 'twoup',
-      image: 'data:image/svg+xml;base64,' + btoa('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="#123"/></svg>'),
-      image2: 'data:image/svg+xml;base64,' + btoa('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="#456"/></svg>'),
-      title: 't'
-    };
+  const IMG = 'data:image/svg+xml;base64,' + Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="#123"/></svg>').toString('base64');
+
+  // ── Test: imagetext slide with photo selected shows inspector with arrangement + fit + focusPad ──
+  const inspectorResult = await page.evaluate((img) => {
+    deck[cur] = { layout: 'imagetext', image: img, title: 'Test' };
     renderAll();
-
-    const cell2 = document.querySelector('#preview [data-imgslot="image2"]');
-    cell2 && cell2.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-
-    const inspectorEl = document.querySelector('#editor [data-img-inspector]');
-    const replaceBtn = inspectorEl ? inspectorEl.querySelector('[data-imgact="replace"]') : null;
-    const delBtn = inspectorEl ? inspectorEl.querySelector('[data-imgact="delimg"]') : null;
-
+    // click the photo slot to select it
+    const slot = document.querySelector('#preview [data-imgslot="image"]');
+    slot && slot.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const inspector = document.querySelector('#editor [data-img-inspector]');
+    const arrangeGrid = inspector ? inspector.querySelector('[data-arrange-grid]') : null;
+    const arrangeBtns = arrangeGrid ? arrangeGrid.querySelectorAll('[data-arrange]').length : 0;
+    const fitGrid = inspector ? inspector.querySelector('[data-fit-grid]') : null;
+    const fitBtns = fitGrid ? fitGrid.querySelectorAll('[data-fit]').length : 0;
+    const focusPad = inspector ? inspector.querySelector('.focusPad') : null;
+    const focusCells = focusPad ? focusPad.querySelectorAll('.focusCell').length : 0;
+    const hasFocalOnCanvas = !!document.querySelector('#preview [data-focal]');
+    const hasToolbarOnCanvas = !!document.querySelector('#preview [data-arrange]');
     return {
-      hasCell2: !!cell2,
-      selectedPhoto: typeof selectedPhoto !== 'undefined' ? selectedPhoto : 'undef',
-      inspectorPresent: !!inspectorEl,
-      hasReplaceBtn: !!replaceBtn,
-      hasDelBtn: !!delBtn,
+      selectedPhoto,
+      inspectorPresent: !!inspector,
+      hasArrangeGrid: !!arrangeGrid,
+      arrangeBtnCount: arrangeBtns,
+      hasFitGrid: !!fitGrid,
+      fitBtnCount: fitBtns,
+      hasFocusPad: !!focusPad,
+      focusCellCount: focusCells,
+      hasFocalOnCanvas,
+      hasToolbarOnCanvas,
     };
-  });
+  }, IMG);
 
-  console.log('── Before delete ──');
-  console.log(JSON.stringify(result, null, 2));
+  console.log('── Inspector structure ──');
+  console.log(JSON.stringify(inspectorResult, null, 2));
 
-  // ── Test: delete-image removes only image2, keeps image and title ──
-  const deleteResult = await page.evaluate(async () => {
-    // build fresh twoup slide to ensure clean state
-    deck[cur] = {
-      layout: 'twoup',
-      image: 'data:image/svg+xml;base64,' + btoa('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="#123"/></svg>'),
-      image2: 'data:image/svg+xml;base64,' + btoa('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="#456"/></svg>'),
-      title: 'keep-me'
-    };
+  // ── Test: clicking [data-arrange="image"] sets deck[cur].layout === 'image' ──
+  const arrangeResult = await page.evaluate((img) => {
+    deck[cur] = { layout: 'imagetext', image: img, title: 'Test' };
     renderAll();
+    const slot = document.querySelector('#preview [data-imgslot="image"]');
+    slot && slot.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const fullBtn = document.querySelector('#editor [data-arrange="image"]');
+    fullBtn && fullBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    return { layout: deck[cur].layout };
+  }, IMG);
 
-    // Click cell2 to select it
-    const cell2 = document.querySelector('#preview [data-imgslot="image2"]');
-    cell2 && cell2.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  console.log('── After arrange click ──');
+  console.log(JSON.stringify(arrangeResult, null, 2));
 
-    // Now click Delete image button in the inspector
-    const delBtn = document.querySelector('#editor [data-imgact="delimg"]');
-    delBtn && delBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  // ── Test: clicking a focus cell sets deck[cur].focusX ──
+  const focusResult = await page.evaluate((img) => {
+    deck[cur] = { layout: 'imagetext', image: img, title: 'Test', fit: 'cover' };
+    renderAll();
+    const slot = document.querySelector('#preview [data-imgslot="image"]');
+    slot && slot.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const cell = document.querySelector('#editor [data-fx="0.17"][data-fy="0.17"]');
+    cell && cell.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    return { focusX: deck[cur].focusX, focusY: deck[cur].focusY };
+  }, IMG);
 
-    return {
-      image2Gone: !deck[cur].image2,
-      image1Kept: !!deck[cur].image,
-      titleKept: deck[cur].title === 'keep-me',
-      selectedPhotoCleared: selectedPhoto === null,
-    };
-  });
+  console.log('── After focus cell click ──');
+  console.log(JSON.stringify(focusResult, null, 2));
 
-  console.log('── After delete ──');
-  console.log(JSON.stringify(deleteResult, null, 2));
+  // ── Test: imageToolbarSVG is deleted ──
+  const toolbarUndef = await page.evaluate(() => typeof imageToolbarSVG);
+  console.log(`── typeof imageToolbarSVG: ${toolbarUndef} ──`);
+
+  // ── Test: no [data-focal] on canvas when photo selected ──
+  const noFocalOnCanvas = await page.evaluate((img) => {
+    deck[cur] = { layout: 'imagetext', image: img, title: 'Test' };
+    renderAll();
+    const slot = document.querySelector('#preview [data-imgslot="image"]');
+    slot && slot.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    return { focalElements: document.querySelectorAll('#preview [data-focal]').length };
+  }, IMG);
+
+  console.log('── Focal element count on canvas ──');
+  console.log(JSON.stringify(noFocalOnCanvas, null, 2));
+
+  // ── Test: gotoSlide clears selectedPhoto ──
+  const gotoResult = await page.evaluate((img) => {
+    deck.push({ layout: 'imagetext', image: img, title: 'Slide 2' });
+    cur = deck.length - 2;
+    renderAll();
+    const slot = document.querySelector('#preview [data-imgslot="image"]');
+    slot && slot.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const beforeNav = selectedPhoto;
+    gotoSlide(deck.length - 1);
+    const afterNav = selectedPhoto;
+    deck.pop();
+    return { selectedPhotoBeforeNav: beforeNav, selectedPhotoAfterNav: afterNav };
+  }, IMG);
+
+  console.log('── gotoSlide clears selectedPhoto ──');
+  console.log(JSON.stringify(gotoResult, null, 2));
+
   console.log('── Console errors ──');
   console.log(JSON.stringify(errors));
 
   // ── Assertions ──
   const assertions = [];
-  if (!result.hasCell2) assertions.push('FAIL: twoup cell2 [data-imgslot="image2"] not found');
-  if (result.selectedPhoto !== 'image2') assertions.push(`FAIL: selectedPhoto should be "image2", got "${result.selectedPhoto}"`);
-  if (!result.inspectorPresent) assertions.push('FAIL: inspector [data-img-inspector] not found in editor');
-  if (!result.hasReplaceBtn) assertions.push('FAIL: Replace button missing');
-  if (!result.hasDelBtn) assertions.push('FAIL: Delete image button missing');
-  if (!deleteResult.image2Gone) assertions.push('FAIL: delete-image did not remove image2');
-  if (!deleteResult.image1Kept) assertions.push('FAIL: delete-image removed image1 (should keep it)');
-  if (!deleteResult.titleKept) assertions.push('FAIL: delete-image removed title (should keep it)');
-  if (!deleteResult.selectedPhotoCleared) assertions.push('FAIL: selectedPhoto not cleared after delete');
-  if (errors.length) assertions.push(`FAIL: ${errors.length} console error(s)`);
+  if (!inspectorResult.inspectorPresent) assertions.push('FAIL: inspector not present when photo selected');
+  if (!inspectorResult.hasArrangeGrid) assertions.push('FAIL: [data-arrange-grid] not in inspector');
+  if (inspectorResult.arrangeBtnCount !== 4) assertions.push(`FAIL: expected 4 arrange buttons, got ${inspectorResult.arrangeBtnCount}`);
+  if (!inspectorResult.hasFitGrid) assertions.push('FAIL: [data-fit-grid] not in inspector');
+  if (inspectorResult.fitBtnCount !== 2) assertions.push(`FAIL: expected 2 fit buttons, got ${inspectorResult.fitBtnCount}`);
+  if (!inspectorResult.hasFocusPad) assertions.push('FAIL: .focusPad not in inspector');
+  if (inspectorResult.focusCellCount !== 9) assertions.push(`FAIL: expected 9 focus cells, got ${inspectorResult.focusCellCount}`);
+  if (inspectorResult.hasFocalOnCanvas) assertions.push('FAIL: [data-focal] still rendered on canvas');
+  if (inspectorResult.hasToolbarOnCanvas) assertions.push('FAIL: [data-arrange] still rendered on canvas');
+  if (arrangeResult.layout !== 'image') assertions.push(`FAIL: after arrange click, layout should be "image", got "${arrangeResult.layout}"`);
+  if (focusResult.focusX !== 0.17) assertions.push(`FAIL: focusX should be 0.17, got ${focusResult.focusX}`);
+  if (focusResult.focusY !== 0.17) assertions.push(`FAIL: focusY should be 0.17, got ${focusResult.focusY}`);
+  if (toolbarUndef !== 'undefined') assertions.push(`FAIL: imageToolbarSVG should be undefined, got typeof=${toolbarUndef}`);
+  if (noFocalOnCanvas.focalElements !== 0) assertions.push(`FAIL: ${noFocalOnCanvas.focalElements} [data-focal] elements on canvas`);
+  if (gotoResult.selectedPhotoAfterNav !== null) assertions.push(`FAIL: selectedPhoto should be null after gotoSlide, got "${gotoResult.selectedPhotoAfterNav}"`);
+  if (errors.length) assertions.push(`FAIL: ${errors.length} console error(s): ${errors.join('; ')}`);
 
   console.log('\n── Assertion results ──');
   if (assertions.length === 0) {
