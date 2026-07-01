@@ -224,6 +224,65 @@ const URL = 'http://localhost:4250/';
   console.log('── Task 3: imagegrid4 swap (cell 2 → cell 0) ──');
   console.log(JSON.stringify(swapGrid4Result, null, 2));
 
+  // ── Task 4 Test (a): select photo, Backspace → photo removed, slide count unchanged ──
+  const t4a = await page.evaluate((img) => {
+    // ensure there are at least 2 slides so deleteSlide won't refuse
+    while (deck.length < 2) deck.push({ layout: 'bullets', title: 'Extra', body: '' });
+    cur = 0;
+    deck[cur] = { layout: 'imagetext', image: img, title: 'T4A' };
+    renderAll();
+    selectedPhoto = 'image';
+    renderEditor();
+    const lenBefore = deck.length;
+    document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true }));
+    return {
+      lenBefore,
+      lenAfter: deck.length,
+      imageAfter: deck[0].image,
+      selectedPhotoAfter: selectedPhoto,
+    };
+  }, IMG);
+  console.log('── Task 4(a): Backspace removes photo, slide unchanged ──');
+  console.log(JSON.stringify(t4a, null, 2));
+
+  // ── Task 4 Test (b): nothing selected, Backspace → slide deleted ──
+  const t4b = await page.evaluate(() => {
+    // ensure at least 2 slides
+    while (deck.length < 2) deck.push({ layout: 'bullets', title: 'Extra', body: '' });
+    cur = 0;
+    selectedPhoto = null;
+    selectedGraphicId = null;
+    renderAll();
+    const lenBefore = deck.length;
+    document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true }));
+    return { lenBefore, lenAfter: deck.length };
+  });
+  console.log('── Task 4(b): Backspace with no selection deletes slide ──');
+  console.log(JSON.stringify(t4b, null, 2));
+
+  // ── Task 4 Test (c): select photo, Escape → selectedPhoto===null ──
+  const t4c = await page.evaluate((img) => {
+    while (deck.length < 1) deck.push({ layout: 'imagetext', image: img, title: 'T4C' });
+    cur = 0;
+    deck[cur] = { layout: 'imagetext', image: img, title: 'T4C' };
+    renderAll();
+    selectedPhoto = 'image';
+    renderEditor();
+    const before = selectedPhoto;
+    document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    return { selectedPhotoBefore: before, selectedPhotoAfter: selectedPhoto };
+  }, IMG);
+  console.log('── Task 4(c): Escape deselects photo ──');
+  console.log(JSON.stringify(t4c, null, 2));
+
+  // ── Task 4 Test: ACTIONS entries exist ──
+  const t4actions = await page.evaluate(() => ({
+    rmimg: typeof ACTIONS !== 'undefined' && ACTIONS.some(a => a.id === 'rmimg'),
+    deselect: typeof ACTIONS !== 'undefined' && ACTIONS.some(a => a.id === 'deselect'),
+  }));
+  console.log('── Task 4: ACTIONS entries ──');
+  console.log(JSON.stringify(t4actions, null, 2));
+
   console.log('── Console errors ──');
   console.log(JSON.stringify(errors));
 
@@ -265,6 +324,14 @@ const URL = 'http://localhost:4250/';
   if (!swapGrid4Result.capAWasCapC) assertions.push(`FAIL: imagegrid4 capA should be "Cap C" after swap, got "${swapGrid4Result.capAAfter}"`);
   if (!swapGrid4Result.capCWasCapA) assertions.push(`FAIL: imagegrid4 capC should be "Cap A" after swap, got "${swapGrid4Result.capCAfter}"`);
   if (errors.length) assertions.push(`FAIL: ${errors.length} console error(s): ${errors.join('; ')}`);
+  // Task 4 assertions
+  if (t4a.lenAfter !== t4a.lenBefore) assertions.push(`FAIL: Task 4(a) slide count changed from ${t4a.lenBefore} to ${t4a.lenAfter} (should be unchanged)`);
+  if (t4a.imageAfter !== undefined) assertions.push(`FAIL: Task 4(a) image still present after Backspace: ${t4a.imageAfter}`);
+  if (t4a.selectedPhotoAfter !== null) assertions.push(`FAIL: Task 4(a) selectedPhoto should be null after Backspace, got "${t4a.selectedPhotoAfter}"`);
+  if (t4b.lenAfter !== t4b.lenBefore - 1) assertions.push(`FAIL: Task 4(b) expected slide count to drop by 1 (${t4b.lenBefore}→${t4b.lenBefore - 1}), got ${t4b.lenAfter}`);
+  if (t4c.selectedPhotoAfter !== null) assertions.push(`FAIL: Task 4(c) selectedPhoto should be null after Escape, got "${t4c.selectedPhotoAfter}"`);
+  if (!t4actions.rmimg) assertions.push('FAIL: Task 4 ACTIONS missing entry id="rmimg"');
+  if (!t4actions.deselect) assertions.push('FAIL: Task 4 ACTIONS missing entry id="deselect"');
 
   console.log('\n── Assertion results ──');
   if (assertions.length === 0) {
