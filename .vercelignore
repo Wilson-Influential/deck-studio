@@ -1,0 +1,9 @@
+# Deploy only the app. Internal docs (meeting notes, plans, roadmaps, reference decks)
+# live in the repo but must never be publicly served.
+*
+!index.html
+!library.json
+!library-assets
+!library-assets/**
+!vendor
+!vendor/**

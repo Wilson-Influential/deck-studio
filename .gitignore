@@ -1,5 +1,7 @@
 .vercel
 .superpowers/
+# local design references (client decks, heavy binaries) stay out of the repo
+docs/reference/
 .claude/
 node_modules/
 .env

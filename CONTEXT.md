@@ -89,7 +89,29 @@ Imported the Studio illustration pack from `OneDrive_1_29-06-2026.zip`.
   existing brand shapes, icons, logos, and photography tabs.
 - Only Studio-ready PNG files are exposed in the app.
 
-## Notion-features merge (2026-06-30) — NEXT UP
+## Background variants + PPTX font fix (2026-07-02)
+
+Shea's brief: match the creative team's deck look (reference: `docs/reference/` regeneration deck,
+local only, never commit or deploy it) and fix PowerPoint export fonts.
+
+- **Per-slide Background control** on the 7 full-bleed colour layouts (cover, section, chart,
+  statement, stat, quote, closing): **Flat** (original, keeps the ring motif), **Gradient**
+  (lifted focal point down to the deep sector tone), **Circles** (huge translucent discs, the
+  creative-deck look). Gradient and circles replace the ring rather than stack on it. Also a
+  "Cycle background style" command in the ⌘K palette. Starter deck ships cover=circles,
+  closing=gradient as a showcase. White content layouts stay white on purpose.
+- **PPTX export**: flat backgrounds stay native rects; gradient/circles export as a full-bleed
+  JPEG background image while all text stays native and editable (6-slide deck ≈ 250KB).
+- **PPTX font fix**: export used to hardcode fontFace "Effra", which almost no machine has by
+  that exact name (Shea's Mac has "Effra Trial"), so PowerPoint silently substituted. Now an
+  Export-menu toggle: **Effra (default, per Shea)** / **Segoe UI** (the brand's sanctioned
+  fallback, ships with Office). Persists as `ds-ppt-font`. Open: ask Viv/Connor about Effra
+  licences for team installs.
+- **Deploy hygiene**: added `.vercelignore` whitelist (index.html, library.json, library-assets,
+  vendor). Before this, `docs/` (meeting notes, plans, roadmap) was publicly served on the
+  production URL. CONTEXT.md and docs are now repo-only.
+
+## Notion-features merge (2026-06-30) — merged 2026-06-30
 
 Shea reviewed a Notion-style reimagining of the whole tool (`../The Deck Notion UX Reimagine/the-deck-reimagined.html`) and decided NOT to switch: the team prefers this familiar, PowerPoint-like, legible design. Instead, graft four ideas onto the current tool. Plan is ready to execute:
 
