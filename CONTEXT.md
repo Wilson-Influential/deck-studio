@@ -89,6 +89,26 @@ Imported the Studio illustration pack from `OneDrive_1_29-06-2026.zip`.
   existing brand shapes, icons, logos, and photography tabs.
 - Only Studio-ready PNG files are exposed in the app.
 
+## Image UX overhaul + multi-image grids MERGED AND LIVE (2026-07-02)
+
+The overhaul Shea approved on 2026-07-01 had been fully built on the worktree branch
+`worktree-library-graphics-images` but never merged or pushed, so the live site never had it.
+Merged into main (merge commit `639d51c`) alongside the background-variants work and pushed:
+
+- **Image inspector**: clicking any photo on any layout selects it (never silently opens the
+  file picker); right panel swaps to Image (Replace, Delete image, Cover/Fit, 3×3 focus pad,
+  Swap for multi-image cells, Back to slide). On-canvas toolbar and focal dot removed.
+- **Context-aware keyboard**: Backspace removes the selected photo/graphic, only deletes the
+  slide when nothing is selected. Esc deselects first. Both in the ⌘K palette.
+- **Library rework**: search across all categories, My uploads persisted in IndexedDB,
+  free placement (click fills the selected cell, drag to place anywhere).
+- **Phase 2 grids**: Three images / Four images layouts, Side-by-side/Stacked toggle.
+
+Verified with the branch's own Playwright harness (`docs/superpowers/verify/check.mjs`, ALL
+PASS on the merged build) plus manual checks that backgrounds/fonts survived the merge.
+The worktree at `.claude/worktrees/library-graphics-images/` is now fully merged; safe to
+remove with `git worktree remove` when Shea confirms.
+
 ## Background variants + PPTX font fix (2026-07-02)
 
 Shea's brief: match the creative team's deck look (reference: `docs/reference/` regeneration deck,
