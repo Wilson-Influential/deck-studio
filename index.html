@@ -130,6 +130,9 @@
   .imgBtn:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
   .imgBtn.ghost{flex:0 0 auto;color:var(--charcoal)}
   .imgBtn.ghost:hover{background:var(--red);border-color:var(--red);color:#fff}
+  .focusPad{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;width:120px;aspect-ratio:16/9;margin:2px 0 10px}
+  .focusPad .focusCell{border:1.5px solid rgba(11,30,45,.22);background:transparent;border-radius:4px;cursor:pointer;padding:0}
+  .focusPad .focusCell.on{background:var(--navy,#0b1e2d);border-color:var(--navy,#0b1e2d)}
   .imgField.drop{border-color:var(--navy);background:#fff;box-shadow:0 0 0 4px rgba(32,23,71,.10)}
   .imgField.drop *{pointer-events:none}
 
@@ -157,11 +160,16 @@
   .libX{width:30px;height:30px;border:0;border-radius:8px;background:var(--soft);color:var(--navy);font-size:16px;cursor:pointer;line-height:1}
   .libX:hover{background:var(--red);color:#fff}
   .libTabs{display:flex;gap:6px;padding:12px 16px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+  .libTabs.muted{opacity:.4;pointer-events:none}
   .libTab{border:1.5px solid var(--line);background:var(--soft);border-radius:999px;padding:6px 12px;font:inherit;font-size:12px;font-weight:900;color:var(--charcoal);cursor:pointer;transition:.12s}
   .libTab:hover{border-color:#cfc9e0}
   .libTab.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .libSearch{padding:10px 16px 0}
+  .libSearch input[type=search]{display:block;width:100%;box-sizing:border-box;border:1.5px solid var(--line);border-radius:8px;padding:8px 12px;font:inherit;font-size:13px;font-weight:700;color:var(--navy);background:var(--soft);outline:none;transition:.12s}
+  .libSearch input[type=search]:focus{border-color:var(--navy);background:#fff}
+  .libSearch input[type=search]::placeholder{color:#aaa;font-weight:600}
   .libGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:16px;overflow-y:auto;align-content:start}
-  .libItem{border:1.5px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;background:#fff;transition:.12s}
+  .libItem{position:relative;border:1.5px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;background:#fff;transition:.12s}
   .libItem:hover{border-color:var(--navy);transform:translateY(-2px);box-shadow:0 12px 24px -16px rgba(32,23,71,.7)}
   .libThumb{aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;background:#f4f2f8;padding:14px}
   .libThumb img{max-width:92%;max-height:92%;display:block;object-fit:contain}
@@ -169,6 +177,10 @@
   .libEmpty{grid-column:1/-1;padding:34px 20px;text-align:center;color:var(--charcoal);font-size:13px;font-weight:700;line-height:1.5}
   .libUpload{margin:0 16px 16px;border:1.5px dashed #cfc9e0;border-radius:10px;padding:12px;text-align:center;color:var(--charcoal);font-size:12px;font-weight:800;cursor:pointer}
   .libUpload:hover{border-color:var(--navy);color:var(--navy)}
+  .libSection{padding:10px 16px 4px;font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--charcoal);opacity:.6}
+  .libDel{position:absolute;top:5px;right:5px;width:18px;height:18px;border-radius:50%;border:none;background:rgba(32,23,71,.15);color:var(--charcoal);font-size:9px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:.12s;line-height:1;padding:0}
+  .libItem:hover .libDel{opacity:1}
+  .libDel:hover{background:var(--red);color:#fff}
 
   /* local deck library + history drawer */
   .homeView{position:fixed;inset:60px 0 0;background:#f4f2f8;z-index:45;display:none;overflow:auto}
@@ -502,6 +514,57 @@ function imageCaptionRender(c,S,uid,interactive){
   if(interactive && has && selectedPhoto==='image') s+=photoControlSVG('image',0,0,W,bandH,c);
   return s;
 }
+// one rounded, clipped photo cell + caption strip below — the shared cell used by twoup/imagestack/grid layouts
+function imageCell(uid,key,img,x,y,w,h,acc,capKey,cap,interactive){
+  let s='';
+  if(img){ s+=`<defs><clipPath id="cl${uid}${key}"><rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="${(u*0.014).toFixed(0)}"/></clipPath></defs>`+
+    `<image href="${img}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" preserveAspectRatio="xMidYMid slice" clip-path="url(#cl${uid}${key})"/>`; }
+  else { s+=imgPlaceholder(x,y,w,h,acc,'Add an image'); }
+  s+=imgSlotHit(key,x,y,w,h);
+  if(interactive && img) s+=cellOutlineSVG(key,x,y,w,h);
+  s+=tblock([cap||''], x, y+h+u*0.016, u*0.024, 1.2, mix(BRAND.navy,'#ffffff',0.1), 700,'start',0,capKey);
+  return s;
+}
+// shared renderer for the multi-image grids (2 stacked / 3 / 4 cells). `cells` = [[key,x,y,w,h,capKey],...]
+function imageGridRender(c,S,uid,cells,interactive){
+  const acc=S.accent;
+  let s=`<rect width="${W}" height="${H}" fill="#ffffff"/>`;
+  s+=brandMark(c.logo, W-m-u*0.15, m, u*0.15, 'nvy', lum(acc)>0.6?BRAND.navy:acc, 'end');
+  let top=m;
+  if(c.title){ const head=fitHead(c.title, W-2*m-u*0.2, H*0.16, u*0.05, u*0.03, 0.52,1.0); s+=tblock(head.lines, m, top+u*0.01, head.fs, head.lh, BRAND.navy, 900,'start',-0.02,'title', W-2*m-u*0.2); top+=head.lines.length*head.fs*head.lh+u*0.03; }
+  cells.forEach(([key,x,y,w,h,capKey])=>{ s+=imageCell(uid,key,c[key],x,y,w,h,acc,capKey,c[capKey],interactive); });
+  return s;
+}
+
+function imagestackRender(c,S,uid,interactive){
+  const top=m+(c.title?u*0.09:0);
+  const capH=u*0.055, gap=u*0.028, colH=(H-m-top-2*capH-gap)/2;
+  let s=imageGridRender(c,S,uid,[
+    ['image', m, top, W-2*m, colH, 'capA'],
+    ['image2', m, top+colH+capH+gap, W-2*m, colH, 'capB'],
+  ],interactive);
+  return s;
+}
+function imagegrid3Render(c,S,uid,interactive){
+  const top=m+(c.title?u*0.09:0);
+  const capH=u*0.055, gap=u*0.028, gh=H-m-top-capH;
+  const bigW=(W-2*m-gap)*0.6, smW=(W-2*m-gap)*0.4, smH=(gh-gap)/2;
+  return imageGridRender(c,S,uid,[
+    ['image', m, top, bigW, gh, 'capA'],
+    ['image2', m+bigW+gap, top, smW, smH, 'capB'],
+    ['image3', m+bigW+gap, top+smH+gap, smW, smH, 'capC'],
+  ],interactive);
+}
+function imagegrid4Render(c,S,uid,interactive){
+  const top=m+(c.title?u*0.09:0);
+  const capH=u*0.05, gap=u*0.024, colW=(W-2*m-gap)/2, rowH=(H-m-top-2*capH-gap)/2;
+  return imageGridRender(c,S,uid,[
+    ['image', m, top, colW, rowH, 'capA'],
+    ['image2', m+colW+gap, top, colW, rowH, 'capB'],
+    ['image3', m, top+rowH+capH+gap, colW, rowH, 'capC'],
+    ['image4', m+colW+gap, top+rowH+capH+gap, colW, rowH, 'capD'],
+  ],interactive);
+}
 const LAYOUTS = [
 {
   id:'cover', name:'Cover',
@@ -820,7 +883,7 @@ const LAYOUTS = [
 {
   id:'screenshot', name:'Screenshot',
   fields:[['image','Screenshot','','image'],['kicker','Eyebrow','optional'],['title','Title','What this shows']],
-  render(c,S,uid){
+  render(c,S,uid,interactive){
     const acc=S.accent;
     let s=`<rect width="${W}" height="${H}" fill="${BRAND.navy}"/>`;
     s+=ring(W*0.02, H*0.05, u*0.18, acc, 0.4);
@@ -840,13 +903,14 @@ const LAYOUTS = [
       s+=imgPlaceholder(fx,fy,fw,fh,acc,'Add a screenshot');
     }
     s+=imgSlotHit('image',fx,fy,fw,fh);   // click/drop onto the screenshot area
+    if(interactive && c.image) s+=cellOutlineSVG('image',fx,fy,fw,fh);
     return s;
   }
 },
 {
   id:'twoup', name:'Two images',
   fields:[['image','Left image','','image'],['image2','Right image','','image'],['title','Title','optional title across the top'],['capA','Left caption','optional'],['capB','Right caption','optional']],
-  render(c,S,uid){
+  render(c,S,uid,interactive){
     const acc=S.accent;
     let s=`<rect width="${W}" height="${H}" fill="#ffffff"/>`;
     s+=brandMark(c.logo, W-m-u*0.15, m, u*0.15, 'nvy', lum(acc)>0.6?BRAND.navy:acc, 'end');
@@ -859,17 +923,33 @@ const LAYOUTS = [
         `<image href="${img}" x="${cx.toFixed(1)}" y="${gy}" width="${colW.toFixed(1)}" height="${gh}" preserveAspectRatio="xMidYMid slice" clip-path="url(#cl${uid}${key})"/>`; }
       else { s+=imgPlaceholder(cx,gy,colW,gh,acc,'Add an image'); }
       s+=imgSlotHit(key,cx,gy,colW,gh);
+      if(interactive && img) s+=cellOutlineSVG(key,cx,gy,colW,gh);
       s+=tblock([cap||''], cx, gy+gh+u*0.016, u*0.024, 1.2, mix(BRAND.navy,'#ffffff',0.1), 700,'start',0,capKey);
     });
     return s;
   }
+},
+{
+  id:'imagestack', name:'Two images (stacked)', hidden:true,
+  fields:[['image','Top image','','image'],['image2','Bottom image','','image'],['title','Title','optional title across the top'],['capA','Top caption','optional'],['capB','Bottom caption','optional']],
+  render(c,S,uid,interactive){ return imagestackRender(c,S,uid,interactive); }
+},
+{
+  id:'imagegrid3', name:'Three images',
+  fields:[['image','Main image','','image'],['image2','Top right','','image'],['image3','Bottom right','','image'],['title','Title','optional title across the top'],['capA','Main caption','optional'],['capB','Top right caption','optional'],['capC','Bottom right caption','optional']],
+  render(c,S,uid,interactive){ return imagegrid3Render(c,S,uid,interactive); }
+},
+{
+  id:'imagegrid4', name:'Four images',
+  fields:[['image','Top left','','image'],['image2','Top right','','image'],['image3','Bottom left','','image'],['image4','Bottom right','','image'],['title','Title','optional title across the top'],['capA','Top left caption','optional'],['capB','Top right caption','optional'],['capC','Bottom left caption','optional'],['capD','Bottom right caption','optional']],
+  render(c,S,uid,interactive){ return imagegrid4Render(c,S,uid,interactive); }
 }
 ];
 const LAYOUT_BY = Object.fromEntries(LAYOUTS.map(l=>[l.id,l]));
 const LAYOUT_GROUPS = [
   {name:'Open',          ids:['cover','section','agenda']},
   {name:'Make the case', ids:['bullets','statement','stat','chart','comparison','columns','quote','table']},
-  {name:'Show',          ids:['image','imagetext','screenshot','twoup']},
+  {name:'Show',          ids:['image','imagetext','screenshot','twoup','imagegrid3','imagegrid4']},
   {name:'Close',         ids:['closing']},
 ];
 
@@ -1147,43 +1227,18 @@ function graphicRect(g){
 function findGraphicById(id){ return slideGraphics(deck[cur]).find(g=>g.id===id); }
 // the selected photo's image-slot key on the current slide (image / imagetext only). Preview-only.
 let selectedPhoto=null;
+// ordered image cells + their caption keys per multi-image layout
+const MULTI_CELLS={ twoup:[['image','capA'],['image2','capB']], imagestack:[['image','capA'],['image2','capB']],
+  imagegrid3:[['image','capA'],['image2','capB'],['image3','capC']], imagegrid4:[['image','capA'],['image2','capB'],['image3','capC'],['image4','capD']] };
+function swapCells(sl, ia, ib){
+  const cells=MULTI_CELLS[sl.layout]; if(!cells||!cells[ia]||!cells[ib]) return;
+  const [ka,ca]=cells[ia], [kb,cb]=cells[ib];
+  [sl[ka],sl[kb]]=[sl[kb],sl[ka]]; [sl[ca],sl[cb]]=[sl[cb],sl[ca]];
+}
 // inline fit/focal control drawn over a selected photo. interactive-only; never exported.
 function photoControlSVG(key,x,y,w,h,c){
-  const cover=(c.fit||'cover')!=='contain';
-  const fx=c.focusX==null?0.5:+c.focusX, fy=c.focusY==null?0.5:+c.focusY;
-  // selection outline on the photo
-  let s=`<rect x="${(x+1).toFixed(1)}" y="${(y+1).toFixed(1)}" width="${(w-2).toFixed(1)}" height="${(h-2).toFixed(1)}" fill="none" stroke="${BRAND.navy}" stroke-width="2.5" opacity="0.85"/>`;
-  // focal dot (cover only)
-  if(cover){
-    const dx=x+fx*w, dy=y+fy*h, r=Math.round(u*0.026);
-    s+=`<g data-focal="${esc(key)}" style="cursor:grab">`+
-      `<circle cx="${dx.toFixed(1)}" cy="${dy.toFixed(1)}" r="${(r+5).toFixed(1)}" fill="${BRAND.navy}" fill-opacity="0.18"/>`+
-      `<circle cx="${dx.toFixed(1)}" cy="${dy.toFixed(1)}" r="${r}" fill="#ffffff" stroke="${BRAND.navy}" stroke-width="2.5"/>`+
-      `<circle cx="${dx.toFixed(1)}" cy="${dy.toFixed(1)}" r="2.5" fill="${BRAND.navy}"/></g>`;
-  }
-  // unified top toolbar: arrangement + fit (the "Apple/Notion" bar)
-  s+=imageToolbarSVG(c);
-  return s;
-}
-// one cohesive control bar at the top of the slide: choose arrangement, then Cover/Fit
-function imageToolbarSVG(c){
-  const arr=[['Left','imagetext'],['Right','imageright'],['Caption','imagecaption'],['Full','image']];
-  const fits=[['Cover','cover'],['Fit','contain']];
-  const segW=Math.round(u*0.11), segH=Math.round(u*0.05), grpGap=Math.round(u*0.035);
-  const totalW=arr.length*segW+grpGap+fits.length*segW;
-  const bx=Math.round(W/2-totalW/2), by=Math.round(u*0.035);
-  const curFit=(c.fit||'cover');
-  const seg=(label,attr,val,active,ox)=>`<g ${attr}="${val}" style="cursor:pointer">`+
-    `<rect x="${ox}" y="${by}" width="${segW}" height="${segH}" rx="${(segH/2)}" fill="${active?BRAND.navy:'transparent'}"/>`+
-    `<text x="${ox+segW/2}" y="${by+segH*0.66}" font-size="${(u*0.022).toFixed(1)}" font-weight="800" text-anchor="middle" fill="${active?'#ffffff':BRAND.navy}">${label}</text></g>`;
-  let s=`<rect x="${bx-9}" y="${by-7}" width="${totalW+18}" height="${segH+14}" rx="${(segH/2+7)}" fill="#ffffff" fill-opacity="0.95" stroke="${BRAND.navy}" stroke-opacity="0.14" stroke-width="1.5"/>`;
-  // faint divider between the two groups
-  s+=`<line x1="${bx+arr.length*segW+grpGap/2}" y1="${by+segH*0.18}" x2="${bx+arr.length*segW+grpGap/2}" y2="${by+segH*0.82}" stroke="${BRAND.navy}" stroke-opacity="0.18" stroke-width="1.5"/>`;
-  let ox=bx;
-  arr.forEach(([lb,id])=>{ s+=seg(lb,'data-arrange',id, c.layout===id, ox); ox+=segW; });
-  ox+=grpGap;
-  fits.forEach(([lb,v])=>{ s+=seg(lb,'data-fit',v, (v==='contain'?curFit==='contain':curFit!=='contain'), ox); ox+=segW; });
-  return s;
+  // selection outline on the photo only — all controls are in the inspector
+  return `<rect x="${(x+1).toFixed(1)}" y="${(y+1).toFixed(1)}" width="${(w-2).toFixed(1)}" height="${(h-2).toFixed(1)}" fill="none" stroke="${BRAND.navy}" stroke-width="2.5" opacity="0.85"/>`;
 }
 function photoRect(){
   const c=deck[cur];
@@ -1191,6 +1246,11 @@ function photoRect(){
   if(c.layout==='imageright'){ const sp=Math.min(2/3,Math.max(1/3,+c.split||0.5)); const iw=Math.round(W*sp); return {x:W-iw,y:0,w:iw,h:H}; }
   if(c.layout==='imagecaption'){ return {x:0,y:0,w:W,h:Math.round(H*CAPTION_BAND)}; }
   return {x:0,y:0,w:W,h:H};
+}
+// selection outline for any photo cell on any layout (interactive only)
+function cellOutlineSVG(key,x,y,w,h){
+  if(typeof selectedPhoto==='undefined' || selectedPhoto!==key) return '';
+  return `<rect x="${(x+1).toFixed(1)}" y="${(y+1).toFixed(1)}" width="${(w-2).toFixed(1)}" height="${(h-2).toFixed(1)}" fill="none" stroke="${BRAND.navy}" stroke-width="2.5" opacity="0.85" pointer-events="none"/>`;
 }
 function graphicsSVG(slide,interactive=false){
   const items=slideGraphics(slide);
@@ -1297,7 +1357,10 @@ function deleteSlide(i){
   if(deck.length<2) return;
   deck.splice(i,1); cur=Math.max(0,Math.min(cur,deck.length-1)); renderAll(); saveDraftSoon(); commitHistorySoon();
 }
-function gotoSlide(i){ cur=Math.max(0,Math.min(deck.length-1,i)); renderAll(); }
+function gotoSlide(i){ cur=Math.max(0,Math.min(deck.length-1,i)); selectedPhoto=null; selectedGraphicId=null; renderAll(); }
+function deselectAll(){ selectedPhoto=null; selectedGraphicId=null; renderPreview(); renderEditor(); }
+function removeSelectedImage(){ if(photoSelected()){ delete deck[cur][selectedPhoto]; selectedPhoto=null; renderAll(); saveDraftSoon(); commitHistorySoon(); return true; } return false; }
+function removeSelectedGraphic(){ if(selectedGraphicId){ const sl=deck[cur]; sl.graphics=slideGraphics(sl).filter(g=>g.id!==selectedGraphicId); selectedGraphicId=null; renderAll(); saveDraftSoon(); commitHistorySoon(); return true; } return false; }
 function moveSlide(from,to){
   if(from===null||from===to){ clearDropMarks(); return; }
   const item=deck.splice(from,1)[0];
@@ -1328,8 +1391,52 @@ function renderPreview(){
   document.getElementById('cap').innerHTML=`<b>Slide ${cur+1}</b> of ${deck.length} · ${L.name} · 1280×720 preview · PNG exports at 2560x1440 <span class="dlSlide" id="capDl">download this slide as PNG</span>`;
   document.getElementById('capDl').onclick=()=>exportSlidePNG(cur);
 }
+function photoSelected(){ return typeof selectedPhoto!=='undefined' && selectedPhoto!==null && !!deck[cur][selectedPhoto]; }
+function imageInspectorHTML(sl,key){
+  const single=['imagetext','imageright','imagecaption','image'].includes(sl.layout);
+  const pair=['twoup','imagestack'].includes(sl.layout);
+  const fit=(sl.fit||'cover');
+  const arrange = single ? `<h2>Arrangement</h2><div class="layoutGrid" data-arrange-grid>`+
+    [['imagetext','Left'],['imageright','Right'],['imagecaption','Caption'],['image','Full']].map(([id,lb])=>
+      `<button class="${sl.layout===id?'on':''}" data-arrange="${id}">${lb}</button>`).join('')+`</div>` :
+    pair ? `<h2>Arrangement</h2><div class="layoutGrid" data-arrange-grid>`+
+    [['twoup','Side by side'],['imagestack','Stacked']].map(([id,lb])=>
+      `<button class="${sl.layout===id?'on':''}" data-arrange="${id}">${lb}</button>`).join('')+`</div>` : '';
+  const fitRow = `<h2>Crop</h2><div class="layoutGrid" data-fit-grid>`+
+    [['cover','Cover'],['contain','Fit']].map(([v,lb])=>`<button class="${fit===v?'on':''}" data-fit="${v}">${lb}</button>`).join('')+`</div>`;
+  const fx=sl.focusX==null?0.5:+sl.focusX, fy=sl.focusY==null?0.5:+sl.focusY;
+  const cell=(gx,gy)=>{ const on=Math.abs(fx-gx)<0.01 && Math.abs(fy-gy)<0.01; return `<button class="focusCell${on?' on':''}" data-fx="${gx}" data-fy="${gy}"></button>`; };
+  const focusPad = fit==='cover' ? `<h2>Focus</h2><div class="focusPad">`+
+    [0.17,0.5,0.83].map(gy=>[0.17,0.5,0.83].map(gx=>cell(gx,gy)).join('')).join('')+`</div>` : '';
+  const cells=MULTI_CELLS[sl.layout];
+  let swap='';
+  if(cells){ const i=cells.findIndex(c=>c[0]===key);
+    swap=`<h2>Swap with</h2><div class="layoutGrid" data-swap-grid>`+
+      cells.map((c,j)=> j===i?'' : `<button data-swap="${j}">Cell ${j+1}</button>`).join('')+`</div>`; }
+  return `<div data-img-inspector data-imgk="${esc(key)}">
+    <h2>Image</h2>
+    <div class="imgThumb" style="background-image:url(&quot;${(sl[key]||'').replace(/"/g,'&quot;')}&quot;)"></div>
+    <div class="imgBtns">
+      <button class="imgBtn" data-imgact="replace">Replace</button>
+      <button class="imgBtn ghost" data-imgact="delimg">Delete image</button>
+    </div>
+    ${arrange}${fitRow}${focusPad}${swap}
+    <button class="layoutTrigger" data-img-deselect><span class="cur">Back to slide</span><span class="chg">Esc</span></button>
+  </div>`;
+}
 function renderEditor(){
   const e=document.getElementById('editor'); const sl=deck[cur]; const L=LAYOUT_BY[sl.layout];
+  if(photoSelected()){
+    e.innerHTML=imageInspectorHTML(sl, selectedPhoto);
+    e.querySelector('[data-imgact="replace"]').onclick=()=>pickImageFile(selectedPhoto);
+    e.querySelector('[data-imgact="delimg"]').onclick=()=>{ delete deck[cur][selectedPhoto]; selectedPhoto=null; renderAll(); saveDraftSoon(); commitHistorySoon(); };
+    e.querySelector('[data-img-deselect]').onclick=()=>{ selectedPhoto=null; renderPreview(); renderEditor(); };
+    e.querySelectorAll('[data-arrange]').forEach(b=>b.onclick=()=>{ deck[cur].layout=b.dataset.arrange; renderAll(); saveDraftSoon(); commitHistorySoon(); });
+    e.querySelectorAll('[data-fit]').forEach(b=>b.onclick=()=>{ deck[cur].fit=b.dataset.fit; renderAll(); saveDraftSoon(); commitHistorySoon(); });
+    e.querySelectorAll('[data-fx]').forEach(b=>b.onclick=()=>{ deck[cur].focusX=+b.dataset.fx; deck[cur].focusY=+b.dataset.fy; renderAll(); saveDraftSoon(); commitHistorySoon(); });
+    e.querySelectorAll('[data-swap]').forEach(b=>b.onclick=()=>{ const cells=MULTI_CELLS[deck[cur].layout]; const i=cells.findIndex(c=>c[0]===selectedPhoto); swapCells(deck[cur], i, +b.dataset.swap); renderAll(); saveDraftSoon(); commitHistorySoon(); });
+    return;
+  }
   let h=`<h2>Layout</h2>
     <button id="layoutTrigger" class="layoutTrigger">
       <span class="cur">${L.name}</span><span class="chg">Change ›</span>
@@ -1715,6 +1822,8 @@ const ACTIONS = [
   {id:'home',    label:'Open deck library',    hint:'',    run:()=>showHome()},
   {id:'undo',    label:'Undo',                 hint:'⌘Z',  run:()=>undoDeck()},
   {id:'redo',    label:'Redo',                 hint:'⇧⌘Z', run:()=>redoDeck()},
+  {id:'rmimg',   label:'Remove selected image', hint:'⌫', run:()=>{ if(!removeSelectedImage()) toast('No image selected'); }},
+  {id:'deselect',label:'Deselect',              hint:'Esc',run:()=>deselectAll()},
 ];
 document.addEventListener('keydown',e=>{
   const k=e.key.toLowerCase();
@@ -1723,11 +1832,11 @@ document.addEventListener('keydown',e=>{
   if((e.metaKey||e.ctrlKey) && k==='y'){ e.preventDefault(); redoDeck(); return; }
   if((e.metaKey||e.ctrlKey) && k==='d'){ e.preventDefault(); duplicateSlide(cur); return; }
   if(e.target.matches('input,textarea')) return;
-  if(e.key==='Escape'){ setExportMenu(false); closeLibrary(); closeVersions(); closeHome(); if(typeof closePalette==='function') closePalette(); if(typeof closeLayoutChooser==='function') closeLayoutChooser(); return; }
+  if(e.key==='Escape'){ if(selectedPhoto!==null||selectedGraphicId!==null){ deselectAll(); return; } setExportMenu(false); closeLibrary(); closeVersions(); closeHome(); if(typeof closePalette==='function') closePalette(); if(typeof closeLayoutChooser==='function') closeLayoutChooser(); return; }
   if(e.key==='ArrowDown'||e.key==='ArrowRight'){ gotoSlide(cur+1); return; }
   if(e.key==='ArrowUp'||e.key==='ArrowLeft'){ gotoSlide(cur-1); return; }
   if(k==='n'){ addSlideAfter(cur); return; }
-  if(e.key==='Backspace'||e.key==='Delete'){ deleteSlide(cur); return; }
+  if(e.key==='Backspace'||e.key==='Delete'){ if(removeSelectedImage()||removeSelectedGraphic()){ return; } deleteSlide(cur); return; }
 });
 
 /* ===== command palette ===== */
@@ -1953,23 +2062,17 @@ function cycleLogo(){
 const previewEl=document.getElementById('preview');
 previewEl.addEventListener('click',e=>{
   if(e.target.closest('[data-edit-logo]')){ closeEditor(true); hideHL(); hideLogoTip(); cycleLogo(); return; }
-  // arrangement toolbar on a selected photo (Left / Right / Caption / Full) — swap layout, keep content
-  const ar=e.target.closest('[data-arrange]');
-  if(ar){ deck[cur].layout=ar.dataset.arrange; selectedPhoto='image'; renderPreview(); renderRailThumb(cur); renderEditor(); saveDraftSoon(); commitHistorySoon(); return; }
-  // fit toggle on a selected photo (Cover / Fit)
-  const ft=e.target.closest('[data-fit]');
-  if(ft){ deck[cur].fit=ft.dataset.fit; renderPreview(); renderRailThumb(cur); saveDraftSoon(); commitHistorySoon(); return; }
-  if(e.target.closest('[data-focal]')) return;   // focal dot is dragged, not clicked
   const t=e.target.closest('[data-edit]');
   if(t){ hideHL(); openEditor(t); return; }
   const slot=e.target.closest('[data-imgslot]');
   if(slot){
     const key=slot.dataset.imgslot;
-    // a filled main photo on the single-photo layouts: select it to show the fit/focal control
-    if(deck[cur][key] && key==='image' && (deck[cur].layout==='image'||deck[cur].layout==='imagetext')){
-      selectedGraphicId=null; selectedPhoto='image'; hideHL(); closeEditor(true); renderPreview(); return;
+    if(deck[cur][key]){                       // filled cell: SELECT it (never silently replace)
+      selectedGraphicId=null; selectedPhoto=key; hideHL(); closeEditor(true);
+      renderPreview(); renderEditor(); return;
     }
-    hideHL(); closeEditor(true); pickImageFile(key);   // empty slot (or other layouts): upload/replace
+    hideHL(); closeEditor(true); pickImageFile(key);   // empty cell: fill it
+    return;
   }
 });
 // While an editor is open, clicking another editable target must not let the
@@ -2005,11 +2108,25 @@ window.addEventListener('pointermove',e=>{
 });
 window.addEventListener('pointerup',()=>{ if(splitDrag){ splitDrag=false; previewEl.classList.remove('splitting'); document.body.style.cursor=''; renderRailThumb(cur); } });
 // drop an image file straight onto the preview (when the layout has an image slot)
-previewEl.addEventListener('dragover',e=>{ if(!dtHasFiles(e)) return; e.preventDefault(); e.dataTransfer.dropEffect='copy'; previewEl.classList.add('drop'); });
+previewEl.addEventListener('dragover',e=>{ const hasAsset=e.dataTransfer&&e.dataTransfer.types&&e.dataTransfer.types.includes('application/x-deck-asset'); if(!dtHasFiles(e)&&!hasAsset) return; e.preventDefault(); e.dataTransfer.dropEffect='copy'; previewEl.classList.add('drop'); });
 previewEl.addEventListener('dragleave',e=>{ if(e.target===previewEl||!previewEl.contains(e.relatedTarget)) previewEl.classList.remove('drop'); });
-previewEl.addEventListener('drop',e=>{ if(!dtHasFiles(e)) return; const slot=e.target.closest('[data-imgslot]'); let key=(slot&&slot.dataset.imgslot)||currentImageKey();
+previewEl.addEventListener('drop',e=>{
+  const hasAsset=e.dataTransfer&&e.dataTransfer.types&&e.dataTransfer.types.includes('application/x-deck-asset');
+  if(hasAsset){ e.preventDefault(); previewEl.classList.remove('drop');
+    let payload; try{ payload=JSON.parse(e.dataTransfer.getData('application/x-deck-asset')); }catch(_){ return; }
+    const slot=e.target.closest('[data-imgslot]'); let key=(slot&&slot.dataset.imgslot)||currentImageKey();
+    if(!key){ const hasText=!!(deck[cur].title||deck[cur].body); deck[cur].layout=hasText?'imagetext':'image'; key='image'; }
+    (async()=>{ try{
+      let dataUrl;
+      if(payload.kind==='lib'){ const la=((LIB&&LIB.assets)||[]).find(a=>a.id===payload.id); if(!la) return; dataUrl=await assetToDataURL(la.src); }
+      else{ const u=MY_UPLOADS.find(u=>u.id===payload.id); if(!u) return; dataUrl=u.data; }
+      await placeAssetIntoCell(dataUrl,key);
+    }catch(err){ console.warn(err); toast('Could not place asset'); } })();
+    return;
+  }
+  if(!dtHasFiles(e)) return; const slot=e.target.closest('[data-imgslot]'); let key=(slot&&slot.dataset.imgslot)||currentImageKey();
   if(!key){ const hasText=!!(deck[cur].title||deck[cur].body); deck[cur].layout=hasText?'imagetext':'image'; key='image'; }   // dropped on a slide with no photo: text -> Image+text (Left), else full-bleed
-  if(key==='image' && ['imagetext','imageright','imagecaption','image'].includes(deck[cur].layout)) selectedPhoto='image';   // show the arrangement/fit bar right away
+  if(key==='image' && ['imagetext','imageright','imagecaption','image'].includes(deck[cur].layout)) selectedPhoto='image';   // select the dropped photo so its inspector opens
   e.preventDefault(); previewEl.classList.remove('drop'); dropImageFile(e,key); });
 // ----- graphics direct manipulation (select / move / corner-resize). Preview only; never exported. -----
 let gDrag=null;
@@ -2019,14 +2136,8 @@ function slidePoint(ev){
   return { x:(ev.clientX-r.left)/r.width*W, y:(ev.clientY-r.top)/r.height*H };
 }
 previewEl.addEventListener('pointerdown',ev=>{
-  const focal=ev.target.closest('[data-focal]');
   const handle=ev.target.closest('[data-graphic-handle]');
   const img=ev.target.closest('[data-graphic-img]');
-  if(focal){
-    gDrag={mode:'focal'};
-    try{ previewEl.setPointerCapture(ev.pointerId); }catch(e){}
-    ev.preventDefault(); return;
-  }
   if(handle){
     selectedGraphicId=handle.dataset.graphicHandle||null; selectedPhoto=null;
     gDrag={mode:'resize',id:selectedGraphicId};
@@ -2043,18 +2154,12 @@ previewEl.addEventListener('pointerdown',ev=>{
     ev.preventDefault(); return;
   }
   // clicked empty area: deselect, but let text/image/split handlers run untouched
-  if(ev.target.closest('[data-edit],[data-imgslot],[data-split],[data-add-graphic],[data-fit],[data-arrange]')) return;
+  if(ev.target.closest('[data-edit],[data-imgslot],[data-split],[data-add-graphic]')) return;
   if(selectedGraphicId!==null||selectedPhoto!==null){ selectedGraphicId=null; selectedPhoto=null; renderPreview(); renderEditor(); }
 });
 previewEl.addEventListener('pointermove',ev=>{
   if(!gDrag) return;
   const p=slidePoint(ev); if(!p) return;
-  if(gDrag.mode==='focal'){
-    const r=photoRect(), c=deck[cur];
-    c.focusX=Math.max(0, Math.min(1, (p.x-r.x)/r.w));
-    c.focusY=Math.max(0, Math.min(1, (p.y-r.y)/r.h));
-    renderPreview(); return;
-  }
   const g=findGraphicById(gDrag.id); if(!g){ gDrag=null; return; }
   if(gDrag.mode==='move'){
     g.x=Math.max(0, Math.min(0.999, (p.x-gDrag.offX)/W));
@@ -2092,7 +2197,7 @@ function imageFieldHTML(key,label,sl){
 function pickImageFile(key){
   const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*';
   inp.onchange=async()=>{ const f=inp.files&&inp.files[0]; if(!f) return;
-    try{ deck[cur][key]=await fileToDataURL(f); renderAll(); }
+    try{ deck[cur][key]=await fileToDataURL(f); renderAll(); idbAddUpload({data:deck[cur][key],name:f.name}).catch(()=>{}); }
     catch(e){ console.warn(e); toast('Could not read that image'); } };
   inp.click();
 }
@@ -2103,7 +2208,7 @@ async function dropImageFile(ev,key){
   const f=ev.dataTransfer.files&&ev.dataTransfer.files[0];
   if(!f){ return; }
   if(!/^image\//.test(f.type)){ toast('Drop an image file (PNG, JPG, SVG…)'); return; }
-  try{ deck[cur][key]=await fileToDataURL(f); renderAll(); }
+  try{ deck[cur][key]=await fileToDataURL(f); renderAll(); idbAddUpload({data:deck[cur][key],name:f.name}).catch(()=>{}); }
   catch(e){ console.warn(e); toast('Could not read that image'); }
 }
 const IMG_MAX=1600;   // longest edge after downscale — keeps state + exports + share links sane
@@ -2126,8 +2231,18 @@ function downscaleToDataURL(img,type){
   catch(e){ return cv.toDataURL('image/png'); }
 }
 
+/* ===== IndexedDB: My uploads ===== */
+const IDB_NAME='deckstudio', IDB_STORE='uploads'; let _idb=null, MY_UPLOADS=[];
+function idbOpen(){ return _idb?Promise.resolve(_idb):new Promise((res,rej)=>{ const r=indexedDB.open(IDB_NAME,1);
+  r.onupgradeneeded=()=>{ const db=r.result; if(!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE,{keyPath:'id'}); };
+  r.onsuccess=()=>{ _idb=r.result; res(_idb); }; r.onerror=()=>rej(r.error); }); }
+function idbTx(mode){ return idbOpen().then(db=>db.transaction(IDB_STORE,mode).objectStore(IDB_STORE)); }
+async function idbAddUpload({data,name}){ const rec={id:makeId(),name:name||'Upload',data,ts:Date.now()}; const st=await idbTx('readwrite'); await new Promise((res,rej)=>{ const q=st.add(rec); q.onsuccess=res; q.onerror=()=>rej(q.error); }); MY_UPLOADS.unshift(rec); return rec; }
+async function idbAllUploads(){ const st=await idbTx('readonly'); return new Promise((res,rej)=>{ const q=st.getAll(); q.onsuccess=()=>res((q.result||[]).sort((a,b)=>b.ts-a.ts)); q.onerror=()=>rej(q.error); }); }
+async function idbDeleteUpload(id){ const st=await idbTx('readwrite'); await new Promise((res,rej)=>{ const q=st.delete(id); q.onsuccess=res; q.onerror=()=>rej(q.error); }); MY_UPLOADS=MY_UPLOADS.filter(u=>u.id!==id); }
+
 /* ===== the shared Library (data-driven, non-modal side panel) ===== */
-let LIB=null, libTargetKey='image', libCat=null, libPanelEl=null;
+let LIB=null, libTargetKey='image', libCat=null, libPanelEl=null, libQuery='';
 async function loadLibrary(){
   try{ const r=await fetch('library.json',{cache:'no-cache'}); if(r.ok){ const j=await r.json(); if(j&&Array.isArray(j.assets)) LIB=j; } }
   catch(e){ /* library is optional — Upload still works without it */ }
@@ -2146,22 +2261,46 @@ function renderLibrary(){
   const p=ensureLibPanel();
   let h=`<div class="libHead"><div><h3>Library</h3><span class="sub">Approved brand assets — click to add</span></div><button class="libX" title="Close">✕</button></div>`;
   if(!LIB||!LIB.assets||!LIB.assets.length){
+    if(MY_UPLOADS.length){ h+=`<div class="libSection">My uploads</div><div class="libGrid">`+MY_UPLOADS.map(u=>`<div class="libItem" data-upload="${esc(u.id)}"><div class="libThumb"><img src="${esc(u.data)}" alt="${esc(u.name)}" loading="lazy"></div><div class="nm">${esc(u.name)}</div><button class="libDel" data-updel="${esc(u.id)}" title="Remove">✕</button></div>`).join('')+`</div>`; }
     h+=`<div class="libGrid"><div class="libEmpty">No library assets loaded yet.<br>Your team adds them in <b>library.json</b>.<br><br>You can still use <b>Upload</b> for your own images.</div></div><div class="libUpload">⬆ Upload your own image instead</div>`;
-    p.innerHTML=h; p.querySelector('.libX').onclick=closeLibrary; p.querySelector('.libUpload').onclick=()=>{ closeLibrary(); pickImageFile(libTargetKey); }; return;
+    p.innerHTML=h; p.querySelector('.libX').onclick=closeLibrary; p.querySelector('.libUpload').onclick=()=>{ closeLibrary(); pickImageFile(libTargetKey); };
+    p.querySelectorAll('[data-updel]').forEach(b=>{ b.onclick=ev=>{ ev.stopPropagation(); idbDeleteUpload(b.dataset.updel).then(()=>renderLibrary()); }; });
+    p.querySelectorAll('[data-upload]').forEach(el=>{ el.onclick=()=>{ const u=MY_UPLOADS.find(x=>x.id===el.dataset.upload); if(!u) return; const dest=(typeof selectedPhoto!=='undefined'&&selectedPhoto)?selectedPhoto:libTargetKey; placeAssetIntoCell(u.data,dest); toast('Added '+u.name); };
+      el.setAttribute('draggable','true'); el.addEventListener('dragstart',ev=>{ ev.dataTransfer.setData('application/x-deck-asset',JSON.stringify({kind:'upload',id:el.dataset.upload})); ev.dataTransfer.effectAllowed='copy'; }); });
+    return;
   }
-  h+=`<div class="libTabs">`;
+  h+=`<div class="libSearch"><input type="search" placeholder="Search assets" value="${esc(libQuery)}" data-lib-search></div>`;
+  const q=libQuery.trim().toLowerCase();
+  const catName=id=>((LIB.categories||[]).find(c=>c.id===id)||{}).name||'';
+  h+=`<div class="libTabs${q?' muted':''}">`;
   (LIB.categories||[]).forEach(c=>{ h+=`<button class="libTab${c.id===libCat?' on':''}" data-cat="${esc(c.id)}">${esc(c.name)}</button>`; });
-  h+=`</div><div class="libGrid">`;
-  const assets=LIB.assets.filter(a=>a.category===libCat);
-  if(!assets.length){ h+=`<div class="libEmpty">Nothing in this category yet.<br>Drop approved assets here in <b>library.json</b>.</div>`; }
+  h+=`</div>`;
+  if(MY_UPLOADS.length && !q){ h+=`<div class="libSection">My uploads</div><div class="libGrid">`+MY_UPLOADS.map(u=>`<div class="libItem" data-upload="${esc(u.id)}"><div class="libThumb"><img src="${esc(u.data)}" alt="${esc(u.name)}" loading="lazy"></div><div class="nm">${esc(u.name)}</div><button class="libDel" data-updel="${esc(u.id)}" title="Remove">✕</button></div>`).join('')+`</div><div class="libSection">Brand library</div>`; }
+  h+=`<div class="libGrid">`;
+  const matchedUploads=q?MY_UPLOADS.filter(u=>(u.name||'').toLowerCase().includes(q)):[];
+  if(q && matchedUploads.length){ matchedUploads.forEach(u=>{ h+=`<div class="libItem" data-upload="${esc(u.id)}"><div class="libThumb"><img src="${esc(u.data)}" alt="${esc(u.name)}" loading="lazy"></div><div class="nm">${esc(u.name)}</div><button class="libDel" data-updel="${esc(u.id)}" title="Remove">✕</button></div>`; }); }
+  const assets = q
+    ? LIB.assets.filter(a=>((a.name||'')+' '+catName(a.category)).toLowerCase().includes(q))
+    : LIB.assets.filter(a=>a.category===libCat);
+  if(!assets.length && !matchedUploads.length){ h+=`<div class="libEmpty">${q?'No assets match your search.':'Nothing in this category yet.<br>Drop approved assets here in <b>library.json</b>.'}</div>`; }
   assets.forEach(a=>{ h+=`<div class="libItem" data-asset="${esc(a.id)}"><div class="libThumb"${a.bg?` style="background:${esc(a.bg)}"`:''}><img src="${esc(a.thumb||a.src)}" alt="${esc(a.name)}" loading="lazy"></div><div class="nm">${esc(a.name)}</div></div>`; });
   h+=`</div><div class="libUpload">⬆ Upload your own image instead</div>`;
   p.innerHTML=h;
   p.querySelector('.libX').onclick=closeLibrary;
-  p.querySelectorAll('.libTab').forEach(b=>b.onclick=()=>{ libCat=b.dataset.cat; renderLibrary(); });
-  p.querySelectorAll('.libItem').forEach(el=>el.onclick=()=>insertLibraryAsset(el.dataset.asset));
+  p.querySelectorAll('.libTab').forEach(b=>b.onclick=()=>{ libCat=b.dataset.cat; libQuery=''; renderLibrary(); });
+  p.querySelectorAll('[data-asset]').forEach(el=>el.onclick=()=>insertLibraryAsset(el.dataset.asset));
+  p.querySelectorAll('[data-updel]').forEach(b=>{ b.onclick=ev=>{ ev.stopPropagation(); idbDeleteUpload(b.dataset.updel).then(()=>renderLibrary()); }; });
+  p.querySelectorAll('[data-upload]').forEach(el=>el.onclick=()=>{ const u=MY_UPLOADS.find(x=>x.id===el.dataset.upload); if(!u) return; const dest=(typeof selectedPhoto!=='undefined'&&selectedPhoto)?selectedPhoto:libTargetKey; placeAssetIntoCell(u.data,dest); toast('Added '+u.name); });
   p.querySelector('.libUpload').onclick=()=>{ closeLibrary(); pickImageFile(libTargetKey); };
+  p.querySelectorAll('[data-asset],[data-upload]').forEach(el=>{
+    el.setAttribute('draggable','true');
+    el.addEventListener('dragstart',ev=>{ const kind=el.dataset.upload?'upload':'lib'; const id=el.dataset.upload||el.dataset.asset;
+      ev.dataTransfer.setData('application/x-deck-asset',JSON.stringify({kind,id})); ev.dataTransfer.effectAllowed='copy'; });
+  });
+  const si=p.querySelector('[data-lib-search]');
+  if(si) si.oninput=()=>{ libQuery=si.value; const pos=si.selectionStart; renderLibrary(); const ni=libPanelEl.querySelector('[data-lib-search]'); if(ni){ ni.focus(); try{ni.setSelectionRange(pos,pos);}catch(_){} } };
 }
+async function placeAssetIntoCell(dataUrl,key){ deck[cur][key]=dataUrl; renderAll(); saveDraftSoon(); commitHistorySoon(); }
 async function insertLibraryAsset(id){
   const a=((LIB&&LIB.assets)||[]).find(x=>x.id===id); if(!a) return;
   try{
@@ -2173,7 +2312,8 @@ async function insertLibraryAsset(id){
       renderAll(); renderLibrary(); libPanelEl.classList.add('on'); toast('Added '+a.name+' as graphic');
       return;
     }
-    deck[cur][libTargetKey]=await assetToDataURL(a.src); renderAll(); renderLibrary(); libPanelEl.classList.add('on'); toast('Added '+a.name);
+    const dest=(typeof selectedPhoto!=='undefined'&&selectedPhoto)?selectedPhoto:libTargetKey;
+    await placeAssetIntoCell(await assetToDataURL(a.src),dest); renderLibrary(); libPanelEl.classList.add('on'); toast('Added '+a.name);
   }
   catch(e){ console.warn(e); toast('Could not load that asset'); }
 }
@@ -2199,6 +2339,7 @@ async function assetToDataURL(src){
 
 (async function init(){
   await loadLibrary();
+  try{ MY_UPLOADS=await idbAllUploads(); }catch(e){}
   const hash=location.hash || '';
   const fromShare=hash.startsWith('#z=') || hash.startsWith('#d=');
   if(fromShare){
